@@ -358,13 +358,17 @@ function DataManager(): null {
   // Use refs to store the latest load functions to avoid infinite loops
   const loadOrdersRef = useRef(loadOrders);
   const loadProductsRef = useRef(loadProducts);
+  const loadAllDataRef = useRef(loadAllData);
+  const refreshStaleDataRef = useRef(refreshStaleData);
 
   // Keep refs up to date. Refs can't be written during render, so this runs
   // as an effect after every commit instead.
   useEffect(() => {
     loadOrdersRef.current = loadOrders;
     loadProductsRef.current = loadProducts;
-  });
+    loadAllDataRef.current = loadAllData;
+    refreshStaleDataRef.current = refreshStaleData;
+  }, [loadOrders, loadProducts, loadAllData, refreshStaleData]);
 
   // Set refresh functions once on mount
   useEffect(() => {
@@ -380,19 +384,18 @@ function DataManager(): null {
   }, []); // Empty dependency - only run once on mount
 
   useEffect(() => {
-    if (!currentStore) return;
+    if (!currentStore?.id) return;
 
-    loadAllData();
+    loadAllDataRef.current();
 
     const refreshInterval = setInterval(() => {
-      refreshStaleData();
+      refreshStaleDataRef.current();
     }, 5 * 60 * 1000);
 
     return () => {
       clearInterval(refreshInterval);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only re-run when store ID changes, not on every currentStore property change
-  }, [currentStore?.id, loadAllData, refreshStaleData]);
+  }, [currentStore?.id]);
 
   return null;
 }
