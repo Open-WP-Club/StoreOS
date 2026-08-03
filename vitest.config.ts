@@ -2,6 +2,8 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 
+const projectRoot = import.meta.dirname;
+
 export default defineConfig({
   plugins: [
     react({
@@ -12,14 +14,14 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': resolve(__dirname, './src'),
-      '@components': resolve(__dirname, './src/components'),
-      '@pages': resolve(__dirname, './src/pages'),
-      '@stores': resolve(__dirname, './src/stores'),
-      '@hooks': resolve(__dirname, './src/hooks'),
-      '@utils': resolve(__dirname, './src/utils'),
-      '@services': resolve(__dirname, './src/services'),
-      '@constants': resolve(__dirname, './src/constants'),
+      '@': resolve(projectRoot, './src'),
+      '@components': resolve(projectRoot, './src/components'),
+      '@pages': resolve(projectRoot, './src/pages'),
+      '@stores': resolve(projectRoot, './src/stores'),
+      '@hooks': resolve(projectRoot, './src/hooks'),
+      '@utils': resolve(projectRoot, './src/utils'),
+      '@services': resolve(projectRoot, './src/services'),
+      '@constants': resolve(projectRoot, './src/constants'),
     },
   },
   test: {
@@ -46,8 +48,8 @@ export default defineConfig({
 
     // Module mocking
     alias: {
-      'chart.js': resolve(__dirname, '__mocks__/chartjs.js'),
-      'react-chartjs-2': resolve(__dirname, '__mocks__/react-chartjs-2.js'),
+      'chart.js': resolve(projectRoot, '__mocks__/chartjs.js'),
+      'react-chartjs-2': resolve(projectRoot, '__mocks__/react-chartjs-2.js'),
     },
 
     // Coverage

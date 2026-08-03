@@ -99,6 +99,25 @@ export default defineConfig({
               return 'react-vendor';
             }
 
+            // The WooCommerce client needs a Node stream shim. Keep it in a
+            // separately cacheable chunk instead of the application entry.
+            if (id.includes('node_modules/stream-browserify')) {
+              return 'stream-polyfill';
+            }
+
+            // PDF export dependencies are large and shared by several pages.
+            // Keep jsPDF and its compression/image dependencies cacheable.
+            if (
+              id.includes('node_modules/jspdf') ||
+              id.includes('node_modules/jspdf-autotable') ||
+              id.includes('node_modules/pako') ||
+              id.includes('node_modules/fflate') ||
+              id.includes('node_modules/fast-png') ||
+              id.includes('node_modules/iobuffer')
+            ) {
+              return 'pdf-vendor';
+            }
+
             // Chart.js - only loaded with analytics pages
             if (id.includes('node_modules/chart.js') || id.includes('node_modules/react-chartjs-2')) {
               return 'chart-vendor';

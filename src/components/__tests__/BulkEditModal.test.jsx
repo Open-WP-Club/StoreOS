@@ -213,6 +213,7 @@ describe('BulkEditModal', () => {
 
     it('should call onError when save fails', async () => {
       const failSave = vi.fn().mockRejectedValue(new Error('Save failed'));
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
       render(<BulkEditModal {...defaultProps} onSave={failSave} />);
 
       await clickUpdateButton();
@@ -222,6 +223,9 @@ describe('BulkEditModal', () => {
           'Failed to save bulk edits. Please try again.'
         );
       });
+
+      expect(consoleError).toHaveBeenCalledWith('Error saving bulk edits:', expect.any(Error));
+      consoleError.mockRestore();
     });
 
     it('should disable the confirm button while saving', async () => {

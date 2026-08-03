@@ -63,21 +63,15 @@ jobs:
 
       - name: Package Electron app (macOS)
         if: matrix.os == 'macos-latest'
-        run: pnpm run build:electron
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm exec electron-builder --publish never
 
       - name: Package Electron app (Linux)
         if: matrix.os == 'ubuntu-latest'
-        run: pnpm run build:electron
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm exec electron-builder --publish never
 
       - name: Package Electron app (Windows)
         if: matrix.os == 'windows-latest'
-        run: pnpm run build:electron
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm exec electron-builder --publish never
 
       - name: Upload artifacts (macOS)
         if: matrix.os == 'macos-latest'
