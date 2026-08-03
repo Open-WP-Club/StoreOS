@@ -50,7 +50,7 @@ describe('SetupPage', () => {
     it('renders app branding header', () => {
       render(<SetupPage />);
       expect(screen.getByText('StoreOS')).toBeInTheDocument();
-      expect(screen.getByText('Version 1.0.0')).toBeInTheDocument();
+      expect(screen.getByText(`Version ${__APP_VERSION__}`)).toBeInTheDocument();
     });
   });
 

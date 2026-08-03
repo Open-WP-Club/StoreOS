@@ -2,6 +2,7 @@ import { defineConfig, externalizeDepsPlugin } from 'electron-vite';
 import react from '@vitejs/plugin-react';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import { resolve } from 'path';
+import packageJson from './package.json' with { type: 'json' };
 
 export default defineConfig({
   // Main process configuration
@@ -44,18 +45,15 @@ export default defineConfig({
           plugins: [['babel-plugin-react-compiler', { target: '19' }]],
         },
       }),
-      // Node.js polyfills for packages like @woocommerce/woocommerce-rest-api
-      // globals (process, Buffer, global) are injected via `define` below,
-      // so we disable the plugin's own shims to avoid the deprecated esbuild banner.
+      // Node.js polyfills for packages like @woocommerce/woocommerce-rest-api.
+      // The package accesses these globals when creating authenticated requests.
       nodePolyfills({
         include: ['stream', 'crypto', 'util'],
-        globals: { Buffer: false, global: false, process: false },
+        globals: { Buffer: true, global: true, process: true },
       }),
     ],
     define: {
-      'globalThis.global': 'globalThis',
-      'globalThis.process': 'globalThis.process',
-      'globalThis.Buffer': 'globalThis.Buffer',
+      __APP_VERSION__: JSON.stringify(packageJson.version),
     },
     resolve: {
       alias: {

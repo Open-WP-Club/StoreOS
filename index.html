@@ -19,8 +19,19 @@
       })();
     </script>
     <style>
-      /* Prevent flash of white background in dark mode */
-      html.dark body {
+      /* Match the loading screen before the renderer CSS is available. */
+      html,
+      body,
+      #root {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        background-color: #f9fafb;
+      }
+
+      html.dark,
+      html.dark body,
+      html.dark #root {
         background-color: #111827;
       }
     </style>

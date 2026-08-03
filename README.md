@@ -230,6 +230,16 @@ If the application won't launch:
 2. Try clearing node_modules and reinstalling: `rm -rf node_modules && pnpm install`
 3. Check that ports 5173 is available
 
+### macOS: “App is damaged and can't be opened”
+
+macOS may quarantine unsigned applications downloaded from the internet. If you downloaded StoreOS from a trusted source, move it to Applications and run:
+
+```bash
+xattr -dr com.apple.quarantine "/Applications/StoreOS - Built for WooCommerce.app"
+```
+
+Then open the application again.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
@@ -237,6 +247,10 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 
 MIT
+
+## Icon Attribution
+
+Store icon by [SVG Repo](https://www.svgrepo.com/).
 
 ## Support
 

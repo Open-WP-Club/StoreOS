@@ -1,6 +1,7 @@
 import { ReactElement, useState, useEffect } from 'react';
-import { Lock, ShoppingBag, X, AlertCircle } from 'lucide-react';
+import { Lock, X, AlertCircle } from 'lucide-react';
 import useAppSettings from '../stores/appSettingsStore';
+import appIcon from '../../assets/icon.svg';
 
 export default function PinLockScreen(): ReactElement | null {
   const isLocked = useAppSettings((state) => state.isLocked);
@@ -76,7 +77,7 @@ export default function PinLockScreen(): ReactElement | null {
       <div className={`text-center ${shake ? 'animate-shake' : ''}`}>
         {/* Logo */}
         <div className="w-20 h-20 mx-auto mb-6 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center border border-gray-200 dark:border-gray-700">
-          <ShoppingBag className="w-10 h-10 text-blue-600 dark:text-blue-400" />
+          <img src={appIcon} alt="" aria-hidden="true" className="w-12 h-12 object-contain" />
         </div>
 
         {/* Lock Icon */}

@@ -188,7 +188,7 @@ function AppContent(): React.ReactElement {
     const timeoutId = setTimeout(() => {
       startupMetrics.mark('first-render-complete');
       // Only log in development
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         startupMetrics.logReport();
       }
     }, 100);

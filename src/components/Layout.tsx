@@ -41,6 +41,7 @@ import ErrorBoundary from './ErrorBoundary';
 import { useTheme, useSettings, useCache, useShallow } from '../stores';
 import { prefetchAnalyticsPages } from '../App';
 import type { WooCommerceProduct, WooCommerceOrder } from '../types';
+import appIcon from '../../assets/icon.svg';
 
 type ApiStatus = 'online' | 'degraded' | 'offline';
 type SyncType = 'orders' | 'products' | 'inventory' | null;
@@ -278,7 +279,7 @@ function Layout(): React.ReactElement {
       <div data-print-hide className="flex-none h-12 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-4 drag-region">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <Package className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <img src={appIcon} alt="" aria-hidden="true" className="w-5 h-5 object-contain" />
             <span className="text-sm font-semibold text-gray-900 dark:text-white">
               StoreOS
             </span>

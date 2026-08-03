@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useStoreConfig } from '../stores';
 import WooCommerceService from '../services/woocommerce';
-import { Store, Trash2, Edit2, Plus, Save, X, Settings, ExternalLink, CheckCircle, Code2, Package } from 'lucide-react';
+import { Store, Trash2, Edit2, Plus, Save, X, Settings, ExternalLink, CheckCircle, Code2 } from 'lucide-react';
 import type { WooCommerceStore } from '../types';
+import appIcon from '../../assets/icon.svg';
 
 interface FormData {
   name: string;
@@ -169,8 +170,8 @@ function SetupPage(): React.ReactElement {
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-blue-600 rounded-xl">
-              <Package className="w-8 h-8 text-white" />
+            <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded-xl">
+              <img src={appIcon} alt="" aria-hidden="true" className="w-10 h-10 object-contain" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">StoreOS</h1>
@@ -203,7 +204,7 @@ function SetupPage(): React.ReactElement {
               OpenWPClub.com
             </a>
           </span>
-          <span className="text-gray-400 dark:text-gray-500">Version 1.0.0</span>
+          <span className="text-gray-400 dark:text-gray-500">Version {__APP_VERSION__}</span>
         </div>
       </div>
 

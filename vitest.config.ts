@@ -1,10 +1,14 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
+import packageJson from './package.json' with { type: 'json' };
 
 const projectRoot = import.meta.dirname;
 
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(packageJson.version),
+  },
   plugins: [
     react({
       babel: {

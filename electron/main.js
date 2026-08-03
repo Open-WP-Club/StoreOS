@@ -118,7 +118,7 @@ function createWindow() {
     mainWindow.webContents.openDevTools();
   } else {
     // Production: load built files
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+    mainWindow.loadFile(path.join(__dirname, '../../dist/index.html'));
   }
 
   // Security: Set Content Security Policy

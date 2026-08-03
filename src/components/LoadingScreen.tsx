@@ -1,6 +1,6 @@
 import { ReactElement, useEffect, useState } from 'react';
-import { ShoppingBag } from 'lucide-react';
 import { useTheme } from '../stores';
+import appIcon from '../../assets/icon.svg';
 
 interface LoadingScreenProps {
   onComplete: () => void;
@@ -56,7 +56,7 @@ export default function LoadingScreen({
 
   return (
     <div className={`fixed inset-0 flex items-center justify-center z-[9999] ${
-      isDark ? 'bg-gray-900' : 'bg-white'
+      isDark ? 'bg-gray-900' : 'bg-gray-50'
     }`}>
       <div className="text-center">
         {/* Logo / Icon */}
@@ -66,7 +66,7 @@ export default function LoadingScreen({
               ? 'bg-gray-800 border-gray-700'
               : 'bg-gray-100 border-gray-200'
           }`}>
-            <ShoppingBag className={`w-12 h-12 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+            <img src={appIcon} alt="" aria-hidden="true" className="w-14 h-14 object-contain" />
           </div>
         </div>
 
