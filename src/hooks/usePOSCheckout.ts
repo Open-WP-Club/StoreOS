@@ -1,0 +1,175 @@
+import { useState, useEffect, useCallback } from 'react';
+import { useStoreConfig } from '../stores';
+import { usePOSStore } from '../stores/posStore';
+import WooCommerceService from '../services/woocommerce';
+import type { WooCommerceCustomer } from '../types';
+
+interface UsePOSCheckoutResult {
+  showCheckout: boolean;
+  setShowCheckout: (show: boolean) => void;
+  processingOrder: boolean;
+  showCustomerSearch: boolean;
+  setShowCustomerSearch: (show: boolean) => void;
+  customerSearchTerm: string;
+  setCustomerSearchTerm: (term: string) => void;
+  customers: WooCommerceCustomer[];
+  loadingCustomers: boolean;
+  selectedCustomer: WooCommerceCustomer | null;
+  handleSelectCustomer: (customer: WooCommerceCustomer) => void;
+  clearCustomer: () => void;
+  orderNote: string;
+  setOrderNote: (note: string) => void;
+  handleCheckout: () => Promise<void>;
+}
+
+/**
+ * Hook for POS checkout logic, customer search, and order creation.
+ */
+export function usePOSCheckout(
+  saveRecentTransaction: (orderId: number) => void
+): UsePOSCheckoutResult {
+  const getCurrentStore = useStoreConfig((state) => state.getCurrentStore);
+  const currentStore = getCurrentStore();
+
+  const {
+    cart,
+    clearCart,
+    paymentMethod,
+    discountType,
+    discountValue,
+    getDiscountAmount,
+  } = usePOSStore();
+
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [processingOrder, setProcessingOrder] = useState(false);
+  const [showCustomerSearch, setShowCustomerSearch] = useState(false);
+  const [customerSearchTerm, setCustomerSearchTerm] = useState('');
+  const [customers, setCustomers] = useState<WooCommerceCustomer[]>([]);
+  const [loadingCustomers, setLoadingCustomers] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<WooCommerceCustomer | null>(null);
+  const [orderNote, setOrderNote] = useState('');
+
+  // Search customers
+  const searchCustomers = useCallback(async (term: string): Promise<void> => {
+    if (!currentStore || term.length < 2) {
+      setCustomers([]);
+      return;
+    }
+
+    try {
+      setLoadingCustomers(true);
+      const service = new WooCommerceService(currentStore);
+      const result = await service.getCustomers({
+        search: term,
+        per_page: 20,
+      });
+
+      if (result.success && result.data) {
+        setCustomers(result.data);
+      }
+    } catch {
+      // Error searching customers - silently handled
+    } finally {
+      setLoadingCustomers(false);
+    }
+  }, [currentStore]);
+
+  // Debounced customer search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (customerSearchTerm.length >= 2) {
+        searchCustomers(customerSearchTerm);
+      } else {
+        setCustomers([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [customerSearchTerm, searchCustomers]);
+
+  const handleSelectCustomer = (customer: WooCommerceCustomer): void => {
+    setSelectedCustomer(customer);
+    setShowCustomerSearch(false);
+    setCustomerSearchTerm('');
+  };
+
+  const clearCustomer = (): void => {
+    setSelectedCustomer(null);
+  };
+
+  const handleCheckout = async (): Promise<void> => {
+    if (!currentStore || cart.length === 0) return;
+
+    try {
+      setProcessingOrder(true);
+      const service = new WooCommerceService(currentStore);
+
+      const lineItems = cart.map((item) => ({
+        product_id: item.product.id,
+        quantity: item.quantity,
+      }));
+
+      const orderData = {
+        status: 'completed' as const,
+        payment_method: paymentMethod,
+        payment_method_title:
+          paymentMethod === 'cash' ? 'Каса' : paymentMethod === 'card' ? 'Карта' : 'Друго',
+        set_paid: true,
+        line_items: lineItems,
+        ...(selectedCustomer && {
+          customer_id: selectedCustomer.id,
+        }),
+        ...(discountValue > 0 && {
+          fee_lines: [
+            {
+              name: discountType === 'percent' ? `Отстъпка ${discountValue}%` : 'Отстъпка',
+              total: (-getDiscountAmount()).toString(),
+            },
+          ],
+        }),
+        ...(orderNote.trim() && {
+          customer_note: orderNote.trim(),
+        }),
+      };
+
+      const result = await service.createOrder(orderData);
+
+      if (result.success) {
+        if (result.data?.id) {
+          saveRecentTransaction(result.data.id);
+        }
+        clearCart();
+        setSelectedCustomer(null);
+        setOrderNote('');
+        setShowCheckout(false);
+        alert(`Поръчка #${result.data?.id} създадена успешно!`);
+      } else {
+        alert('Грешка при създаване на поръчка: ' + result.error);
+      }
+    } catch {
+      alert('Грешка при създаване на поръчка');
+    } finally {
+      setProcessingOrder(false);
+    }
+  };
+
+  return {
+    showCheckout,
+    setShowCheckout,
+    processingOrder,
+    showCustomerSearch,
+    setShowCustomerSearch,
+    customerSearchTerm,
+    setCustomerSearchTerm,
+    customers,
+    loadingCustomers,
+    selectedCustomer,
+    handleSelectCustomer,
+    clearCustomer,
+    orderNote,
+    setOrderNote,
+    handleCheckout,
+  };
+}
+
+export default usePOSCheckout;

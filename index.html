@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StoreOS - Built for WooCommerce</title>
+    <script>
+      // Apply dark mode immediately to prevent flash
+      (function() {
+        try {
+          const stored = localStorage.getItem('settings-storage');
+          if (stored) {
+            const data = JSON.parse(stored);
+            if (data.state && data.state.theme === 'dark') {
+              document.documentElement.classList.add('dark');
+            }
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <style>
+      /* Prevent flash of white background in dark mode */
+      html.dark body {
+        background-color: #111827;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

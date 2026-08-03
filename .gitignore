@@ -1,0 +1,66 @@
+# Dependencies and package-manager files
+node_modules/
+.pnpm-store/
+.pnp.*
+
+# Logs and debug output
+logs/
+*.log
+*.log.*
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Application builds and Electron packages
+dist/
+dist-electron/
+dist_electron/
+build/
+out/
+release/
+
+# Tool caches and incremental build data
+.cache/
+.vite/
+.parcel-cache/
+.turbo/
+.eslintcache
+.jest-cache/
+*.tsbuildinfo
+
+# Test reports and generated artifacts
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+blob-report/
+.playwright-mcp/
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# OS-generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor and local workspace settings
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.claude/worktrees/

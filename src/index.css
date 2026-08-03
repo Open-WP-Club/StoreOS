@@ -1,0 +1,227 @@
+@import "tailwindcss";
+
+@variant dark (.dark &);
+
+/* Desktop Application Styling */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+  user-select: none;
+  background-color: #f9fafb; /* gray-50 - light mode */
+  transition: background-color 0.2s ease;
+}
+
+.dark body,
+body.dark {
+  background-color: #111827; /* gray-900 - dark mode */
+}
+
+/* Apply dark background when html has dark class (Tailwind convention) */
+html.dark body {
+  background-color: #111827;
+}
+
+#root {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: inherit;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Native-style scrollbars for desktop */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+/* Draggable title bar region */
+.drag-region {
+  -webkit-app-region: drag;
+}
+
+.drag-region button,
+.drag-region input,
+.drag-region select,
+.drag-region a {
+  -webkit-app-region: no-drag;
+}
+
+/* Native button styling */
+button {
+  user-select: none;
+  cursor: pointer;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+/* Remove text selection on double-click for app-like feel */
+h1, h2, h3, h4, h5, h6, label, button {
+  user-select: none;
+}
+
+/* Allow text selection in content areas */
+main, article, section, p, li, td {
+  user-select: text;
+}
+
+/* Smooth transitions for desktop app feel */
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Desktop window shadow for panels */
+.desktop-panel {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.dark .desktop-panel {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Native input styling */
+input, select, textarea {
+  user-select: text;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  ring: 2px;
+  ring-color: rgb(59, 130, 246);
+}
+
+/* Custom select dropdown arrow positioning */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+  padding-right: 2.5rem;
+}
+
+.dark select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+/* Prevent text selection during drag operations */
+.dragging {
+  user-select: none !important;
+}
+
+/* Toast animations */
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+/* Print styles */
+@media print {
+  /* Hide navigation, controls, and non-content elements */
+  [data-print-hide],
+  .drag-region,
+  button,
+  select,
+  nav {
+    display: none !important;
+  }
+
+  /* Make main content full-width */
+  body,
+  #root {
+    overflow: visible !important;
+    height: auto !important;
+    width: auto !important;
+  }
+
+  #root > div {
+    display: block !important;
+  }
+
+  main {
+    overflow: visible !important;
+    width: 100% !important;
+    padding: 0 !important;
+  }
+
+  /* Force white background */
+  body,
+  #root,
+  main,
+  div {
+    background-color: white !important;
+    color: black !important;
+  }
+
+  /* Prevent page breaks inside cards and tables */
+  .bg-white,
+  .dark\:bg-gray-800,
+  table,
+  tr {
+    break-inside: avoid;
+  }
+
+  /* Ensure charts fit */
+  canvas {
+    max-width: 100% !important;
+  }
+
+  /* Remove shadows and borders for cleaner print */
+  .shadow {
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb !important;
+  }
+}
