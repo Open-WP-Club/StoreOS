@@ -1,4 +1,5 @@
 import { app, BrowserWindow, Menu, ipcMain, Notification } from 'electron';
+import { autoUpdater } from 'electron-updater';
 import path from 'path';
 
 // electron-vite provides these environment variables
@@ -160,7 +161,14 @@ ipcMain.on('show-notification', (_event, { title, body, route }) => {
   notification.show();
 });
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  createWindow();
+  if (!isDev) {
+    // Checks GitHub releases (see package.json "build.publish"), downloads in the
+    // background, and shows a native notification when ready to install on quit.
+    autoUpdater.checkForUpdatesAndNotify();
+  }
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

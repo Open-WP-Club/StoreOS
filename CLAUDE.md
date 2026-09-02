@@ -20,7 +20,7 @@ StoreOS - Built for WooCommerce is an Electron-based desktop application for man
 ## Technology Stack
 
 ### Core Technologies
-- **Electron 43.x** - Desktop application framework
+- **Electron 44.x** - Desktop application framework
 - **React 19.x** - UI library with hooks (React Compiler enabled via `babel-plugin-react-compiler`)
 - **TypeScript 6.x** - Strict mode (see `tsconfig.json` gotchas below)
 - **electron-vite 6.x (beta)** - Build tool/dev server for main, preload, and renderer processes
@@ -39,11 +39,11 @@ StoreOS - Built for WooCommerce is an Electron-based desktop application for man
 - **IndexedDB** - Browser-based persistent storage
 
 ### Development & Testing Tools
-- **Vitest 4.x** - Test runner (`jsdom` environment), **not Jest** — 580+ test files, ~10,600 tests
+- **Vitest 4.x** - Test runner (`jsdom` environment), **not Jest** — 97 test files, ~1,777 tests
 - **@testing-library/react** + **jest-dom** matchers + **user-event**
 - **ESLint 9.x** - Flat config (`eslint.config.js`, not `.eslintrc.json`), includes `eslint-plugin-react-compiler`
 - **Prettier** - Code formatting
-- **typescript-eslint 8.x** - blocks bumping `typescript` past `<6.1.0` and `eslint` past `^10` (peer dep constraint) — check `TODO.md` "🔵 Пакети за следене" before upgrading either
+- **typescript-eslint 8.x** - blocks bumping `typescript` past `<6.1.0` (peer dep constraint); separately, `eslint-plugin-react`'s peer range (`^9.7`) blocks bumping `eslint` past 9.x — check `TODO.md` "🔵 Пакети за следене" before upgrading either
 
 ## Codebase Structure
 
@@ -264,7 +264,7 @@ pnpm run build:electron   # build + electron-builder → distributable in dist-e
 ### Testing
 
 ```bash
-pnpm run test             # vitest run — full suite (~580 files, ~10,600 tests)
+pnpm run test             # vitest run — full suite (97 files, ~1,777 tests)
 pnpm run test:watch       # vitest (watch mode)
 pnpm run test:coverage    # vitest run --coverage (v8 provider)
 ```
@@ -404,7 +404,7 @@ Verify field names match the data shape (e.g. `billing.email`, not `email`) and 
 
 ## Testing Guidelines
 
-The project has a full **Vitest** suite (~580 files, ~10,600 tests) — this is not a "manual testing only" project. Key points:
+The project has a full **Vitest** suite (97 files, ~1,777 tests) — this is not a "manual testing only" project. Key points:
 
 - `clearMocks: true` in `vitest.config.ts` — mock implementations reset between tests automatically.
 - Set up mocks in `beforeEach()`, not inside `vi.mock()` factories.

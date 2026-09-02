@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback, ChangeEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { RefreshCw, Filter, X } from 'lucide-react';
+import { RefreshCw, Filter } from 'lucide-react';
 import { useStoreConfig, useCache, useSettings, useActivityLog } from '../stores';
 import WooCommerceService from '../services/woocommerce';
 import { formatPrice } from '../utils/currency';
@@ -9,29 +9,20 @@ import { exportToCSV } from '../utils/csvExport';
 import { exportTableToPDF } from '../utils/pdfExport';
 import ExportMenu from '../components/ExportMenu';
 import { searchOrders, applyOrderFilters } from '../utils/searchService';
-import Pagination from '../components/Pagination';
 import FilterPresetManager from '../components/FilterPresetManager';
 import ToastContainer from '../components/ToastContainer';
 import LoadingIndicator from '../components/LoadingIndicator';
 import BulkActionsBar from '../components/BulkActionsBar';
+import OrdersAdvancedFilters from '../components/OrdersAdvancedFilters';
+import OrdersTable from '../components/OrdersTable';
 import { useToast } from '../hooks/useToast';
 import { useProgressiveLoading } from '../hooks/useProgressiveLoading';
 import { useOfflineMutation } from '../hooks/useOfflineMutation';
-import OrderTableRow from '../components/OrderTableRow';
-import type { Order, OrderStatus, FilterPreset } from '../types';
+import type { Order, OrderStatus, OrderFilters, FilterPreset } from '../types';
 import { EMPTY_ORDERS } from '../constants';
 import StatCard from '../components/StatCard';
 import PageHeader from '../components/PageHeader';
 import EmptyState from '../components/EmptyState';
-
-interface OrderFilters {
-  status: string;
-  dateFrom: string;
-  dateTo: string;
-  totalMin: string;
-  totalMax: string;
-  paymentMethod: string;
-}
 
 interface OrderStats {
   total: number;
@@ -486,154 +477,15 @@ function OrdersPage(): React.ReactElement {
 
           {/* Advanced Filters */}
           {showAdvancedFilters && (
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-4">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                  Advanced Filters
-                </h3>
-                {(hasActiveFilters || searchTerm) && (
-                  <button
-                    onClick={clearAllFilters}
-                    className="flex items-center gap-1 text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
-                  >
-                    <X className="w-4 h-4" />
-                    Clear All
-                  </button>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Order Status Filter */}
-                <div>
-                  <label
-                    htmlFor="order-status-filter"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                  >
-                    Order Status
-                  </label>
-                  <select
-                    id="order-status-filter"
-                    value={filters.status}
-                    onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                      setFilters({ ...filters, status: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="all">All Status</option>
-                    <option value="pending">Pending</option>
-                    <option value="processing">Processing</option>
-                    <option value="on-hold">On Hold</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
-                    <option value="refunded">Refunded</option>
-                    <option value="failed">Failed</option>
-                  </select>
-                </div>
-
-                {/* Payment Method Filter */}
-                <div>
-                  <label
-                    htmlFor="payment-method-filter"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                  >
-                    Payment Method
-                  </label>
-                  <select
-                    id="payment-method-filter"
-                    value={filters.paymentMethod}
-                    onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                      setFilters({ ...filters, paymentMethod: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="all">All Methods</option>
-                    <option value="bacs">Bank Transfer</option>
-                    <option value="cheque">Check</option>
-                    <option value="cod">Cash on Delivery</option>
-                    <option value="paypal">PayPal</option>
-                    <option value="stripe">Stripe</option>
-                  </select>
-                </div>
-
-                {/* Total Amount Range */}
-                <div>
-                  <span className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Total Amount
-                  </span>
-                  <div className="flex gap-2">
-                    <input
-                      id="total-min"
-                      type="number"
-                      placeholder="Min"
-                      aria-label="Minimum total amount"
-                      value={filters.totalMin}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                        setFilters({ ...filters, totalMin: e.target.value })
-                      }
-                      className="w-1/2 px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    <input
-                      id="total-max"
-                      type="number"
-                      placeholder="Max"
-                      aria-label="Maximum total amount"
-                      value={filters.totalMax}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                        setFilters({ ...filters, totalMax: e.target.value })
-                      }
-                      className="w-1/2 px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                </div>
-
-                {/* Date Range */}
-                <div>
-                  <label
-                    htmlFor="date-from"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                  >
-                    From Date
-                  </label>
-                  <input
-                    id="date-from"
-                    type="date"
-                    value={filters.dateFrom}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                      setFilters({ ...filters, dateFrom: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="date-to"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                  >
-                    To Date
-                  </label>
-                  <input
-                    id="date-to"
-                    type="date"
-                    value={filters.dateTo}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                      setFilters({ ...filters, dateTo: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-
-              {/* Results Summary */}
-              <div className="text-sm text-gray-600 dark:text-gray-400">
-                Showing{' '}
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  {filteredOrders.length}
-                </span>{' '}
-                of{' '}
-                <span className="font-semibold text-gray-900 dark:text-white">{orders.length}</span>{' '}
-                orders
-              </div>
-            </div>
+            <OrdersAdvancedFilters
+              filters={filters}
+              onFilterChange={(patch) => setFilters({ ...filters, ...patch })}
+              hasActiveFilters={hasActiveFilters}
+              searchTerm={searchTerm}
+              onClearAll={clearAllFilters}
+              filteredOrdersCount={filteredOrders.length}
+              ordersCount={orders.length}
+            />
           )}
         </div>
 
@@ -661,76 +513,18 @@ function OrdersPage(): React.ReactElement {
           {error}
         </div>
       ) : (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-colors">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="px-3 py-3 text-left w-10">
-                    <input
-                      type="checkbox"
-                      checked={
-                        selectedOrderIds.length === paginatedOrders.length &&
-                        paginatedOrders.length > 0
-                      }
-                      onChange={handleSelectAll}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Order ID
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Customer
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Total
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {paginatedOrders.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={7}
-                      className="px-6 py-8 text-center text-gray-500 dark:text-gray-400"
-                    >
-                      No orders found
-                    </td>
-                  </tr>
-                ) : (
-                  paginatedOrders.map((order) => (
-                    <OrderTableRow
-                      key={order.id}
-                      order={order}
-                      isSelected={selectedOrderIds.includes(order.id)}
-                      onSelect={handleSelectOrder}
-                      onStatusChange={updateOrderStatus}
-                    />
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-          {filteredOrders.length > 0 && (
-            <Pagination
-              currentPage={currentPage}
-              totalItems={filteredOrders.length}
-              pageSize={pageSize}
-              onPageChange={handlePageChange}
-              onPageSizeChange={handlePageSizeChange}
-            />
-          )}
-        </div>
+        <OrdersTable
+          paginatedOrders={paginatedOrders}
+          selectedOrderIds={selectedOrderIds}
+          onSelectAll={handleSelectAll}
+          onSelectOrder={handleSelectOrder}
+          onStatusChange={updateOrderStatus}
+          currentPage={currentPage}
+          totalItems={filteredOrders.length}
+          pageSize={pageSize}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+        />
       )}
     </div>
   );

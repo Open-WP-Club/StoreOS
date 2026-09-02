@@ -1,5 +1,6 @@
 import React, { useCallback, ChangeEvent, KeyboardEvent } from 'react';
 import { Link } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 import { useStoreConfig, useCache, useSettings } from '../stores';
 import { formatPrice } from '../utils/currency';
 import Pagination from '../components/Pagination';
@@ -497,7 +498,9 @@ function ProductsPage(): React.ReactElement {
                       <h4 className="font-semibold text-gray-900 mb-2">Description</h4>
                       <div
                         className="bg-gray-50 p-4 rounded-md text-sm prose prose-sm max-w-none"
-                        dangerouslySetInnerHTML={{ __html: actions.selectedProduct.description }}
+                        dangerouslySetInnerHTML={{
+                          __html: DOMPurify.sanitize(actions.selectedProduct.description),
+                        }}
                       />
                     </div>
                   )}
