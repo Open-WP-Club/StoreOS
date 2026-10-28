@@ -241,7 +241,7 @@ const InventoryPage: React.FC = (): React.ReactElement => {
 
   const handleSelectAll = (e: ChangeEvent<HTMLInputElement>): void => {
     if (e.target.checked) {
-      setSelectedProductIds(visibleRows.map((p) => p.id));
+      setSelectedProductIds(paginatedProducts.map((p) => p.id)); // whole page, not just the virtual window
     } else {
       setSelectedProductIds([]);
     }
@@ -561,7 +561,7 @@ const InventoryPage: React.FC = (): React.ReactElement => {
                     </td>
                   </tr>
                 ) : (
-                  paginatedProducts.map((product) => {
+                  visibleRows.map((product) => {
                     const isLowStock =
                       product.stock_quantity !== null &&
                       product.stock_quantity !== undefined &&

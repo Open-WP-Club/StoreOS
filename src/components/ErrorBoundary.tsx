@@ -99,7 +99,10 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
                 Reload Page
               </button>
               <button
-                onClick={() => (window.location.href = '/')}
+                onClick={() => {
+                  window.location.hash = '#/'; // HashRouter (file:// safe)
+                  window.location.reload();
+                }}
                 className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
               >
                 Go Home

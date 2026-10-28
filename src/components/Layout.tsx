@@ -89,7 +89,7 @@ function Layout(): React.ReactElement {
 
   // Auto-expand the group that contains the active route
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(() => {
-    const path = window.location.pathname;
+    const path = window.location.hash.slice(1) || '/'; // HashRouter: route lives in the hash
     return {
       sales: ['/orders', '/customers', '/coupons', '/reviews'].some((p) => path.startsWith(p)),
       catalog: ['/products', '/inventory', '/categories', '/attributes', '/tax'].some((p) => path.startsWith(p)),
