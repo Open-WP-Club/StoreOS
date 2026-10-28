@@ -22,9 +22,19 @@ export interface ProductsSlice {
   getProductsLastSync: () => string | null;
 }
 
+export interface OrdersSync {
+  storeId: string;
+  at: number;
+  lastSync: string | null;
+}
+
 export interface OrdersSlice {
   getCachedOrders: (currentStoreId: string) => Promise<WooCommerceOrder[] | null>;
   setCachedOrders: (data: WooCommerceOrder[], currentStoreId: string, now: number) => Promise<void>;
+  /** Persist the orders delta cursor (last full load time + newest modified date) to IndexedDB. */
+  saveOrdersSync: (storeId: string, sync: OrdersSync) => Promise<void>;
+  /** Restore the persisted orders delta cursor, or null if none. */
+  loadOrdersSync: (storeId: string) => Promise<OrdersSync | null>;
 }
 
 export interface CustomersSlice {

@@ -1,8 +1,8 @@
 import type { StateCreator } from 'zustand';
-import { getCollection, STORES } from '../../utils/indexedDBCache';
+import { getCollection, saveToCache, getFromCache, STORES } from '../../utils/indexedDBCache';
 import { CACHE_EXPIRY } from '../../constants/config';
 import type { WooCommerceOrder } from '../../types';
-import type { CacheStore, OrdersSlice } from './types';
+import type { CacheStore, OrdersSlice, OrdersSync } from './types';
 import { persistCollection } from './persist';
 
 type Mutators = [['zustand/immer', never]];
@@ -14,6 +14,27 @@ const FINAL_STATUSES = ['completed', 'cancelled', 'refunded', 'failed', 'trash']
  * for the overall cache strategy).
  */
 export const createOrdersSlice: StateCreator<CacheStore, Mutators, [], OrdersSlice> = (set, get) => ({
+  saveOrdersSync: async (storeId, sync) => {
+    try {
+      await saveToCache(STORES.ORDERS, `${storeId}_lastSync`, sync);
+    } catch {
+      // Best effort: next start just does a full load
+    }
+  },
+
+  loadOrdersSync: async (storeId) => {
+    try {
+      // 1 year: the cursor must outlive the orders data TTL; the 1h full re-sync bounds staleness
+      return (await getFromCache(
+        STORES.ORDERS,
+        `${storeId}_lastSync`,
+        365 * 24 * 60 * 60 * 1000
+      )) as OrdersSync | null;
+    } catch {
+      return null;
+    }
+  },
+
   getCachedOrders: async (currentStoreId: string): Promise<WooCommerceOrder[] | null> => {
     const state = get();
     const now = Date.now();

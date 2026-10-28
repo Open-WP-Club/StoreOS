@@ -49,6 +49,8 @@ const mockStartLoading = vi.fn();
 const mockUpdateProgress = vi.fn();
 const mockFinishLoading = vi.fn();
 const mockIsCancelled = vi.fn();
+const mockLoadOrdersSync = vi.fn();
+const mockSaveOrdersSync = vi.fn();
 const mockGetAllOrders = vi.fn();
 const mockGetAllProducts = vi.fn();
 const mockGetProductsSince = vi.fn();
@@ -97,6 +99,8 @@ describe('DataManager', () => {
     mockUpdateProgress.mockReset();
     mockFinishLoading.mockReset();
     mockIsCancelled.mockReturnValue(false);
+    mockLoadOrdersSync.mockResolvedValue(null);
+    mockSaveOrdersSync.mockResolvedValue(undefined);
 
     mockGetAllOrders.mockResolvedValue({
       success: true,
@@ -128,6 +132,8 @@ describe('DataManager', () => {
 
     // useCache.getState and useCache.setState are used for direct Zustand access
     useCache.getState.mockReturnValue({
+      loadOrdersSync: mockLoadOrdersSync,
+      saveOrdersSync: mockSaveOrdersSync,
       cache: {
         products: { lastSync: null, data: null },
       },
@@ -342,6 +348,8 @@ describe('DataManager', () => {
   describe('Delta Sync for Products', () => {
     it('should use delta sync when lastSync is available', async () => {
       useCache.getState.mockReturnValue({
+        loadOrdersSync: mockLoadOrdersSync,
+        saveOrdersSync: mockSaveOrdersSync,
         cache: {
           products: {
             lastSync: '2024-01-01T00:00:00Z',
@@ -399,6 +407,8 @@ describe('DataManager', () => {
         return selector ? selector(state) : state;
       });
       useCache.getState = vi.fn().mockReturnValue({
+        loadOrdersSync: mockLoadOrdersSync,
+        saveOrdersSync: mockSaveOrdersSync,
         cache: { products: { lastSync: null, data: null } },
       });
       useCache.setState = vi.fn();
