@@ -1,19 +1,21 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
 import ToastContainer from '../components/ToastContainer';
 import type { ToastType } from '../types';
+import type { ToastAction } from '../hooks/useToast';
 
 interface ToastItem {
   id: string;
   message: string;
   type: ToastType;
   duration: number;
+  action?: ToastAction;
 }
 
 interface ToastMethods {
-  success: (message: string, duration?: number) => string;
-  error: (message: string, duration?: number) => string;
-  warning: (message: string, duration?: number) => string;
-  info: (message: string, duration?: number) => string;
+  success: (message: string, duration?: number, action?: ToastAction) => string;
+  error: (message: string, duration?: number, action?: ToastAction) => string;
+  warning: (message: string, duration?: number, action?: ToastAction) => string;
+  info: (message: string, duration?: number, action?: ToastAction) => string;
 }
 
 const ToastContext = createContext<ToastMethods | null>(null);
@@ -34,9 +36,14 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   const addToast = useCallback(
-    (message: string, type: ToastType = 'info', duration: number = 3000): string => {
+    (
+      message: string,
+      type: ToastType = 'info',
+      duration: number = 3000,
+      action?: ToastAction
+    ): string => {
       const id = crypto.randomUUID();
-      setToasts((prev) => [...prev, { id, message, type, duration }]);
+      setToasts((prev) => [...prev, { id, message, type, duration, action }]);
       return id;
     },
     []
@@ -46,12 +53,16 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
-  const toast: ToastMethods = {
-    success: (message, duration) => addToast(message, 'success', duration),
-    error: (message, duration) => addToast(message, 'error', duration),
-    warning: (message, duration) => addToast(message, 'warning', duration),
-    info: (message, duration) => addToast(message, 'info', duration),
-  };
+  // Stable identity so consumers can list it in hook dependencies.
+  const toast = useMemo<ToastMethods>(
+    () => ({
+      success: (message, duration, action) => addToast(message, 'success', duration, action),
+      error: (message, duration, action) => addToast(message, 'error', duration, action),
+      warning: (message, duration, action) => addToast(message, 'warning', duration, action),
+      info: (message, duration, action) => addToast(message, 'info', duration, action),
+    }),
+    [addToast]
+  );
 
   return (
     <ToastContext.Provider value={toast}>

@@ -6,6 +6,13 @@ import { usePOSStore } from '../../stores/posStore';
 import WooCommerceService from '../../services/woocommerce';
 import { createMockStore } from '../../__test_utils__';
 
+const mockToast = vi.hoisted(() => ({
+  success: vi.fn(),
+  error: vi.fn(),
+  warning: vi.fn(),
+  info: vi.fn(),
+}));
+vi.mock('../../contexts/ToastContext', () => ({ useToast: () => mockToast }));
 vi.mock('../../stores', () => ({
   useStoreConfig: vi.fn(),
 }));
@@ -146,7 +153,6 @@ describe('usePOSDailyReport', () => {
   it('should handle refund successfully', async () => {
     mockRefundOrder.mockResolvedValue({ success: true, data: { id: 1, amount: '20.00' } });
 
-    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
     const { result } = renderHook(() => usePOSDailyReport());
 
     act(() => {
@@ -161,14 +167,12 @@ describe('usePOSDailyReport', () => {
 
     expect(mockRefundOrder).toHaveBeenCalledWith(400, 20, 'POS Refund');
     expect(result.current.recentTransactions[0]!.refunded).toBe(true);
-    expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('400'));
-    alertSpy.mockRestore();
+    expect(mockToast.success).toHaveBeenCalledWith(expect.stringContaining('400'));
   });
 
   it('should handle refund failure', async () => {
     mockRefundOrder.mockResolvedValue({ success: false, error: 'Refund failed' });
 
-    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
     const { result } = renderHook(() => usePOSDailyReport());
 
     act(() => {
@@ -182,8 +186,7 @@ describe('usePOSDailyReport', () => {
     });
 
     expect(result.current.recentTransactions[0]!.refunded).toBeFalsy();
-    expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('Refund failed'));
-    alertSpy.mockRestore();
+    expect(mockToast.error).toHaveBeenCalledWith(expect.stringContaining('Refund failed'));
   });
 
   it('should toggle modals', () => {

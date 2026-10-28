@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useStoreConfig } from '../stores';
+import { useToast } from '../contexts/ToastContext';
 import { usePOSStore } from '../stores/posStore';
 import WooCommerceService from '../services/woocommerce';
 
@@ -53,6 +54,7 @@ interface UsePOSDailyReportResult {
 export function usePOSDailyReport(): UsePOSDailyReportResult {
   const getCurrentStore = useStoreConfig((state) => state.getCurrentStore);
   const currentStore = getCurrentStore();
+  const toast = useToast();
   const currencySymbol = currentStore?.currencySymbol || '';
 
   const {
@@ -69,6 +71,7 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
       const stored = localStorage.getItem(RECENT_TRANSACTIONS_KEY);
       return stored ? JSON.parse(stored) : [];
     } catch {
+      // Intentional: corrupt or unavailable localStorage just means an empty history.
       return [];
     }
   });
@@ -100,7 +103,8 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
       try {
         localStorage.setItem(RECENT_TRANSACTIONS_KEY, JSON.stringify(updated));
       } catch {
-        // Error saving - silently handled
+        // eslint-disable-next-line no-console
+        console.warn('POS: could not persist recent transactions to localStorage');
       }
       return updated;
     });
@@ -210,15 +214,16 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
         try {
           localStorage.setItem(RECENT_TRANSACTIONS_KEY, JSON.stringify(updated));
         } catch {
-          // Error saving - silently handled
+          // eslint-disable-next-line no-console
+          console.warn('POS: could not persist recent transactions to localStorage');
         }
 
-        alert(`Поръчка #${transaction.id} е възстановена успешно!`);
+        toast.success(`Поръчка #${transaction.id} е възстановена успешно!`);
       } else {
-        alert('Грешка при възстановяване: ' + result.error);
+        toast.error('Грешка при възстановяване: ' + result.error);
       }
     } catch {
-      alert('Грешка при възстановяване на поръчка');
+      toast.error('Грешка при възстановяване на поръчка');
     } finally {
       setProcessingRefund(false);
       setRefundingTransaction(null);

@@ -14,6 +14,13 @@ import { usePOSStore } from '../../stores/posStore';
 vi.mock('../../services/woocommerce');
 vi.mock('../../stores');
 vi.mock('../../stores/posStore');
+const mockToast = vi.hoisted(() => ({
+  success: vi.fn(),
+  error: vi.fn(),
+  warning: vi.fn(),
+  info: vi.fn(),
+}));
+vi.mock('../../contexts/ToastContext', () => ({ useToast: () => mockToast }));
 
 // ============================================
 // Setup
@@ -39,7 +46,6 @@ beforeEach(() => {
   mockDiscountType = 'percent';
   mockDiscountValue = 0;
   mockGetDiscountAmount.mockReturnValue(0);
-  window.alert = vi.fn();
 
   (useStoreConfig as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
     const state = { getCurrentStore: () => mockActiveStore };
@@ -122,7 +128,7 @@ describe('usePOSCheckout', () => {
       expect(result.current.customers).toHaveLength(0);
     });
 
-    it('handles search API error silently', async () => {
+    it('shows an error toast when customer search fails', async () => {
       mockGetCustomers.mockRejectedValue(new Error('Network error'));
 
       const { result } = renderHook(() => usePOSCheckout(mockSaveRecentTransaction));
@@ -139,7 +145,7 @@ describe('usePOSCheckout', () => {
         expect(result.current.loadingCustomers).toBe(false);
       });
 
-      expect(window.alert).not.toHaveBeenCalled();
+      expect(mockToast.error).toHaveBeenCalledWith(expect.stringContaining('клиенти'));
     });
 
     it('selects customer and clears search', () => {
@@ -195,7 +201,7 @@ describe('usePOSCheckout', () => {
 
       expect(mockSaveRecentTransaction).toHaveBeenCalledWith(100);
       expect(mockClearCart).toHaveBeenCalled();
-      expect(window.alert).toHaveBeenCalledWith(expect.stringContaining('100'));
+      expect(mockToast.success).toHaveBeenCalledWith(expect.stringContaining('100'));
     });
 
     it('does nothing with empty cart', async () => {
@@ -383,7 +389,7 @@ describe('usePOSCheckout', () => {
       expect(result.current.showCheckout).toBe(false);
     });
 
-    it('shows error alert on API failure', async () => {
+    it('shows error toast on API failure', async () => {
       mockCart = [{ product: { id: 1 }, quantity: 1 }];
       mockCreateOrder.mockResolvedValue({ success: false, error: 'Server error' });
 
@@ -393,10 +399,10 @@ describe('usePOSCheckout', () => {
         await result.current.handleCheckout();
       });
 
-      expect(window.alert).toHaveBeenCalledWith(expect.stringContaining('Server error'));
+      expect(mockToast.error).toHaveBeenCalledWith(expect.stringContaining('Server error'));
     });
 
-    it('shows generic error alert on exception', async () => {
+    it('shows generic error toast on exception', async () => {
       mockCart = [{ product: { id: 1 }, quantity: 1 }];
       mockCreateOrder.mockRejectedValue(new Error('Network failed'));
 
@@ -406,7 +412,7 @@ describe('usePOSCheckout', () => {
         await result.current.handleCheckout();
       });
 
-      expect(window.alert).toHaveBeenCalledWith(expect.stringContaining('Грешка'));
+      expect(mockToast.error).toHaveBeenCalledWith(expect.stringContaining('Грешка'));
     });
 
     it('resets processingOrder flag after completion', async () => {

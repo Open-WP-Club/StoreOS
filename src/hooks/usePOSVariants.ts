@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { useStoreConfig } from '../stores';
+import { useToast } from '../contexts/ToastContext';
 import WooCommerceService from '../services/woocommerce';
 import type { WooCommerceProduct, ProductVariation } from '../types';
 
@@ -23,6 +24,7 @@ export function usePOSVariants(
 ): UsePOSVariantsResult {
   const getCurrentStore = useStoreConfig((state) => state.getCurrentStore);
   const currentStore = getCurrentStore();
+  const toast = useToast();
 
   const requestId = useRef(0);
   const [showVariantPicker, setShowVariantPicker] = useState(false);
@@ -53,17 +55,19 @@ export function usePOSVariants(
           const result = await service.getProductVariations(product.id);
           if (id === requestId.current && result.success && result.data) {
             setProductVariations(result.data);
+          } else if (id === requestId.current && !result.success) {
+            toast.error('Грешка при зареждане на вариантите: ' + result.error);
           }
         }
       } catch {
-        // Error loading variations - silently handled
+        if (id === requestId.current) toast.error('Грешка при зареждане на вариантите');
       } finally {
         if (id === requestId.current) setLoadingVariations(false);
       }
     } else {
       addToCart(product);
     }
-  }, [currentStore, addToCart]);
+  }, [currentStore, addToCart, toast]);
 
   const handleAddVariation = (variation: ProductVariation): void => {
     const variationProduct = {

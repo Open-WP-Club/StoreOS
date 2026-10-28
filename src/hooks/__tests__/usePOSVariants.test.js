@@ -15,6 +15,9 @@ vi.mock('../../stores', () => ({
     }),
 }));
 
+const mockToast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn(), warning: vi.fn(), info: vi.fn() }));
+vi.mock('../../contexts/ToastContext', () => ({ useToast: () => mockToast }));
+
 // Mock WooCommerceService
 vi.mock('../../services/woocommerce');
 
@@ -206,5 +209,6 @@ describe('usePOSVariants', () => {
     expect(result.current.showVariantPicker).toBe(true);
     expect(result.current.productVariations).toEqual([]);
     expect(result.current.loadingVariations).toBe(false);
+    expect(mockToast.error).toHaveBeenCalledWith(expect.stringContaining('Грешка'));
   });
 });
