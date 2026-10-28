@@ -7,6 +7,7 @@ import { TIME } from '../constants/config';
 import { useProgressiveLoading } from '../hooks/useProgressiveLoading';
 import { playNotificationSound } from '../utils/notificationSound';
 import type { WooCommerceOrder, WooCommerceProduct, BatchLoadProgress } from '../types';
+import type { OrdersSync } from '../stores/cache/types';
 import type { NotificationType } from '../stores/notificationStore';
 
 import type { OrderCelebrationData } from '../stores/notificationStore';
@@ -135,7 +136,11 @@ function DataManager(): null {
   });
 
   // Orders delta sync state (in-memory): when the last full load ran and the newest modified date
-  const ordersSyncRef = useRef<{ at: number; lastSync: string | null }>({ at: 0, lastSync: null });
+  const ordersSyncRef = useRef<OrdersSync>({
+    storeId: '',
+    at: 0,
+    lastSync: null,
+  });
 
   // Track known order IDs for new-order detection
   const knownOrderIdsRef = useRef<Set<number> | null>(null);
@@ -160,6 +165,15 @@ function DataManager(): null {
         // because delta cannot see deletions)
         const cached = useCache.getState().cache.orders;
         const cachedData = cached?.data;
+        // Restore the persisted cursor after a restart or store switch
+        if (ordersSyncRef.current.storeId !== currentStore.id) {
+          const { loadOrdersSync } = useCache.getState();
+          ordersSyncRef.current = (await loadOrdersSync(currentStore.id)) ?? {
+            storeId: currentStore.id,
+            at: 0,
+            lastSync: null,
+          };
+        }
         const { at, lastSync } = ordersSyncRef.current;
         if (
           lastSync &&
@@ -180,7 +194,12 @@ function DataManager(): null {
                 ];
                 await setCachedData('orders', merged);
                 detectNewOrders(merged, knownOrderIdsRef, currentStore.id);
-                ordersSyncRef.current = { at, lastSync: latestModified(delta.data, lastSync) };
+                ordersSyncRef.current = {
+                  storeId: currentStore.id,
+                  at,
+                  lastSync: latestModified(delta.data, lastSync),
+                };
+                await useCache.getState().saveOrdersSync(currentStore.id, ordersSyncRef.current);
               }
               return;
             }
@@ -247,9 +266,11 @@ function DataManager(): null {
 
           detectNewOrders(result.data as WooCommerceOrder[], knownOrderIdsRef, currentStore.id);
           ordersSyncRef.current = {
+            storeId: currentStore.id,
             at: Date.now(),
             lastSync: latestModified(result.data as WooCommerceOrder[]),
           };
+          await useCache.getState().saveOrdersSync(currentStore.id, ordersSyncRef.current);
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unknown error';
