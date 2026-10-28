@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useStoreConfig } from '../stores';
+import { useToast } from '../contexts/ToastContext';
 import { usePOSStore } from '../stores/posStore';
 import WooCommerceService from '../services/woocommerce';
 import type { WooCommerceCustomer } from '../types';
@@ -30,6 +31,7 @@ export function usePOSCheckout(
 ): UsePOSCheckoutResult {
   const getCurrentStore = useStoreConfig((state) => state.getCurrentStore);
   const currentStore = getCurrentStore();
+  const toast = useToast();
 
   const {
     cart,
@@ -65,9 +67,11 @@ export function usePOSCheckout(
         const result = await service.getCustomers({ search: customerSearchTerm, per_page: 20 });
         if (!cancelled && result.success && result.data) {
           setCustomers(result.data);
+        } else if (!cancelled && !result.success) {
+          toast.error('Грешка при търсене на клиенти: ' + result.error);
         }
       } catch {
-        // Error searching customers - silently handled
+        if (!cancelled) toast.error('Грешка при търсене на клиенти');
       } finally {
         if (!cancelled) setLoadingCustomers(false);
       }
@@ -77,7 +81,7 @@ export function usePOSCheckout(
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [customerSearchTerm, currentStore]);
+  }, [customerSearchTerm, currentStore, toast]);
 
   const handleSelectCustomer = (customer: WooCommerceCustomer): void => {
     setSelectedCustomer(customer);
@@ -135,12 +139,12 @@ export function usePOSCheckout(
         setSelectedCustomer(null);
         setOrderNote('');
         setShowCheckout(false);
-        alert(`Поръчка #${result.data?.id} създадена успешно!`);
+        toast.success(`Поръчка #${result.data?.id} създадена успешно!`);
       } else {
-        alert('Грешка при създаване на поръчка: ' + result.error);
+        toast.error('Грешка при създаване на поръчка: ' + result.error);
       }
     } catch {
-      alert('Грешка при създаване на поръчка');
+      toast.error('Грешка при създаване на поръчка');
     } finally {
       checkoutInFlight.current = false;
       setProcessingOrder(false);

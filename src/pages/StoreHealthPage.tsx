@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, ReactElement } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   RefreshCw,
   CheckCircle,
@@ -14,6 +15,8 @@ import {
 } from 'lucide-react';
 import { useStoreConfig } from '../stores';
 import WooCommerceService from '../services/woocommerce';
+import { useToast } from '../contexts/ToastContext';
+import { isInvalidCredentials, loadFailureMessage, openSetupAction } from '../utils/loadErrors';
 import type { SystemStatus } from '../types';
 import type {
   WooCommercePaymentGateway,
@@ -73,6 +76,8 @@ function formatBytes(bytes: number): string {
 function StoreHealthPage(): ReactElement | null {
   const getCurrentStore = useStoreConfig((state) => state.getCurrentStore);
   const activeStore = getCurrentStore();
+  const toast = useToast();
+  const navigate = useNavigate();
 
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -107,13 +112,20 @@ function StoreHealthPage(): ReactElement | null {
         );
       } else {
         setError(result.error || 'Failed to fetch system status');
+        if (isInvalidCredentials(result)) {
+          toast.error(
+            loadFailureMessage('store health', result),
+            8000,
+            openSetupAction(navigate)
+          );
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
-  }, [activeStore]);
+  }, [activeStore, toast, navigate]);
 
   useEffect(() => {
     void Promise.resolve().then(fetchHealth);
