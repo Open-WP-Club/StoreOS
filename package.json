@@ -13,6 +13,8 @@
     "restart": "node restart-app.js",
     "test": "vitest run",
     "test:watch": "vitest",
+    "e2e:build": "electron-vite build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --dir --mac --arm64 -c.mac.identity=null -c.publish=null",
+    "test:e2e": "playwright test -c e2e/playwright.config.ts",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src electron --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint src electron --ext .js,.jsx,.ts,.tsx --fix",
@@ -95,6 +97,7 @@
       "dist-electron/**/*"
     ],
     "asar": true,
+    "afterSign": "scripts/adhocSign.cjs",
     "electronFuses": {
       "runAsNode": false,
       "enableNodeOptionsEnvironmentVariable": false,
