@@ -42,7 +42,7 @@ interface UseProductActionsResult {
   handleSelectProduct: (productId: number) => void;
   handleSelectAll: (paginatedProducts: Product[], checked: boolean) => void;
   getSelectedProducts: (products: Product[]) => Product[];
-  showToast: (message: string, type: 'success' | 'error' | 'info') => void;
+  showToast: (message: string, type: 'success' | 'error' | 'info' | 'warning') => void;
 }
 
 /**
@@ -50,7 +50,7 @@ interface UseProductActionsResult {
  * quick-edit price, bulk edit, bulk delete, and selection management.
  */
 export function useProductActions(
-  showToast: (message: string, type: 'success' | 'error' | 'info') => void
+  showToast: (message: string, type: 'success' | 'error' | 'info' | 'warning') => void
 ): UseProductActionsResult {
   const getCurrentStore = useStoreConfig((state) => state.getCurrentStore);
   const refreshProducts = useSettings((state) => state.refreshProducts);
@@ -285,18 +285,15 @@ export function useProductActions(
 
     try {
       const service = new WooCommerceService(currentStore);
-<<<<<<< HEAD
       const deleteResult = await service.batchProducts({ delete: selectedProductIds });
       if (!deleteResult.success) throw new Error(deleteResult.error);
-=======
-      const results = await Promise.all(selectedProductIds.map((id) => service.deleteProduct(id)));
-      const deletedIds = selectedProductIds.filter((_, i) => results[i]?.success);
-      const failedCount = selectedProductIds.length - deletedIds.length;
+      const failedIds = batchErrorIds(deleteResult.data, 'delete');
+      const deletedIds = selectedProductIds.filter((id) => !failedIds.includes(id));
+      const failedCount = failedIds.length;
       if (deletedIds.length === 0) {
         showToast(`Error deleting products: ${failedCount} of ${selectedProductIds.length} failed`, 'error');
         return;
       }
->>>>>>> 4ab4dcf (wip: bulk ops partial-failure handling and coupon bulk delete)
 
       const updatedProducts = products.filter((p) => !deletedIds.includes(p.id));
       setProducts(updatedProducts);

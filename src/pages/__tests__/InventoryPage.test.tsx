@@ -263,6 +263,23 @@ describe('InventoryPage', () => {
   });
 
   describe('bulk delete', () => {
+    it('warns about partial failures from the batch response', async () => {
+      mockBatchProducts.mockResolvedValue({
+        success: true,
+        data: { delete: [{ id: 1, error: { code: 'x', message: 'no' } }] },
+      });
+
+      render(<InventoryPage />);
+      fireEvent.click(screen.getAllByRole('checkbox')[1]!);
+
+      await act(async () => {
+        fireEvent.click(screen.getByText('Delete Selected'));
+      });
+
+      expect(mockBatchProducts).toHaveBeenCalled();
+      expect(mockShowToast).toHaveBeenCalledWith('Error deleting products: 1 of 1 failed', 'error');
+    });
+
     it('deletes selected products after confirmation', async () => {
       mockBatchProducts.mockResolvedValue({ success: true, data: {} });
 
