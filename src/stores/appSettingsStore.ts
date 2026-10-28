@@ -17,6 +17,7 @@ export interface AppSettingsState {
   // PIN Lock
   pinEnabled: boolean;
   pinCode: string | null; // Stored as hashed value
+  pinLength: number; // Digits in the PIN; the lock screen auto-submits at this length
   pinTimeout: number; // Minutes of inactivity before lock (default 30)
   lastActivity: number | null; // Timestamp of last activity
   isLocked: boolean;
@@ -80,6 +81,7 @@ const useAppSettings = create<AppSettingsStore>()(
       defaultPrinter: null,
       pinEnabled: false,
       pinCode: null,
+      pinLength: 4,
       pinTimeout: 30, // 30 minutes default
       lastActivity: null,
       isLocked: false,
@@ -108,6 +110,7 @@ const useAppSettings = create<AppSettingsStore>()(
       setPinCode: async (code: string | null) => {
         set({
           pinCode: code ? await hashPin(code) : null,
+          pinLength: code ? code.length : 4,
           failedPinAttempts: 0,
           pinLockedUntil: null,
         });
@@ -176,6 +179,7 @@ const useAppSettings = create<AppSettingsStore>()(
           defaultPrinter: null,
           pinEnabled: false,
           pinCode: null,
+          pinLength: 4,
           pinTimeout: 30,
           lastActivity: null,
           isLocked: false,
@@ -191,6 +195,7 @@ const useAppSettings = create<AppSettingsStore>()(
         defaultPrinter: state.defaultPrinter,
         pinEnabled: state.pinEnabled,
         pinCode: state.pinCode,
+        pinLength: state.pinLength,
         pinTimeout: state.pinTimeout,
         lastActivity: state.lastActivity,
         failedPinAttempts: state.failedPinAttempts,

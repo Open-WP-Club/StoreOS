@@ -7,6 +7,7 @@ export default function PinLockScreen(): ReactElement | null {
   const isLocked = useAppSettings((state) => state.isLocked);
   const pinEnabled = useAppSettings((state) => state.pinEnabled);
   const pinCode = useAppSettings((state) => state.pinCode);
+  const pinLength = useAppSettings((state) => state.pinLength);
   const verifyPin = useAppSettings((state) => state.verifyPin);
   const unlock = useAppSettings((state) => state.unlock);
 
@@ -24,12 +25,11 @@ export default function PinLockScreen(): ReactElement | null {
       setPin('');
     } else if (key === 'backspace') {
       setPin((prev) => prev.slice(0, -1));
-    } else if (pin.length < 6) {
+    } else if (pin.length < pinLength) {
       const newPin = pin + key;
       setPin(newPin);
 
-      // Auto-submit when 4+ digits entered
-      if (newPin.length >= 4) {
+      if (newPin.length === pinLength) {
         setTimeout(async () => {
           if (await verifyPin(newPin)) {
             unlock();
@@ -92,7 +92,7 @@ export default function PinLockScreen(): ReactElement | null {
 
         {/* PIN Display */}
         <div className="flex justify-center gap-3 mb-8">
-          {[0, 1, 2, 3, 4, 5].map((i) => (
+          {Array.from({ length: pinLength }, (_, i) => (
             <div
               key={i}
               className={`w-4 h-4 rounded-full border-2 transition-all duration-200 ${
