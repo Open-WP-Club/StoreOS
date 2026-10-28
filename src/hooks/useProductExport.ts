@@ -25,8 +25,16 @@ export function useProductExport(): UseProductExportResult {
       { key: 'id', label: 'Product ID' },
       { key: 'name', label: 'Product Name' },
       { key: 'sku', label: 'SKU' },
-      { key: 'price', label: 'Price', format: (val: unknown) => formatPrice(val as string) },
-      { key: 'regular_price', label: 'Regular Price', format: (val: unknown) => formatPrice(val as string) },
+      {
+        key: 'price',
+        label: 'Price',
+        format: (val: unknown) => formatPrice(val as string),
+      },
+      {
+        key: 'regular_price',
+        label: 'Regular Price',
+        format: (val: unknown) => formatPrice(val as string),
+      },
       { key: 'stock_quantity', label: 'Stock' },
       { key: 'stock_status', label: 'Stock Status' },
       { key: 'status', label: 'Status' },
@@ -43,7 +51,11 @@ export function useProductExport(): UseProductExportResult {
       { key: 'id', label: 'ID' },
       { key: 'name', label: 'Product Name' },
       { key: 'sku', label: 'SKU' },
-      { key: 'price', label: 'Price', format: (val: unknown) => formatPrice(val as string) },
+      {
+        key: 'price',
+        label: 'Price',
+        format: (val: unknown) => formatPrice(val as string),
+      },
       { key: 'stock_quantity', label: 'Stock' },
       { key: 'stock_status', label: 'Stock Status' },
       { key: 'status', label: 'Status' },
@@ -52,7 +64,10 @@ export function useProductExport(): UseProductExportResult {
     exportTableToPDF(filteredProducts as ProductRecord[], columns, {
       title: `Products - ${currentStore.name}`,
       orientation: 'landscape',
-    });
+    }).catch((error) =>
+      // eslint-disable-next-line no-console
+      console.error('PDF export failed', error)
+    );
   };
 
   return { handleExportCSV, handleExportPDF };

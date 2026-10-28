@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useStoreConfig } from '../stores';
 import { usePOSStore } from '../stores/posStore';
 import WooCommerceService from '../services/woocommerce';
@@ -40,6 +40,7 @@ export function usePOSCheckout(
     getDiscountAmount,
   } = usePOSStore();
 
+  const checkoutInFlight = useRef(false);
   const [showCheckout, setShowCheckout] = useState(false);
   const [processingOrder, setProcessingOrder] = useState(false);
   const [showCustomerSearch, setShowCustomerSearch] = useState(false);
@@ -49,43 +50,34 @@ export function usePOSCheckout(
   const [selectedCustomer, setSelectedCustomer] = useState<WooCommerceCustomer | null>(null);
   const [orderNote, setOrderNote] = useState('');
 
-  // Search customers
-  const searchCustomers = useCallback(async (term: string): Promise<void> => {
-    if (!currentStore || term.length < 2) {
-      setCustomers([]);
-      return;
-    }
-
-    try {
-      setLoadingCustomers(true);
-      const service = new WooCommerceService(currentStore);
-      const result = await service.getCustomers({
-        search: term,
-        per_page: 20,
-      });
-
-      if (result.success && result.data) {
-        setCustomers(result.data);
-      }
-    } catch {
-      // Error searching customers - silently handled
-    } finally {
-      setLoadingCustomers(false);
-    }
-  }, [currentStore]);
-
-  // Debounced customer search
+  // Debounced customer search; `cancelled` drops out-of-order/stale responses
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (customerSearchTerm.length >= 2) {
-        searchCustomers(customerSearchTerm);
-      } else {
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      if (!currentStore || customerSearchTerm.length < 2) {
         setCustomers([]);
+        setLoadingCustomers(false);
+        return;
+      }
+      setLoadingCustomers(true);
+      try {
+        const service = new WooCommerceService(currentStore);
+        const result = await service.getCustomers({ search: customerSearchTerm, per_page: 20 });
+        if (!cancelled && result.success && result.data) {
+          setCustomers(result.data);
+        }
+      } catch {
+        // Error searching customers - silently handled
+      } finally {
+        if (!cancelled) setLoadingCustomers(false);
       }
     }, 300);
 
-    return () => clearTimeout(timer);
-  }, [customerSearchTerm, searchCustomers]);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [customerSearchTerm, currentStore]);
 
   const handleSelectCustomer = (customer: WooCommerceCustomer): void => {
     setSelectedCustomer(customer);
@@ -98,7 +90,8 @@ export function usePOSCheckout(
   };
 
   const handleCheckout = async (): Promise<void> => {
-    if (!currentStore || cart.length === 0) return;
+    if (!currentStore || cart.length === 0 || checkoutInFlight.current) return;
+    checkoutInFlight.current = true;
 
     try {
       setProcessingOrder(true);
@@ -149,6 +142,7 @@ export function usePOSCheckout(
     } catch {
       alert('Грешка при създаване на поръчка');
     } finally {
+      checkoutInFlight.current = false;
       setProcessingOrder(false);
     }
   };

@@ -181,6 +181,8 @@ export interface OrderUpdateData {
 
 export interface OrderQueryParams {
   context?: 'view' | 'edit';
+  _fields?: string;
+  modified_after?: string;
   page?: number;
   per_page?: number;
   search?: string;

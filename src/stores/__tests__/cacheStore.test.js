@@ -61,8 +61,8 @@ describe('cacheStore', () => {
     vi.clearAllMocks();
 
     // Mock IndexedDB functions
-    indexedDBCache.saveToCache.mockResolvedValue(true);
-    indexedDBCache.getFromCache.mockResolvedValue(null);
+    indexedDBCache.saveCollection.mockResolvedValue(true);
+    indexedDBCache.getCollection.mockResolvedValue(null);
     indexedDBCache.clearCacheStore.mockResolvedValue(true);
     indexedDBCache.clearAllCache.mockResolvedValue(true);
 
@@ -135,7 +135,7 @@ describe('cacheStore', () => {
       });
 
       expect(result.current.cache.products.data).toBeNull();
-      expect(indexedDBCache.saveToCache).not.toHaveBeenCalled();
+      expect(indexedDBCache.saveCollection).not.toHaveBeenCalled();
     });
 
     it('should split products by modification date', async () => {
@@ -175,7 +175,7 @@ describe('cacheStore', () => {
         await result.current.setCachedData('products', mockProducts);
       });
 
-      expect(indexedDBCache.saveToCache).toHaveBeenCalled();
+      expect(indexedDBCache.saveCollection).toHaveBeenCalled();
     });
 
     it('should set correct storeId in cache', async () => {
@@ -403,14 +403,14 @@ describe('cacheStore', () => {
     });
 
     it('should try IndexedDB when memory cache is empty', async () => {
-      indexedDBCache.getFromCache.mockResolvedValue(mockProducts);
+      indexedDBCache.getCollection.mockResolvedValue(mockProducts);
       const { result } = renderHook(() => useCache());
 
       await act(async () => {
         await result.current.getCachedProducts('test-store-1');
       });
 
-      expect(indexedDBCache.getFromCache).toHaveBeenCalled();
+      expect(indexedDBCache.getCollection).toHaveBeenCalled();
     });
   });
 
@@ -431,20 +431,20 @@ describe('cacheStore', () => {
     });
 
     it('should try IndexedDB when memory cache is empty', async () => {
-      indexedDBCache.getFromCache.mockResolvedValue(mockOrders);
+      indexedDBCache.getCollection.mockResolvedValue(mockOrders);
       const { result } = renderHook(() => useCache());
 
       await act(async () => {
         await result.current.getCachedOrders('test-store-1');
       });
 
-      expect(indexedDBCache.getFromCache).toHaveBeenCalled();
+      expect(indexedDBCache.getCollection).toHaveBeenCalled();
     });
   });
 
   describe('error handling', () => {
     it('should handle IndexedDB save errors gracefully', async () => {
-      indexedDBCache.saveToCache.mockRejectedValue(new Error('IndexedDB error'));
+      indexedDBCache.saveCollection.mockRejectedValue(new Error('IndexedDB error'));
       const { result } = renderHook(() => useCache());
 
       // Should not throw
@@ -474,7 +474,7 @@ describe('cacheStore', () => {
     });
 
     it('should handle IndexedDB read errors gracefully', async () => {
-      indexedDBCache.getFromCache.mockRejectedValue(new Error('IndexedDB error'));
+      indexedDBCache.getCollection.mockRejectedValue(new Error('IndexedDB error'));
       const { result } = renderHook(() => useCache());
 
       let cachedData;

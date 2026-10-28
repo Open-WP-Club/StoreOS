@@ -6,8 +6,9 @@ import type {
   ApiResponse,
   PaginatedApiResponse,
   OnBatchLoaded,
+  BatchOperationResponse,
 } from '../../types';
-import { type WooCommerceApiResponse, type WooCommerceApiError, type PaginatedFetchOptions } from './base';
+import { type WooCommerceApiResponse, type PaginatedFetchOptions } from './base';
 import { WooCommerceServiceProducts } from './products';
 
 export class WooCommerceServiceCustomers extends WooCommerceServiceProducts {
@@ -23,7 +24,7 @@ export class WooCommerceServiceCustomers extends WooCommerceServiceProducts {
         await (await this.getApi()).get('customers', params);
       return { success: true, data: response.data, headers: response.headers };
     } catch (error) {
-      return { success: false, error: this.getErrorMessage(error as WooCommerceApiError) };
+      return this.fail(error);
     }
   }
 
@@ -46,7 +47,7 @@ export class WooCommerceServiceCustomers extends WooCommerceServiceProducts {
         await (await this.getApi()).get(`customers/${id}`);
       return { success: true, data: response.data };
     } catch (error) {
-      return { success: false, error: this.getErrorMessage(error as WooCommerceApiError) };
+      return this.fail(error);
     }
   }
 
@@ -59,7 +60,7 @@ export class WooCommerceServiceCustomers extends WooCommerceServiceProducts {
         await (await this.getApi()).put(`customers/${id}`, data);
       return { success: true, data: response.data };
     } catch (error) {
-      return { success: false, error: this.getErrorMessage(error as WooCommerceApiError) };
+      return this.fail(error);
     }
   }
 
@@ -72,7 +73,15 @@ export class WooCommerceServiceCustomers extends WooCommerceServiceProducts {
         await (await this.getApi()).get('orders', { ...params, customer: customerId });
       return { success: true, data: response.data };
     } catch (error) {
-      return { success: false, error: this.getErrorMessage(error as WooCommerceApiError) };
+      return this.fail(error);
     }
+  }
+
+  async batchCustomers(ops: {
+    create?: Partial<WooCommerceCustomer>[];
+    update?: Array<{ id: number } & Partial<WooCommerceCustomer>>;
+    delete?: number[];
+  }): Promise<ApiResponse<BatchOperationResponse<WooCommerceCustomer>>> {
+    return this.batchResource<WooCommerceCustomer>('customers', ops);
   }
 }

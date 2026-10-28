@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, ChangeEvent } from 'react';
-import createGlobe from 'cobe';
+import type { Globe as CobeGlobe } from 'cobe';
 import { useCache } from '../stores';
 import { MapPin, Globe, Building2, Calendar, TrendingUp } from 'lucide-react';
 import type { Order } from '../types';
@@ -86,7 +86,9 @@ function GlobeCanvas({ markers, dark }: GlobeProps): React.ReactElement {
     if (!canvas) return;
 
     let rafId: number;
-    let globe: ReturnType<typeof createGlobe> | null = null;
+    let globe: CobeGlobe | null = null;
+    let disposed = false;
+    let createGlobeFn: typeof import('cobe').default | null = null;
 
     const init = () => {
       const size = canvas.offsetWidth;
@@ -96,7 +98,8 @@ function GlobeCanvas({ markers, dark }: GlobeProps): React.ReactElement {
         return;
       }
 
-      globe = createGlobe(canvas, {
+      if (!createGlobeFn) return;
+      globe = createGlobeFn(canvas, {
         devicePixelRatio: 2,
         width: size * 2,
         height: size * 2,
@@ -124,9 +127,15 @@ function GlobeCanvas({ markers, dark }: GlobeProps): React.ReactElement {
       setTimeout(() => { canvas.style.opacity = '1'; }, 100);
     };
 
-    rafId = requestAnimationFrame(init);
+    // cobe (WebGL globe) is only needed on this page; load it on demand
+    void import('cobe').then(({ default: createGlobe }) => {
+      if (disposed) return;
+      createGlobeFn = createGlobe;
+      rafId = requestAnimationFrame(init);
+    });
 
     return () => {
+      disposed = true;
       cancelAnimationFrame(rafId);
       globe?.destroy();
     };

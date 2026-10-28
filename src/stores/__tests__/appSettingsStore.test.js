@@ -13,6 +13,8 @@ describe('appSettingsStore', () => {
       pinTimeout: 30,
       lastActivity: null,
       isLocked: false,
+      failedPinAttempts: 0,
+      pinLockedUntil: null,
       isInitialized: false,
     });
   });
@@ -83,12 +85,12 @@ describe('appSettingsStore', () => {
       expect(result.current.pinEnabled).toBe(true);
     });
 
-    it('should clear PIN code when disabling PIN', () => {
+    it('should clear PIN code when disabling PIN', async () => {
       const { result } = renderHook(() => useAppSettings());
 
-      act(() => {
+      await act(async () => {
         result.current.setPinEnabled(true);
-        result.current.setPinCode('1234');
+        await result.current.setPinCode('1234');
       });
 
       act(() => {
@@ -99,11 +101,11 @@ describe('appSettingsStore', () => {
       expect(result.current.isLocked).toBe(false);
     });
 
-    it('should set PIN code (hashed)', () => {
+    it('should set PIN code (hashed)', async () => {
       const { result } = renderHook(() => useAppSettings());
 
-      act(() => {
-        result.current.setPinCode('1234');
+      await act(async () => {
+        await result.current.setPinCode('1234');
       });
 
       // PIN should be stored as a hash, not plain text
@@ -111,45 +113,45 @@ describe('appSettingsStore', () => {
       expect(result.current.pinCode).toBeTruthy();
     });
 
-    it('should clear PIN code when set to null', () => {
+    it('should clear PIN code when set to null', async () => {
       const { result } = renderHook(() => useAppSettings());
 
-      act(() => {
-        result.current.setPinCode('1234');
+      await act(async () => {
+        await result.current.setPinCode('1234');
       });
 
-      act(() => {
-        result.current.setPinCode(null);
+      await act(async () => {
+        await result.current.setPinCode(null);
       });
 
       expect(result.current.pinCode).toBeNull();
     });
 
-    it('should verify correct PIN', () => {
+    it('should verify correct PIN', async () => {
       const { result } = renderHook(() => useAppSettings());
 
-      act(() => {
-        result.current.setPinCode('1234');
+      await act(async () => {
+        await result.current.setPinCode('1234');
       });
 
-      expect(result.current.verifyPin('1234')).toBe(true);
+      expect(await result.current.verifyPin('1234')).toBe(true);
     });
 
-    it('should reject incorrect PIN', () => {
+    it('should reject incorrect PIN', async () => {
       const { result } = renderHook(() => useAppSettings());
 
-      act(() => {
-        result.current.setPinCode('1234');
+      await act(async () => {
+        await result.current.setPinCode('1234');
       });
 
-      expect(result.current.verifyPin('4321')).toBe(false);
-      expect(result.current.verifyPin('0000')).toBe(false);
+      expect(await result.current.verifyPin('4321')).toBe(false);
+      expect(await result.current.verifyPin('0000')).toBe(false);
     });
 
-    it('should return true when no PIN is set', () => {
+    it('should return true when no PIN is set', async () => {
       const { result } = renderHook(() => useAppSettings());
 
-      expect(result.current.verifyPin('any')).toBe(true);
+      expect(await result.current.verifyPin('any')).toBe(true);
     });
   });
 
@@ -214,12 +216,12 @@ describe('appSettingsStore', () => {
       expect(result.current.isLocked).toBe(false);
     });
 
-    it('should lock when PIN is enabled and set', () => {
+    it('should lock when PIN is enabled and set', async () => {
       const { result } = renderHook(() => useAppSettings());
 
-      act(() => {
+      await act(async () => {
         result.current.setPinEnabled(true);
-        result.current.setPinCode('1234');
+        await result.current.setPinCode('1234');
       });
 
       act(() => {
@@ -251,12 +253,12 @@ describe('appSettingsStore', () => {
       expect(result.current.isLocked).toBe(false);
     });
 
-    it('should unlock and update lastActivity', () => {
+    it('should unlock and update lastActivity', async () => {
       const { result } = renderHook(() => useAppSettings());
 
-      act(() => {
+      await act(async () => {
         result.current.setPinEnabled(true);
-        result.current.setPinCode('1234');
+        await result.current.setPinCode('1234');
         result.current.lock();
       });
 
@@ -298,23 +300,23 @@ describe('appSettingsStore', () => {
       expect(result.current.checkPinTimeout()).toBe(false);
     });
 
-    it('should return true when no activity recorded', () => {
+    it('should return true when no activity recorded', async () => {
       const { result } = renderHook(() => useAppSettings());
 
-      act(() => {
+      await act(async () => {
         result.current.setPinEnabled(true);
-        result.current.setPinCode('1234');
+        await result.current.setPinCode('1234');
       });
 
       expect(result.current.checkPinTimeout()).toBe(true);
     });
 
-    it('should return false when within timeout', () => {
+    it('should return false when within timeout', async () => {
       const { result } = renderHook(() => useAppSettings());
 
-      act(() => {
+      await act(async () => {
         result.current.setPinEnabled(true);
-        result.current.setPinCode('1234');
+        await result.current.setPinCode('1234');
         result.current.setPinTimeout(30); // 30 minutes
         result.current.updateLastActivity();
       });
@@ -323,12 +325,12 @@ describe('appSettingsStore', () => {
       expect(result.current.checkPinTimeout()).toBe(false);
     });
 
-    it('should return true and lock when timeout exceeded', () => {
+    it('should return true and lock when timeout exceeded', async () => {
       const { result } = renderHook(() => useAppSettings());
 
-      act(() => {
+      await act(async () => {
         result.current.setPinEnabled(true);
-        result.current.setPinCode('1234');
+        await result.current.setPinCode('1234');
         result.current.setPinTimeout(1); // 1 minute
         result.current.updateLastActivity();
       });
@@ -364,15 +366,15 @@ describe('appSettingsStore', () => {
   });
 
   describe('resetAppSettings', () => {
-    it('should reset all settings to defaults', () => {
+    it('should reset all settings to defaults', async () => {
       const { result } = renderHook(() => useAppSettings());
 
       // Change some settings
-      act(() => {
+      await act(async () => {
         result.current.setLanguage('en');
         result.current.setDefaultPrinter('Printer');
         result.current.setPinEnabled(true);
-        result.current.setPinCode('1234');
+        await result.current.setPinCode('1234');
         result.current.setPinTimeout(60);
         result.current.updateLastActivity();
         result.current.lock();

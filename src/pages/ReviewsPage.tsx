@@ -63,7 +63,10 @@ function ReviewsPage(): React.ReactElement {
   const [sortBy, setSortBy] = useState<SortBy>('date');
   const [expandedReview, setExpandedReview] = useState<number | null>(null);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; reviewId: number | null }>({
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    isOpen: boolean;
+    reviewId: number | null;
+  }>({
     isOpen: false,
     reviewId: null,
   });
@@ -108,7 +111,16 @@ function ReviewsPage(): React.ReactElement {
     const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
     const averageRating = total > 0 ? Math.round((totalRating / total) * 10) / 10 : 0;
 
-    return { total, approved, pending, spam, averageRating, verified, fiveStar, oneStar };
+    return {
+      total,
+      approved,
+      pending,
+      spam,
+      averageRating,
+      verified,
+      fiveStar,
+      oneStar,
+    };
   }, [reviews]);
 
   // Filter and sort reviews
@@ -193,7 +205,9 @@ function ReviewsPage(): React.ReactElement {
     setActionLoading(reviewId);
     try {
       const service = new WooCommerceService(currentStore);
-      const result = await service.updateReview(reviewId, { status: newStatus });
+      const result = await service.updateReview(reviewId, {
+        status: newStatus,
+      });
 
       if (result.success) {
         setReviews((prev) => prev.map((r) => (r.id === reviewId ? result.data : r)));
@@ -226,7 +240,10 @@ function ReviewsPage(): React.ReactElement {
     setLoading(true);
     try {
       const service = new WooCommerceService(currentStore);
-      const updates = pendingReviews.map((r) => ({ id: r.id, status: 'approved' as const }));
+      const updates = pendingReviews.map((r) => ({
+        id: r.id,
+        status: 'approved' as const,
+      }));
       const result = await service.batchUpdateReviews(updates);
 
       if (result.success) {
@@ -305,7 +322,7 @@ function ReviewsPage(): React.ReactElement {
 
     exportTableToPDF(filteredReviews, columns, {
       title: `Reviews - ${currentStore.name}`,
-    });
+    }).catch(() => showToast('PDF export failed', 'error'));
   };
 
   const handlePageChange = (page: number): void => {
@@ -351,7 +368,9 @@ function ReviewsPage(): React.ReactElement {
     };
 
     return (
-      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${styles[status] || styles.hold}`}>
+      <span
+        className={`px-2 py-1 text-xs font-semibold rounded-full ${styles[status] || styles.hold}`}
+      >
         {labels[status] || status}
       </span>
     );
@@ -475,8 +494,7 @@ function ReviewsPage(): React.ReactElement {
           <span className="font-semibold text-gray-900 dark:text-white">
             {filteredReviews.length}
           </span>{' '}
-          of{' '}
-          <span className="font-semibold text-gray-900 dark:text-white">{reviews.length}</span>{' '}
+          of <span className="font-semibold text-gray-900 dark:text-white">{reviews.length}</span>{' '}
           reviews
         </div>
       </div>
@@ -614,7 +632,10 @@ function ReviewsPage(): React.ReactElement {
                           )}
                           <button
                             onClick={() =>
-                              setDeleteConfirm({ isOpen: true, reviewId: review.id })
+                              setDeleteConfirm({
+                                isOpen: true,
+                                reviewId: review.id,
+                              })
                             }
                             disabled={isActionLoading}
                             className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-50"

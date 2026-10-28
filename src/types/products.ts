@@ -224,6 +224,7 @@ export interface ProductUpdateData {
 
 export interface ProductQueryParams {
   context?: 'view' | 'edit';
+  _fields?: string;
   page?: number;
   per_page?: number;
   search?: string;

@@ -60,7 +60,7 @@ beforeEach(() => {
 // ============================================
 
 describe('exportOrderInvoice', () => {
-  it('generates a PDF invoice and saves it', () => {
+  it('generates a PDF invoice and saves it', async () => {
     const order = createMockOrder({
       number: '1234',
       line_items: [
@@ -69,22 +69,22 @@ describe('exportOrderInvoice', () => {
       total: '50.00',
     });
 
-    exportOrderInvoice(order, 'My Store', 'USD');
+    await exportOrderInvoice(order, 'My Store', 'USD');
 
     expect(mockSave).toHaveBeenCalledTimes(1);
     const filename = mockSave.mock.calls[0]![0];
     expect(filename).toMatch(/^invoice-1234-\d{4}-\d{2}-\d{2}\.pdf$/);
   });
 
-  it('renders store name in header', () => {
+  it('renders store name in header', async () => {
     const order = createMockOrder();
-    exportOrderInvoice(order, 'Acme Shop', 'EUR');
+    await exportOrderInvoice(order, 'Acme Shop', 'EUR');
 
     const textCalls = mockText.mock.calls.map((c) => c[0]);
     expect(textCalls).toContain('Acme Shop');
   });
 
-  it('renders billing address lines', () => {
+  it('renders billing address lines', async () => {
     const order = createMockOrder({
       billing: {
         first_name: 'Alice',
@@ -101,14 +101,14 @@ describe('exportOrderInvoice', () => {
       },
     });
 
-    exportOrderInvoice(order);
+    await exportOrderInvoice(order);
 
     const textCalls = mockText.mock.calls.map((c) => c[0]);
     expect(textCalls).toContain('Alice Wonder');
     expect(textCalls).toContain('42 Elm St');
   });
 
-  it('skips shipping section when no shipping address', () => {
+  it('skips shipping section when no shipping address', async () => {
     const order = createMockOrder({
       shipping: {
         first_name: '',
@@ -124,13 +124,13 @@ describe('exportOrderInvoice', () => {
       },
     });
 
-    exportOrderInvoice(order);
+    await exportOrderInvoice(order);
 
     const textCalls = mockText.mock.calls.map((c) => c[0]);
     expect(textCalls).not.toContain('Ship To');
   });
 
-  it('renders shipping section when shipping address exists', () => {
+  it('renders shipping section when shipping address exists', async () => {
     const order = createMockOrder({
       shipping: {
         first_name: 'Bob',
@@ -146,95 +146,95 @@ describe('exportOrderInvoice', () => {
       },
     });
 
-    exportOrderInvoice(order);
+    await exportOrderInvoice(order);
 
     const textCalls = mockText.mock.calls.map((c) => c[0]);
     expect(textCalls).toContain('Ship To');
   });
 
-  it('shows discount when discount_total > 0', () => {
+  it('shows discount when discount_total > 0', async () => {
     const order = createMockOrder({
       discount_total: '10.00',
       line_items: [createMockLineItem({ subtotal: '60.00', total: '50.00' })],
     });
 
-    exportOrderInvoice(order);
+    await exportOrderInvoice(order);
 
     const textCalls = mockText.mock.calls.map((c) => c[0]);
     expect(textCalls).toContain('Discount:');
   });
 
-  it('hides discount when discount_total is 0', () => {
+  it('hides discount when discount_total is 0', async () => {
     const order = createMockOrder({ discount_total: '0.00' });
 
-    exportOrderInvoice(order);
+    await exportOrderInvoice(order);
 
     const textCalls = mockText.mock.calls.map((c) => c[0]);
     expect(textCalls).not.toContain('Discount:');
   });
 
-  it('shows shipping line when shipping_total > 0', () => {
+  it('shows shipping line when shipping_total > 0', async () => {
     const order = createMockOrder({
       shipping_total: '5.00',
       shipping_lines: [{ id: 1, method_title: 'Flat Rate', method_id: 'flat', instance_id: '', total: '5.00', total_tax: '0', taxes: [], meta_data: [] }],
     });
 
-    exportOrderInvoice(order);
+    await exportOrderInvoice(order);
 
     const textCalls = mockText.mock.calls.map((c) => c[0]);
     expect(textCalls).toContain('Shipping (Flat Rate):');
   });
 
-  it('shows tax when total_tax > 0', () => {
+  it('shows tax when total_tax > 0', async () => {
     const order = createMockOrder({ total_tax: '12.50' });
 
-    exportOrderInvoice(order);
+    await exportOrderInvoice(order);
 
     const textCalls = mockText.mock.calls.map((c) => c[0]);
     expect(textCalls).toContain('Tax:');
   });
 
-  it('shows payment method info when available', () => {
+  it('shows payment method info when available', async () => {
     const order = createMockOrder({
       payment_method_title: 'Credit Card',
       transaction_id: 'TX-789',
     });
 
-    exportOrderInvoice(order);
+    await exportOrderInvoice(order);
 
     const textCalls = mockText.mock.calls.map((c) => c[0]);
     expect(textCalls).toContain('Payment: Credit Card');
     expect(textCalls).toContain('Transaction: TX-789');
   });
 
-  it('uses order.id in filename when order.number is absent', () => {
+  it('uses order.id in filename when order.number is absent', async () => {
     const order = createMockOrder({ number: '', id: 42 });
 
-    exportOrderInvoice(order);
+    await exportOrderInvoice(order);
 
     const filename = mockSave.mock.calls[0]![0];
     expect(filename).toMatch(/^invoice-42-/);
   });
 
-  it('defaults store name to "Store" and currency to "USD"', () => {
+  it('defaults store name to "Store" and currency to "USD"', async () => {
     const order = createMockOrder();
-    exportOrderInvoice(order);
+    await exportOrderInvoice(order);
 
     const textCalls = mockText.mock.calls.map((c) => c[0]);
     expect(textCalls).toContain('Store');
   });
 
-  it('handles empty line items', () => {
+  it('handles empty line items', async () => {
     const order = createMockOrder({ line_items: [] });
 
-    expect(() => exportOrderInvoice(order)).not.toThrow();
+    await expect(exportOrderInvoice(order)).resolves.toBeUndefined();
     expect(mockSave).toHaveBeenCalled();
   });
 
-  it('capitalizes order status', () => {
+  it('capitalizes order status', async () => {
     const order = createMockOrder({ status: 'processing' });
 
-    exportOrderInvoice(order);
+    await exportOrderInvoice(order);
 
     const textCalls = mockText.mock.calls.map((c) => c[0]);
     expect(textCalls).toContain('Status: Processing');
@@ -246,67 +246,64 @@ describe('exportOrderInvoice', () => {
 // ============================================
 
 describe('exportTableToPDF', () => {
-  it('generates a PDF with title and saves it', () => {
+  it('generates a PDF with title and saves it', async () => {
     const data = [{ name: 'Widget', price: 25 }];
     const columns = [
       { key: 'name', label: 'Name' },
       { key: 'price', label: 'Price' },
     ];
 
-    exportTableToPDF(data, columns, { title: 'Product Report' });
+    await exportTableToPDF(data, columns, { title: 'Product Report' });
 
     const textCalls = mockText.mock.calls.map((c) => c[0]);
     expect(textCalls).toContain('Product Report');
     expect(mockSave).toHaveBeenCalledTimes(1);
   });
 
-  it('returns early for empty data', () => {
-    exportTableToPDF([], [{ key: 'x', label: 'X' }]);
+  it('returns early for empty data', async () => {
+    await exportTableToPDF([], [{ key: 'x', label: 'X' }]);
     expect(mockSave).not.toHaveBeenCalled();
   });
 
-  it('uses custom filename when provided', () => {
+  it('uses custom filename when provided', async () => {
     const data = [{ a: 1 }];
-    exportTableToPDF(data, [{ key: 'a', label: 'A' }], { filename: 'custom.pdf' });
+    await exportTableToPDF(data, [{ key: 'a', label: 'A' }], { filename: 'custom.pdf' });
 
     expect(mockSave).toHaveBeenCalledWith('custom.pdf');
   });
 
-  it('generates filename from title when no filename provided', () => {
+  it('generates filename from title when no filename provided', async () => {
     const data = [{ a: 1 }];
-    exportTableToPDF(data, [{ key: 'a', label: 'A' }], { title: 'Sales Report' });
+    await exportTableToPDF(data, [{ key: 'a', label: 'A' }], { title: 'Sales Report' });
 
     const filename = mockSave.mock.calls[0]![0];
     expect(filename).toMatch(/^sales-report-\d{4}-\d{2}-\d{2}\.pdf$/);
   });
 
-  it('supports nested object access via dot notation', () => {
+  it('supports nested object access via dot notation', async () => {
     const data = [{ billing: { email: 'test@example.com' } }];
     const columns = [{ key: 'billing.email', label: 'Email' }];
 
     // Just verify it doesn't throw
-    expect(() =>
-      exportTableToPDF(
-        data as unknown as Record<string, unknown>[],
-        columns
-      )
-    ).not.toThrow();
+    await expect(
+      exportTableToPDF(data as unknown as Record<string, unknown>[], columns)
+    ).resolves.toBeUndefined();
   });
 
-  it('uses custom format function', () => {
+  it('uses custom format function', async () => {
     const formatFn = vi.fn((value) => `$${value}`);
     const data = [{ price: 25 }];
     const columns = [{ key: 'price', label: 'Price', format: formatFn }];
 
-    exportTableToPDF(data, columns);
+    await exportTableToPDF(data, columns);
 
     expect(formatFn).toHaveBeenCalledWith(25, expect.any(Object));
   });
 
-  it('renders null values as empty string', () => {
+  it('renders null values as empty string', async () => {
     const data = [{ name: null }] as unknown as Record<string, unknown>[];
     const columns = [{ key: 'name', label: 'Name' }];
 
-    expect(() => exportTableToPDF(data, columns)).not.toThrow();
+    await expect(exportTableToPDF(data, columns)).resolves.toBeUndefined();
   });
 });

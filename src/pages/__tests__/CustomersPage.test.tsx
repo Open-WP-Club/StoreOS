@@ -35,7 +35,7 @@ vi.mock('../../utils/csvExport', () => ({
 }));
 
 vi.mock('../../utils/pdfExport', () => ({
-  exportTableToPDF: vi.fn(),
+  exportTableToPDF: vi.fn(() => Promise.resolve()),
 }));
 
 vi.mock('../../components/ExportMenu', () => ({

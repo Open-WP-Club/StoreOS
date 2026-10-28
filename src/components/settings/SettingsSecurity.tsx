@@ -10,7 +10,7 @@ interface SettingsSecurityProps {
   pinCode: string | null;
   pinTimeout: number;
   setPinEnabled: (v: boolean) => void;
-  setPinCode: (v: string | null) => void;
+  setPinCode: (v: string | null) => void | Promise<void>;
   setPinTimeout: (v: number) => void;
 }
 
@@ -45,7 +45,7 @@ const SettingsSecurity = memo(function SettingsSecurity({
     setShowPinModal(true);
   };
 
-  const handlePinSubmit = (): void => {
+  const handlePinSubmit = async (): Promise<void> => {
     setPinError('');
 
     if (pinMode === 'change' || pinMode === 'remove') {
@@ -54,14 +54,14 @@ const SettingsSecurity = memo(function SettingsSecurity({
         return;
       }
       const { verifyPin } = useAppSettings.getState();
-      if (!verifyPin(currentPin)) {
+      if (!(await verifyPin(currentPin))) {
         setPinError(t('pinIncorrect', language));
         return;
       }
     }
 
     if (pinMode === 'remove') {
-      setPinCode(null);
+      await setPinCode(null);
       setPinEnabled(false);
       setShowPinModal(false);
       resetPinForm();
@@ -78,7 +78,7 @@ const SettingsSecurity = memo(function SettingsSecurity({
       return;
     }
 
-    setPinCode(newPin);
+    await setPinCode(newPin);
     setPinEnabled(true);
     setShowPinModal(false);
     resetPinForm();

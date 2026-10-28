@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import {
   TrendingUp,
@@ -13,10 +13,10 @@ import { useProgressiveLoading } from '../hooks/useProgressiveLoading';
 import { useDashboardStats } from '../hooks/useDashboardStats';
 import LoadingIndicator from '../components/LoadingIndicator';
 import PageHeader from '../components/PageHeader';
-import OrderStatusDonut from '../components/OrderStatusDonut';
 import TopSellingDays from '../components/TopSellingDays';
 import OrderFunnel from '../components/OrderFunnel';
 import KPICard from '../components/KPICard';
+const OrderStatusDonut = lazy(() => import('../components/OrderStatusDonut'));
 import DashboardTodayPerformance from '../components/dashboard/DashboardTodayPerformance';
 import DashboardWeeklyStats from '../components/dashboard/DashboardWeeklyStats';
 import DashboardTopProducts from '../components/dashboard/DashboardTopProducts';
@@ -272,7 +272,9 @@ function Dashboard(): React.ReactElement {
           </h2>
           <div className="flex justify-center">
             <div className="w-72 h-72">
-              <OrderStatusDonut orders={orders} />
+              <Suspense fallback={null}>
+                <OrderStatusDonut orders={orders} />
+              </Suspense>
             </div>
           </div>
         </section>

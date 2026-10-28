@@ -174,8 +174,7 @@ function CouponsPage(): React.ReactElement {
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
       result = result.filter(
-        (c) =>
-          c.code?.toLowerCase().includes(term) || c.description?.toLowerCase().includes(term)
+        (c) => c.code?.toLowerCase().includes(term) || c.description?.toLowerCase().includes(term)
       );
     }
     return result;
@@ -186,7 +185,11 @@ function CouponsPage(): React.ReactElement {
     return filteredCoupons.slice(start, start + pageSize);
   }, [filteredCoupons, currentPage, pageSize]);
 
-  const [prevFilters, setPrevFilters] = useState({ searchTerm, filterStatus, filterDiscountType });
+  const [prevFilters, setPrevFilters] = useState({
+    searchTerm,
+    filterStatus,
+    filterDiscountType,
+  });
   if (
     prevFilters.searchTerm !== searchTerm ||
     prevFilters.filterStatus !== filterStatus ||
@@ -248,8 +251,8 @@ function CouponsPage(): React.ReactElement {
         { key: 'date_expires', label: 'Expires' },
       ],
       { title: `Coupons - ${currentStore.name}` }
-    );
-  }, [currentStore, filteredCoupons]);
+    ).catch(() => toast.showToast('PDF export failed', 'error'));
+  }, [currentStore, filteredCoupons, toast]);
 
   const handleCreateCoupon = useCallback((): void => {
     form.initForCreate();
@@ -346,17 +349,17 @@ function CouponsPage(): React.ReactElement {
     [currentStore, coupons, setCachedData, logActivity, toast, offlineMutate]
   );
 
-  const getDiscountDisplay = useCallback(
-    (coupon: Coupon): string => {
-      switch (coupon.discount_type) {
-        case 'percent': return `${coupon.amount}%`;
-        case 'fixed_cart':
-        case 'fixed_product': return formatPrice(coupon.amount);
-        default: return coupon.amount;
-      }
-    },
-    []
-  );
+  const getDiscountDisplay = useCallback((coupon: Coupon): string => {
+    switch (coupon.discount_type) {
+      case 'percent':
+        return `${coupon.amount}%`;
+      case 'fixed_cart':
+      case 'fixed_product':
+        return formatPrice(coupon.amount);
+      default:
+        return coupon.amount;
+    }
+  }, []);
 
   if (!currentStore) {
     return <EmptyState title="No store selected" message="Please select a store to view coupons" />;
@@ -379,9 +382,24 @@ function CouponsPage(): React.ReactElement {
 
       {/* Stats Row 2 */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Total Discount Given" value={`~${formatPrice(stats.totalDiscountGiven.toString())}`} color="purple" icon={TrendingUp} />
-        <StatCard label="Most Used Coupon" value={stats.mostUsedCoupon} color="yellow" icon={Award} />
-        <StatCard label="Avg Uses / Coupon" value={stats.avgUsesPerCoupon} color="blue" icon={BarChart3} />
+        <StatCard
+          label="Total Discount Given"
+          value={`~${formatPrice(stats.totalDiscountGiven.toString())}`}
+          color="purple"
+          icon={TrendingUp}
+        />
+        <StatCard
+          label="Most Used Coupon"
+          value={stats.mostUsedCoupon}
+          color="yellow"
+          icon={Award}
+        />
+        <StatCard
+          label="Avg Uses / Coupon"
+          value={stats.avgUsesPerCoupon}
+          color="blue"
+          icon={BarChart3}
+        />
         <StatCard label="Fully Used" value={stats.fullyUsed} color="green" icon={CheckCircle} />
       </div>
 
@@ -449,10 +467,11 @@ function CouponsPage(): React.ReactElement {
         </div>
         <div className="mt-3 text-sm text-gray-600 dark:text-gray-400">
           Showing{' '}
-          <span className="font-semibold text-gray-900 dark:text-white">{filteredCoupons.length}</span>
-          {' '}of{' '}
-          <span className="font-semibold text-gray-900 dark:text-white">{coupons.length}</span>
-          {' '}coupons
+          <span className="font-semibold text-gray-900 dark:text-white">
+            {filteredCoupons.length}
+          </span>{' '}
+          of <span className="font-semibold text-gray-900 dark:text-white">{coupons.length}</span>{' '}
+          coupons
         </div>
       </div>
 
@@ -469,7 +488,10 @@ function CouponsPage(): React.ReactElement {
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
                   {['Code', 'Type', 'Amount', 'Usage', 'Expires', 'Status', 'Actions'].map((h) => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th
+                      key={h}
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                    >
                       {h}
                     </th>
                   ))}
@@ -478,7 +500,10 @@ function CouponsPage(): React.ReactElement {
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {paginatedCoupons.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                    <td
+                      colSpan={7}
+                      className="px-6 py-8 text-center text-gray-500 dark:text-gray-400"
+                    >
                       No coupons found
                     </td>
                   </tr>
@@ -531,11 +556,13 @@ function CouponsPage(): React.ReactElement {
                             : 'Never'}
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                            expired
-                              ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                              : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                          }`}>
+                          <span
+                            className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                              expired
+                                ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                            }`}
+                          >
                             {expired ? 'Expired' : 'Active'}
                           </span>
                         </td>

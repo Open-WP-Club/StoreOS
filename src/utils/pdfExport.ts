@@ -1,8 +1,15 @@
 /**
  * Utility functions for exporting data to PDF format
  */
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
+
+// jspdf (+ autotable) is large; load it only when an export is actually requested.
+const loadPdf = async () => {
+  const [{ jsPDF }, { default: autoTable }] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable'),
+  ]);
+  return { jsPDF, autoTable };
+};
 import type { WooCommerceOrder, OrderLineItem } from '../types';
 import { formatCurrency } from './currency';
 
@@ -30,11 +37,12 @@ export interface TablePDFOptions {
 /**
  * Export an order as a formatted invoice PDF
  */
-export function exportOrderInvoice(
+export async function exportOrderInvoice(
   order: WooCommerceOrder,
   storeName: string = 'Store',
   currencyCode: string = 'USD'
-): void {
+): Promise<void> {
+  const { jsPDF, autoTable } = await loadPdf();
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   let y = 20;
@@ -240,10 +248,11 @@ export function exportOrderInvoice(
 /**
  * Export an order as a packing slip PDF (no prices, focused on items and shipping)
  */
-export function exportPackingSlip(
+export async function exportPackingSlip(
   order: WooCommerceOrder,
   storeName: string = 'Store'
-): void {
+): Promise<void> {
+  const { jsPDF, autoTable } = await loadPdf();
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   let y = 20;
@@ -398,12 +407,12 @@ export interface ReportPDFOptions {
 /**
  * Export a report PDF with title, summary metrics, and data table
  */
-export function exportReportToPDF<T extends object>(
+export async function exportReportToPDF<T extends object>(
   data: T[],
   columns: PDFColumn<T>[],
   summaryMetrics: ReportSummaryMetric[],
   options: ReportPDFOptions = {}
-): void {
+): Promise<void> {
   const {
     title = 'Report',
     storeName,
@@ -412,6 +421,7 @@ export function exportReportToPDF<T extends object>(
     orientation = 'portrait',
   } = options;
 
+  const { jsPDF, autoTable } = await loadPdf();
   const doc = new jsPDF({ orientation });
   const pageWidth = doc.internal.pageSize.getWidth();
   let y = 20;
@@ -518,11 +528,11 @@ export function exportReportToPDF<T extends object>(
 /**
  * Export tabular data as a PDF (for analytics and reports)
  */
-export function exportTableToPDF<T extends object>(
+export async function exportTableToPDF<T extends object>(
   data: T[],
   columns: PDFColumn<T>[],
   options: TablePDFOptions = {}
-): void {
+): Promise<void> {
   const {
     title = 'Report',
     filename,
@@ -531,6 +541,7 @@ export function exportTableToPDF<T extends object>(
 
   if (!data || data.length === 0) return;
 
+  const { jsPDF, autoTable } = await loadPdf();
   const doc = new jsPDF({ orientation });
   const pageWidth = doc.internal.pageSize.getWidth();
 

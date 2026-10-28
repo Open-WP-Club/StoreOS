@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import confetti from 'canvas-confetti';
+import type { Options as ConfettiOptions } from 'canvas-confetti';
 import { ShoppingCart, X } from 'lucide-react';
 import useNotifications from '../stores/notificationStore';
 
@@ -13,20 +13,24 @@ export default function OrderCelebrationOverlay(): React.ReactElement | null {
   useEffect(() => {
     if (!pendingCelebration) return;
 
-    // Fire confetti from both sides
-    const fire = (particleRatio: number, opts: confetti.Options): void => {
-      confetti({
-        ...opts,
-        origin: { y: 0.7 },
-        particleCount: Math.floor(200 * particleRatio),
-      });
-    };
+    // Fire confetti from both sides (library loaded on first celebration)
+    let cancelled = false;
+    void import('canvas-confetti').then(({ default: confetti }) => {
+      if (cancelled) return;
+      const fire = (particleRatio: number, opts: ConfettiOptions): void => {
+        void confetti({
+          ...opts,
+          origin: { y: 0.7 },
+          particleCount: Math.floor(200 * particleRatio),
+        });
+      };
 
-    fire(0.25, { spread: 26, startVelocity: 55 });
-    fire(0.2, { spread: 60 });
-    fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
-    fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
-    fire(0.1, { spread: 120, startVelocity: 45 });
+      fire(0.25, { spread: 26, startVelocity: 55 });
+      fire(0.2, { spread: 60 });
+      fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+      fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+      fire(0.1, { spread: 120, startVelocity: 45 });
+    });
 
     // Auto-dismiss
     timerRef.current = setTimeout(() => {
@@ -34,6 +38,7 @@ export default function OrderCelebrationOverlay(): React.ReactElement | null {
     }, AUTO_DISMISS_MS);
 
     return () => {
+      cancelled = true;
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, [pendingCelebration, clearCelebration]);

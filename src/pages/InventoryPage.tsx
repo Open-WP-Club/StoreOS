@@ -1,9 +1,10 @@
-import React, { useState, ChangeEvent, KeyboardEvent } from 'react';
+import React, { useState, useDeferredValue, ChangeEvent, KeyboardEvent } from 'react';
 import { useStoreConfig, useCache, useActivityLog, useSettings } from '../stores';
 import WooCommerceService from '../services/woocommerce';
 import { formatPrice } from '../utils/currency';
 import { exportToCSV } from '../utils/csvExport';
 import { exportTableToPDF } from '../utils/pdfExport';
+import { useVirtualRows } from '../hooks/useVirtualRows';
 import ExportMenu from '../components/ExportMenu';
 import Pagination from '../components/Pagination';
 import BulkEditModal from '../components/BulkEditModal';
@@ -65,13 +66,20 @@ const InventoryPage: React.FC = (): React.ReactElement => {
   }
 
   // Reset to page 1 when search term or filter changes
-  const [prevSearchFilter, setPrevSearchFilter] = useState({ searchTerm, filter });
+  const [prevSearchFilter, setPrevSearchFilter] = useState({
+    searchTerm,
+    filter,
+  });
   if (prevSearchFilter.searchTerm !== searchTerm || prevSearchFilter.filter !== filter) {
     setPrevSearchFilter({ searchTerm, filter });
     setCurrentPage(1);
   }
 
-  const updateStock = async (productId: number, newQuantity: number, stockStatus: StockStatus): Promise<void> => {
+  const updateStock = async (
+    productId: number,
+    newQuantity: number,
+    stockStatus: StockStatus
+  ): Promise<void> => {
     if (!currentStore) return;
     setUpdating(true);
 
@@ -80,7 +88,11 @@ const InventoryPage: React.FC = (): React.ReactElement => {
     try {
       await offlineMutate({
         operationType: 'update_stock',
-        queueData: { id: productId, stock_quantity: newQuantity, stock_status: stockStatus },
+        queueData: {
+          id: productId,
+          stock_quantity: newQuantity,
+          stock_status: stockStatus,
+        },
         storeId: currentStore.id,
         execute: async () => {
           const service = new WooCommerceService(currentStore);
@@ -99,7 +111,12 @@ const InventoryPage: React.FC = (): React.ReactElement => {
             entityName: oldProduct?.name,
             storeId: currentStore?.id ?? null,
             storeName: currentStore?.name,
-            changes: { stock_quantity: { from: oldProduct?.stock_quantity, to: newQuantity } },
+            changes: {
+              stock_quantity: {
+                from: oldProduct?.stock_quantity,
+                to: newQuantity,
+              },
+            },
           });
         },
         onError: (error) => showToast(`Failed to update stock: ${error}`, 'error'),
@@ -118,13 +135,17 @@ const InventoryPage: React.FC = (): React.ReactElement => {
     updateStock(productId, quantity, stockStatus);
   };
 
+  const deferredSearch = useDeferredValue(searchTerm);
   const getFilteredProducts = (): Product[] => {
     let filtered = products;
 
     // Apply stock filter
     if (filter === 'low') {
       filtered = filtered.filter(
-        (p) => p.stock_quantity !== null && p.stock_quantity !== undefined && p.stock_quantity <= lowStockThreshold
+        (p) =>
+          p.stock_quantity !== null &&
+          p.stock_quantity !== undefined &&
+          p.stock_quantity <= lowStockThreshold
       );
     } else if (filter === 'out') {
       filtered = filtered.filter((p) => p.stock_status === 'outofstock');
@@ -133,8 +154,8 @@ const InventoryPage: React.FC = (): React.ReactElement => {
     }
 
     // Apply search filter
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
+    if (deferredSearch) {
+      const searchLower = deferredSearch.toLowerCase();
       filtered = filtered.filter(
         (p) =>
           p.name.toLowerCase().includes(searchLower) ||
@@ -149,14 +170,26 @@ const InventoryPage: React.FC = (): React.ReactElement => {
 
   const handleExportCSV = (): void => {
     if (!currentStore) return;
-    const columns: Array<{ key: string; label: string; format?: (value: unknown) => string }> = [
+    const columns: Array<{
+      key: string;
+      label: string;
+      format?: (value: unknown) => string;
+    }> = [
       { key: 'id', label: 'Product ID' },
       { key: 'name', label: 'Product Name' },
       { key: 'sku', label: 'SKU' },
       { key: 'stock_quantity', label: 'Stock Quantity' },
       { key: 'stock_status', label: 'Stock Status' },
-      { key: 'price', label: 'Price', format: (val: unknown) => formatPrice(val as string | number) },
-      { key: 'regular_price', label: 'Regular Price', format: (val: unknown) => formatPrice(val as string | number) },
+      {
+        key: 'price',
+        label: 'Price',
+        format: (val: unknown) => formatPrice(val as string | number),
+      },
+      {
+        key: 'regular_price',
+        label: 'Regular Price',
+        format: (val: unknown) => formatPrice(val as string | number),
+      },
     ];
 
     const filename = `inventory-${currentStore.name}-${new Date().toISOString().split('T')[0] ?? ''}.csv`;
@@ -171,18 +204,29 @@ const InventoryPage: React.FC = (): React.ReactElement => {
       { key: 'sku', label: 'SKU' },
       { key: 'stock_quantity', label: 'Stock' },
       { key: 'stock_status', label: 'Status' },
-      { key: 'price', label: 'Price', format: (val: unknown) => formatPrice(val as string | number) },
+      {
+        key: 'price',
+        label: 'Price',
+        format: (val: unknown) => formatPrice(val as string | number),
+      },
     ];
 
     exportTableToPDF(filteredProducts as unknown as Record<string, unknown>[], columns, {
       title: `Inventory - ${currentStore.name}`,
-    });
+    }).catch(() => showToast('PDF export failed', 'error'));
   };
 
   // Calculate paginated products
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
   const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+  const {
+    scrollContainer,
+    enabled: virtualized,
+    rows: visibleRows,
+    padTop,
+    padBottom,
+  } = useVirtualRows(paginatedProducts);
 
   const handlePageChange = (page: number): void => {
     setCurrentPage(page);
@@ -196,16 +240,16 @@ const InventoryPage: React.FC = (): React.ReactElement => {
 
   const handleSelectAll = (e: ChangeEvent<HTMLInputElement>): void => {
     if (e.target.checked) {
-      setSelectedProductIds(paginatedProducts.map(p => p.id));
+      setSelectedProductIds(visibleRows.map((p) => p.id));
     } else {
       setSelectedProductIds([]);
     }
   };
 
   const handleSelectProduct = (productId: number): void => {
-    setSelectedProductIds(prev => {
+    setSelectedProductIds((prev) => {
       if (prev.includes(productId)) {
-        return prev.filter(id => id !== productId);
+        return prev.filter((id) => id !== productId);
       } else {
         return [...prev, productId];
       }
@@ -225,11 +269,10 @@ const InventoryPage: React.FC = (): React.ReactElement => {
     try {
       const service = new WooCommerceService(currentStore);
 
-      // Delete products one by one
-      const deletePromises = selectedProductIds.map(id => service.deleteProduct(id));
-      await Promise.all(deletePromises);
+      const deleteResult = await service.batchProducts({ delete: selectedProductIds });
+      if (!deleteResult.success) throw new Error(deleteResult.error);
 
-      const updatedProducts = products.filter(p => !selectedProductIds.includes(p.id));
+      const updatedProducts = products.filter((p) => !selectedProductIds.includes(p.id));
       setProducts(updatedProducts);
       await setCachedData('products', updatedProducts);
       logActivity({
@@ -247,7 +290,9 @@ const InventoryPage: React.FC = (): React.ReactElement => {
     }
   };
 
-  const handleBulkSave = async (updates: { id: number; [key: string]: unknown }[]): Promise<void> => {
+  const handleBulkSave = async (
+    updates: { id: number; [key: string]: unknown }[]
+  ): Promise<void> => {
     if (!currentStore) return;
 
     // Capture snapshot of affected products for undo
@@ -320,20 +365,26 @@ const InventoryPage: React.FC = (): React.ReactElement => {
   };
 
   const getSelectedProducts = (): Product[] => {
-    return products.filter(p => selectedProductIds.includes(p.id));
+    return products.filter((p) => selectedProductIds.includes(p.id));
   };
 
   const stats: InventoryStats = {
     total: products.length,
     inStock: products.filter((p) => p.stock_status === 'instock').length,
     lowStock: products.filter(
-      (p) => p.stock_quantity !== null && p.stock_quantity !== undefined && p.stock_quantity <= lowStockThreshold && p.stock_quantity > 0
+      (p) =>
+        p.stock_quantity !== null &&
+        p.stock_quantity !== undefined &&
+        p.stock_quantity <= lowStockThreshold &&
+        p.stock_quantity > 0
     ).length,
     outOfStock: products.filter((p) => p.stock_status === 'outofstock').length,
   };
 
   if (!currentStore) {
-    return <EmptyState title="No store selected" message="Please select a store to manage inventory" />;
+    return (
+      <EmptyState title="No store selected" message="Please select a store to manage inventory" />
+    );
   }
 
   return (
@@ -390,7 +441,8 @@ const InventoryPage: React.FC = (): React.ReactElement => {
         {selectedProductIds.length > 0 && (
           <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-md">
             <span className="text-sm font-medium text-blue-900">
-              {selectedProductIds.length} product{selectedProductIds.length !== 1 ? 's' : ''} selected
+              {selectedProductIds.length} product
+              {selectedProductIds.length !== 1 ? 's' : ''} selected
             </span>
             <div className="flex gap-2">
               <button
@@ -429,14 +481,22 @@ const InventoryPage: React.FC = (): React.ReactElement => {
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-colors">
-          <div className="overflow-x-auto">
+          <div
+            ref={scrollContainer}
+            className={virtualized ? 'overflow-auto max-h-[70vh]' : 'overflow-x-auto'}
+          >
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
+              <thead
+                className={`bg-gray-50 dark:bg-gray-700${virtualized ? ' sticky top-0 z-10' : ''}`}
+              >
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     <input
                       type="checkbox"
-                      checked={selectedProductIds.length === paginatedProducts.length && paginatedProducts.length > 0}
+                      checked={
+                        selectedProductIds.length === paginatedProducts.length &&
+                        paginatedProducts.length > 0
+                      }
                       onChange={handleSelectAll}
                       className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                     />
@@ -462,9 +522,17 @@ const InventoryPage: React.FC = (): React.ReactElement => {
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {padTop > 0 && (
+                  <tr aria-hidden="true" style={{ height: padTop }}>
+                    <td colSpan={99} className="p-0" />
+                  </tr>
+                )}
                 {paginatedProducts.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                    <td
+                      colSpan={7}
+                      className="px-6 py-8 text-center text-gray-500 dark:text-gray-400"
+                    >
                       No products found
                     </td>
                   </tr>
@@ -484,8 +552,8 @@ const InventoryPage: React.FC = (): React.ReactElement => {
                           isOutOfStock
                             ? 'bg-red-50 dark:bg-red-900/20'
                             : isLowStock
-                            ? 'bg-yellow-50 dark:bg-yellow-900/20'
-                            : ''
+                              ? 'bg-yellow-50 dark:bg-yellow-900/20'
+                              : ''
                         }`}
                       >
                         <td className="px-6 py-4">
@@ -507,7 +575,8 @@ const InventoryPage: React.FC = (): React.ReactElement => {
                                   onError={(e) => {
                                     const target = e.currentTarget;
                                     target.style.display = 'none';
-                                    const placeholder = target.nextElementSibling as HTMLElement | null;
+                                    const placeholder =
+                                      target.nextElementSibling as HTMLElement | null;
                                     if (placeholder) placeholder.style.display = 'flex';
                                   }}
                                 />
@@ -539,8 +608,8 @@ const InventoryPage: React.FC = (): React.ReactElement => {
                               product.stock_status === 'instock'
                                 ? 'bg-green-100 text-green-800'
                                 : product.stock_status === 'outofstock'
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-yellow-100 text-yellow-800'
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-yellow-100 text-yellow-800'
                             }`}
                           >
                             {product.stock_status}
@@ -553,8 +622,8 @@ const InventoryPage: React.FC = (): React.ReactElement => {
                                 isLowStock
                                   ? 'text-yellow-600 dark:text-yellow-400 font-semibold'
                                   : isOutOfStock
-                                  ? 'text-red-600 dark:text-red-400 font-semibold'
-                                  : ''
+                                    ? 'text-red-600 dark:text-red-400 font-semibold'
+                                    : ''
                               }
                             >
                               {product.stock_quantity}
@@ -591,6 +660,11 @@ const InventoryPage: React.FC = (): React.ReactElement => {
                       </tr>
                     );
                   })
+                )}
+                {padBottom > 0 && (
+                  <tr aria-hidden="true" style={{ height: padBottom }}>
+                    <td colSpan={99} className="p-0" />
+                  </tr>
                 )}
               </tbody>
             </table>

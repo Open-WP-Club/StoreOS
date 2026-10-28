@@ -23,6 +23,7 @@ export interface WooCommerceCustomer {
 
 export interface CustomerQueryParams {
   context?: 'view' | 'edit';
+  _fields?: string;
   page?: number;
   per_page?: number;
   search?: string;

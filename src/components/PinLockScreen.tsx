@@ -30,12 +30,14 @@ export default function PinLockScreen(): ReactElement | null {
 
       // Auto-submit when 4+ digits entered
       if (newPin.length >= 4) {
-        setTimeout(() => {
-          if (verifyPin(newPin)) {
+        setTimeout(async () => {
+          if (await verifyPin(newPin)) {
             unlock();
             setPin('');
           } else {
-            setError('Грешен PIN код');
+            const { pinLockedUntil } = useAppSettings.getState();
+            const secs = pinLockedUntil ? Math.ceil((pinLockedUntil - Date.now()) / 1000) : 0;
+            setError(secs > 0 ? `Твърде много опити. Опитай след ${secs} сек.` : 'Грешен PIN код');
             setShake(true);
             setTimeout(() => {
               setShake(false);

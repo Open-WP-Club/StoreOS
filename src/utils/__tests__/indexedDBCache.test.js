@@ -279,7 +279,7 @@ describe('indexedDBCache', () => {
       const result = await clearCacheStore(STORES.PRODUCTS);
 
       expect(result).toBe(true);
-      expect(mockDB.transaction).toHaveBeenCalledWith([STORES.PRODUCTS], 'readwrite', {
+      expect(mockDB.transaction).toHaveBeenCalledWith([STORES.PRODUCTS, 'products_items'], 'readwrite', {
         durability: 'relaxed',
       });
       expect(mockObjectStore.clear).toHaveBeenCalled();

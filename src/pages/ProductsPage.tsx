@@ -18,6 +18,7 @@ import { useProductActions } from '../hooks/useProductActions';
 import { useProductExport } from '../hooks/useProductExport';
 import { Trash2, Edit, Copy, ImageOff } from 'lucide-react';
 import type { Product, StockStatus, BatchProductUpdate } from '../types';
+import { useVirtualRows } from '../hooks/useVirtualRows';
 import { EMPTY_PRODUCTS } from '../constants';
 
 function ProductsPage(): React.ReactElement {
@@ -40,6 +41,7 @@ function ProductsPage(): React.ReactElement {
 
   const { loadingState } = useProgressiveLoading();
   const filtersHook = useProductFilters(products);
+  const { scrollContainer, enabled: virtualized, rows: visibleRows, padTop, padBottom } = useVirtualRows(filtersHook.paginatedProducts);
   const actions = useProductActions(showToast);
   const exportHook = useProductExport();
 
@@ -104,9 +106,9 @@ function ProductsPage(): React.ReactElement {
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-colors">
-          <div className="overflow-x-auto">
+          <div ref={scrollContainer} className={virtualized ? 'overflow-auto max-h-[70vh]' : 'overflow-x-auto'}>
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
+              <thead className={`bg-gray-50 dark:bg-gray-700${virtualized ? ' sticky top-0 z-10' : ''}`}>
                 <tr>
                   <th className="px-3 py-3 text-left w-10">
                     <input
@@ -140,6 +142,7 @@ function ProductsPage(): React.ReactElement {
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+{padTop > 0 && (<tr aria-hidden="true" style={{ height: padTop }}><td colSpan={99} className="p-0" /></tr>)}
                 {filtersHook.paginatedProducts.length === 0 ? (
                   <tr>
                     <td
@@ -150,7 +153,7 @@ function ProductsPage(): React.ReactElement {
                     </td>
                   </tr>
                 ) : (
-                  filtersHook.paginatedProducts.map((product) => {
+                  visibleRows.map((product) => {
                     const isLowStock =
                       product.stock_quantity !== null &&
                       product.stock_quantity <= lowStockThreshold &&
@@ -317,7 +320,8 @@ function ProductsPage(): React.ReactElement {
                     );
                   })
                 )}
-              </tbody>
+              {padBottom > 0 && (<tr aria-hidden="true" style={{ height: padBottom }}><td colSpan={99} className="p-0" /></tr>)}
+</tbody>
             </table>
           </div>
           {filtersHook.filteredProducts.length > 0 && (

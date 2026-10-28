@@ -71,6 +71,7 @@ describe('WooCommerceService', () => {
         consumerSecret: 'test_secret',
         version: 'wc/v3',
         queryStringAuth: true,
+        timeout: 30000,
       });
     });
 

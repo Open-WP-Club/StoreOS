@@ -55,7 +55,10 @@ export function useReportExport<T extends Record<string, unknown>>(
       timeRange: config.timeRange,
       filename,
       orientation: 'landscape',
-    });
+    }).catch((error) =>
+      // eslint-disable-next-line no-console
+      console.error('PDF export failed', error)
+    );
   };
 
   const handlePrint = (): void => {

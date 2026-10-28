@@ -48,7 +48,7 @@ export default defineConfig({
 
     // File patterns
     include: ['**/__tests__/**/*.(test|spec).(js|jsx|ts|tsx)', '**/*.(test|spec).(js|jsx|ts|tsx)'],
-    exclude: ['node_modules', 'dist', 'dist-electron'],
+    exclude: ['**/node_modules/**', '**/.claude/**', 'dist/**', 'dist-electron/**', 'release/**'],
 
     // Module mocking
     alias: {

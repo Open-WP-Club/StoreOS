@@ -44,8 +44,8 @@ describe('cacheStore - edge cases', () => {
 
     vi.clearAllMocks();
 
-    indexedDBCache.saveToCache.mockResolvedValue(true);
-    indexedDBCache.getFromCache.mockResolvedValue(null);
+    indexedDBCache.saveCollection.mockResolvedValue(true);
+    indexedDBCache.getCollection.mockResolvedValue(null);
     indexedDBCache.clearCacheStore.mockResolvedValue(true);
     indexedDBCache.clearAllCache.mockResolvedValue(true);
 
@@ -85,7 +85,7 @@ describe('cacheStore - edge cases', () => {
     });
 
     it('should fallback to IndexedDB when memory is empty', async () => {
-      indexedDBCache.getFromCache.mockResolvedValue(mockCustomers);
+      indexedDBCache.getCollection.mockResolvedValue(mockCustomers);
       const { result } = renderHook(() => useCache());
 
       let cached;
@@ -93,7 +93,7 @@ describe('cacheStore - edge cases', () => {
         cached = await result.current.getCachedCustomers('test-store-1');
       });
 
-      expect(indexedDBCache.getFromCache).toHaveBeenCalled();
+      expect(indexedDBCache.getCollection).toHaveBeenCalled();
       expect(cached).toHaveLength(2);
     });
 
@@ -114,7 +114,7 @@ describe('cacheStore - edge cases', () => {
     });
 
     it('should handle IndexedDB read error gracefully', async () => {
-      indexedDBCache.getFromCache.mockRejectedValue(new Error('DB error'));
+      indexedDBCache.getCollection.mockRejectedValue(new Error('DB error'));
       const { result } = renderHook(() => useCache());
 
       let cached;
@@ -136,7 +136,7 @@ describe('cacheStore - edge cases', () => {
 
       expect(result.current.cache.customers.data).toHaveLength(2);
       expect(result.current.cache.customers.storeId).toBe('test-store-1');
-      expect(indexedDBCache.saveToCache).toHaveBeenCalledWith(
+      expect(indexedDBCache.saveCollection).toHaveBeenCalledWith(
         expect.anything(),
         'test-store-1',
         mockCustomers
@@ -144,7 +144,7 @@ describe('cacheStore - edge cases', () => {
     });
 
     it('should handle IndexedDB save error gracefully', async () => {
-      indexedDBCache.saveToCache.mockRejectedValue(new Error('Save failed'));
+      indexedDBCache.saveCollection.mockRejectedValue(new Error('Save failed'));
       const { result } = renderHook(() => useCache());
 
       await act(async () => {
@@ -189,7 +189,7 @@ describe('cacheStore - edge cases', () => {
     });
 
     it('should fallback to IndexedDB when memory is empty', async () => {
-      indexedDBCache.getFromCache.mockResolvedValue(mockCoupons);
+      indexedDBCache.getCollection.mockResolvedValue(mockCoupons);
       const { result } = renderHook(() => useCache());
 
       let cached;
@@ -197,12 +197,12 @@ describe('cacheStore - edge cases', () => {
         cached = await result.current.getCachedCoupons('test-store-1');
       });
 
-      expect(indexedDBCache.getFromCache).toHaveBeenCalled();
+      expect(indexedDBCache.getCollection).toHaveBeenCalled();
       expect(cached).toHaveLength(2);
     });
 
     it('should handle IndexedDB read error gracefully', async () => {
-      indexedDBCache.getFromCache.mockRejectedValue(new Error('DB error'));
+      indexedDBCache.getCollection.mockRejectedValue(new Error('DB error'));
       const { result } = renderHook(() => useCache());
 
       let cached;
@@ -224,7 +224,7 @@ describe('cacheStore - edge cases', () => {
 
       expect(result.current.cache.coupons.data).toHaveLength(2);
       expect(result.current.cache.coupons.storeId).toBe('test-store-1');
-      expect(indexedDBCache.saveToCache).toHaveBeenCalledWith(
+      expect(indexedDBCache.saveCollection).toHaveBeenCalledWith(
         expect.anything(),
         'test-store-1',
         mockCoupons
@@ -395,11 +395,11 @@ describe('cacheStore - edge cases', () => {
       // Should still set in memory
       expect(result.current.cache.products.lastSync).toBe('2025-01-01T00:00:00.000Z');
       // But should not call IndexedDB save
-      expect(indexedDBCache.saveToCache).not.toHaveBeenCalled();
+      expect(indexedDBCache.saveCollection).not.toHaveBeenCalled();
     });
 
     it('should handle IndexedDB save error for lastSync gracefully', async () => {
-      indexedDBCache.saveToCache.mockRejectedValue(new Error('Save failed'));
+      indexedDBCache.saveCollection.mockRejectedValue(new Error('Save failed'));
       const { result } = renderHook(() => useCache());
 
       await act(async () => {

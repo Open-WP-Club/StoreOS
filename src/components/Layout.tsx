@@ -189,7 +189,10 @@ function Layout(): React.ReactElement {
     loadHealthIndicators();
 
     // Refresh indicators periodically if auto-refresh is enabled
-    const interval = autoRefresh ? setInterval(loadHealthIndicators, 60000) : null;
+    const tick = (): void => {
+      if (document.visibilityState !== 'hidden') loadHealthIndicators();
+    };
+    const interval = autoRefresh ? setInterval(tick, 60000) : null;
     return () => {
       if (interval) clearInterval(interval);
     };

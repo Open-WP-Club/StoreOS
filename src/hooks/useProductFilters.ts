@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useDeferredValue } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { searchProducts, applyProductFilters } from '../utils/searchService';
 import useSettings from '../stores/settingsStore';
@@ -77,10 +77,11 @@ export function useProductFilters(products: Product[]): UseProductFiltersResult 
     return { total, inStock, lowStock, outOfStock };
   }, [products, lowStockThreshold]);
 
+  const deferredSearch = useDeferredValue(searchTerm);
   const searchedProducts = useMemo(() => {
-    if (searchTerm.trim() === '') return products;
-    return searchProducts(products, searchTerm, { minScore: 0.3 });
-  }, [products, searchTerm]);
+    if (deferredSearch.trim() === '') return products;
+    return searchProducts(products, deferredSearch, { minScore: 0.3 });
+  }, [products, deferredSearch]);
 
   const filteredProducts = useMemo(() => {
     return applyProductFilters(searchedProducts, filters);

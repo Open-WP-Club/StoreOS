@@ -56,6 +56,7 @@ export interface CouponUpdateData {
 
 export interface CouponQueryParams {
   context?: 'view' | 'edit';
+  _fields?: string;
   page?: number;
   per_page?: number;
   search?: string;

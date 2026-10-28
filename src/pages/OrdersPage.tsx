@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, ChangeEvent } from 'react';
+import React, { useState, useMemo, useCallback, useDeferredValue, ChangeEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { RefreshCw, Filter } from 'lucide-react';
 import { useStoreConfig, useCache, useSettings, useActivityLog } from '../stores';
@@ -87,11 +87,11 @@ function OrdersPage(): React.ReactElement {
   }
 
   // Reset to page 1 when search term or filter changes
-  const [prevPageResetKey, setPrevPageResetKey] = useState({ searchTerm, filters });
-  if (
-    prevPageResetKey.searchTerm !== searchTerm ||
-    prevPageResetKey.filters !== filters
-  ) {
+  const [prevPageResetKey, setPrevPageResetKey] = useState({
+    searchTerm,
+    filters,
+  });
+  if (prevPageResetKey.searchTerm !== searchTerm || prevPageResetKey.filters !== filters) {
     setPrevPageResetKey({ searchTerm, filters });
     setCurrentPage(1);
   }
@@ -113,7 +113,9 @@ function OrdersPage(): React.ReactElement {
       storeId: currentStore.id,
       execute: async () => {
         const service = new WooCommerceService(currentStore);
-        const result = await service.updateOrder(orderId, { status: newStatus as OrderStatus });
+        const result = await service.updateOrder(orderId, {
+          status: newStatus as OrderStatus,
+        });
         if (!result.success) throw new Error(result.error);
         return result;
       },
@@ -141,12 +143,20 @@ function OrdersPage(): React.ReactElement {
 
     const columns = [
       { key: 'id', label: 'Order ID' },
-      { key: 'date_created', label: 'Date', format: (val: unknown) => formatDate(val as string) },
+      {
+        key: 'date_created',
+        label: 'Date',
+        format: (val: unknown) => formatDate(val as string),
+      },
       { key: 'billing.first_name', label: 'First Name' },
       { key: 'billing.last_name', label: 'Last Name' },
       { key: 'billing.email', label: 'Email' },
       { key: 'status', label: 'Status' },
-      { key: 'total', label: 'Total', format: (val: unknown) => formatPrice(val as string) },
+      {
+        key: 'total',
+        label: 'Total',
+        format: (val: unknown) => formatPrice(val as string),
+      },
       { key: 'payment_method_title', label: 'Payment Method' },
     ];
 
@@ -159,18 +169,26 @@ function OrdersPage(): React.ReactElement {
 
     const columns = [
       { key: 'id', label: 'Order ID' },
-      { key: 'date_created', label: 'Date', format: (val: unknown) => formatDate(val as string) },
+      {
+        key: 'date_created',
+        label: 'Date',
+        format: (val: unknown) => formatDate(val as string),
+      },
       { key: 'billing.first_name', label: 'First Name' },
       { key: 'billing.last_name', label: 'Last Name' },
       { key: 'status', label: 'Status' },
-      { key: 'total', label: 'Total', format: (val: unknown) => formatPrice(val as string) },
+      {
+        key: 'total',
+        label: 'Total',
+        format: (val: unknown) => formatPrice(val as string),
+      },
       { key: 'payment_method_title', label: 'Payment' },
     ];
 
     exportTableToPDF(filteredOrders, columns, {
       title: `Orders - ${currentStore.name}`,
       orientation: 'landscape',
-    });
+    }).catch(() => showToast('PDF export failed', 'error'));
   };
 
   const handleSelectAll = (e: ChangeEvent<HTMLInputElement>): void => {
@@ -210,10 +228,10 @@ function OrdersPage(): React.ReactElement {
       setBulkProcessing(true);
       const service = new WooCommerceService(currentStore);
 
-      const updatePromises = selectedOrderIds.map((id) =>
-        service.updateOrder(id, { status: newStatus })
-      );
-      await Promise.all(updatePromises);
+      const batchResult = await service.batchOrders({
+        update: selectedOrderIds.map((id) => ({ id, status: newStatus })),
+      });
+      if (!batchResult.success) throw new Error(batchResult.error);
 
       const updatedOrders = orders.map((order) =>
         selectedOrderIds.includes(order.id) ? { ...order, status: newStatus } : order
@@ -238,11 +256,10 @@ function OrdersPage(): React.ReactElement {
           onClick: async () => {
             try {
               const undoService = new WooCommerceService(currentStore);
-              await Promise.all(
-                previousStatuses.map(({ id, status }) =>
-                  undoService.updateOrder(id, { status })
-                )
-              );
+              const undoResult = await undoService.batchOrders({
+                update: previousStatuses.map(({ id, status }) => ({ id, status })),
+              });
+              if (!undoResult.success) throw new Error(undoResult.error);
               const restoredOrders = updatedOrders.map((order) => {
                 const prev = previousStatuses.find((p) => p.id === order.id);
                 return prev ? { ...order, status: prev.status } : order;
@@ -257,7 +274,10 @@ function OrdersPage(): React.ReactElement {
         }
       );
     } catch (err) {
-      showToast(`Грешка при обновяване: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error');
+      showToast(
+        `Грешка при обновяване: ${err instanceof Error ? err.message : 'Unknown error'}`,
+        'error'
+      );
     } finally {
       setBulkProcessing(false);
     }
@@ -268,15 +288,15 @@ function OrdersPage(): React.ReactElement {
 
     const exportData = selectedOrders.map((order) => ({
       'Order ID': order.id,
-      'Status': order.status,
-      'Customer': `${order.billing?.first_name || ''} ${order.billing?.last_name || ''}`.trim(),
-      'Email': order.billing?.email || '',
-      'Phone': order.billing?.phone || '',
-      'Total': order.total,
-      'Currency': order.currency,
+      Status: order.status,
+      Customer: `${order.billing?.first_name || ''} ${order.billing?.last_name || ''}`.trim(),
+      Email: order.billing?.email || '',
+      Phone: order.billing?.phone || '',
+      Total: order.total,
+      Currency: order.currency,
       'Payment Method': order.payment_method_title || order.payment_method || '',
-      'Date': order.date_created,
-      'Items': (order.line_items || []).map((item) => `${item.name} x${item.quantity}`).join('; '),
+      Date: order.date_created,
+      Items: (order.line_items || []).map((item) => `${item.name} x${item.quantity}`).join('; '),
       'Shipping Address': [
         order.shipping?.address_1,
         order.shipping?.city,
@@ -288,7 +308,9 @@ function OrdersPage(): React.ReactElement {
     }));
 
     const exportFilename = `orders-export-${new Date().toISOString().split('T')[0]}`;
-    const exportColumns = (Object.keys(exportData[0] ?? {}) as (keyof typeof exportData[0])[]).map((k) => ({
+    const exportColumns = (
+      Object.keys(exportData[0] ?? {}) as (keyof (typeof exportData)[0])[]
+    ).map((k) => ({
       key: k as string,
       label: k as string,
     }));
@@ -303,10 +325,8 @@ function OrdersPage(): React.ReactElement {
       setBulkProcessing(true);
       const service = new WooCommerceService(currentStore);
 
-      // Delete orders one by one
-      const deletePromises = selectedOrderIds.map((id) => service.deleteOrder(id));
-
-      await Promise.all(deletePromises);
+      const deleteResult = await service.batchOrders({ delete: selectedOrderIds });
+      if (!deleteResult.success) throw new Error(deleteResult.error);
 
       // Update local state
       const remainingOrders = orders.filter((order) => !selectedOrderIds.includes(order.id));
@@ -323,7 +343,10 @@ function OrdersPage(): React.ReactElement {
       showToast(`Изтрити ${selectedOrderIds.length} поръчки`, 'success');
       setSelectedOrderIds([]);
     } catch (err) {
-      showToast(`Грешка при изтриване: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error');
+      showToast(
+        `Грешка при изтриване: ${err instanceof Error ? err.message : 'Unknown error'}`,
+        'error'
+      );
     } finally {
       setBulkProcessing(false);
     }
@@ -332,10 +355,12 @@ function OrdersPage(): React.ReactElement {
   // Memoized search results - only recalculates when orders or searchTerm changes.
   // Always returns a fresh array (never the same reference as `orders`) so
   // downstream derived values can't accidentally alias mutable state.
+  // Deferred so typing stays responsive while a 50k-order search runs.
+  const deferredSearch = useDeferredValue(searchTerm);
   const searchedOrders = useMemo(() => {
-    if (searchTerm.trim() === '') return orders.slice();
-    return searchOrders(orders, searchTerm);
-  }, [orders, searchTerm]);
+    if (deferredSearch.trim() === '') return orders.slice();
+    return searchOrders(orders, deferredSearch);
+  }, [orders, deferredSearch]);
 
   // Memoized filtered results - only recalculates when searchedOrders or filters change.
   // React Compiler (RC) can't currently prove applyOrderFilters (a pure .filter())
@@ -462,7 +487,9 @@ function OrdersPage(): React.ReactElement {
               type="orders"
               currentFilters={filters as unknown as Record<string, unknown>}
               onApplyPreset={handleApplyPreset}
-              onSaveSuccess={(preset: FilterPreset) => showToast(`Preset "${preset.name}" saved`, 'success')}
+              onSaveSuccess={(preset: FilterPreset) =>
+                showToast(`Preset "${preset.name}" saved`, 'success')
+              }
             />
             <ExportMenu onExportCSV={handleExportCSV} onExportPDF={handleExportPDF} />
             <button

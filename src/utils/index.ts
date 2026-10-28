@@ -19,18 +19,6 @@ export {
   formatDuration,
 } from './dateTime';
 
-// URL pattern utilities (using URLPattern API)
-export {
-  parseWooCommerceApiUrl,
-  validateStoreUrl,
-  isWebhookUrl,
-  isWpAdminUrl,
-  buildWooCommerceApiUrl,
-  extractBaseUrl,
-  normalizeStoreUrl,
-  isResourceUrl,
-} from './urlPatterns';
-
 // Currency utilities
 export { formatCurrency, formatPrice, getCurrencySymbol, getCurrencyCode } from './currency';
 

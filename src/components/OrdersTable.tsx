@@ -2,6 +2,7 @@ import React, { ChangeEvent } from 'react';
 import Pagination from './Pagination';
 import OrderTableRow from './OrderTableRow';
 import type { Order } from '../types';
+import { useVirtualRows } from '../hooks/useVirtualRows';
 
 interface OrdersTableProps {
   paginatedOrders: Order[];
@@ -28,11 +29,13 @@ function OrdersTable({
   onPageChange,
   onPageSizeChange,
 }: OrdersTableProps): React.ReactElement {
+  const { scrollContainer, enabled: virtualized, rows: visibleRows, padTop, padBottom } = useVirtualRows(paginatedOrders);
+  const selectedSet = new Set(selectedOrderIds);
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-colors">
-      <div className="overflow-x-auto">
+      <div ref={scrollContainer} className={virtualized ? 'overflow-auto max-h-[70vh]' : 'overflow-x-auto'}>
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-700">
+          <thead className={`bg-gray-50 dark:bg-gray-700${virtualized ? ' sticky top-0 z-10' : ''}`}>
             <tr>
               <th className="px-3 py-3 text-left w-10">
                 <input
@@ -65,6 +68,7 @@ function OrdersTable({
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+{padTop > 0 && (<tr aria-hidden="true" style={{ height: padTop }}><td colSpan={99} className="p-0" /></tr>)}
             {paginatedOrders.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
@@ -72,17 +76,18 @@ function OrdersTable({
                 </td>
               </tr>
             ) : (
-              paginatedOrders.map((order) => (
+              visibleRows.map((order) => (
                 <OrderTableRow
                   key={order.id}
                   order={order}
-                  isSelected={selectedOrderIds.includes(order.id)}
+                  isSelected={selectedSet.has(order.id)}
                   onSelect={onSelectOrder}
                   onStatusChange={onStatusChange}
                 />
               ))
             )}
-          </tbody>
+          {padBottom > 0 && (<tr aria-hidden="true" style={{ height: padBottom }}><td colSpan={99} className="p-0" /></tr>)}
+</tbody>
         </table>
       </div>
       {totalItems > 0 && (

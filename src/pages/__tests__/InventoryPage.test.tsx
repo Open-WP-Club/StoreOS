@@ -21,7 +21,7 @@ vi.mock('../../utils/csvExport', () => ({
   exportToCSV: vi.fn(),
 }));
 vi.mock('../../utils/pdfExport', () => ({
-  exportTableToPDF: vi.fn(),
+  exportTableToPDF: vi.fn(() => Promise.resolve()),
 }));
 vi.mock('../../constants', () => ({
   EMPTY_PRODUCTS: [],
@@ -60,6 +60,7 @@ const mockShowToast = vi.fn();
 const mockLogActivity = vi.fn();
 const mockUpdateStock = vi.fn();
 const mockDeleteProduct = vi.fn();
+const mockBatchProducts = vi.fn();
 const mockBatchUpdateProducts = vi.fn();
 
 function createProducts(): Product[] {
@@ -112,6 +113,7 @@ beforeEach(() => {
   (WooCommerceService as Mock).mockImplementation(function () { return {
     updateStock: mockUpdateStock,
     deleteProduct: mockDeleteProduct,
+    batchProducts: mockBatchProducts,
     batchUpdateProducts: mockBatchUpdateProducts,
   }; });
 
@@ -262,7 +264,7 @@ describe('InventoryPage', () => {
 
   describe('bulk delete', () => {
     it('deletes selected products after confirmation', async () => {
-      mockDeleteProduct.mockResolvedValue({ success: true });
+      mockBatchProducts.mockResolvedValue({ success: true, data: {} });
 
       render(<InventoryPage />);
       const checkboxes = screen.getAllByRole('checkbox');
@@ -273,7 +275,7 @@ describe('InventoryPage', () => {
       });
 
       expect(window.confirm).toHaveBeenCalled();
-      expect(mockDeleteProduct).toHaveBeenCalled();
+      expect(mockBatchProducts).toHaveBeenCalledWith({ delete: [expect.any(Number)] });
     });
 
     it('does not delete if confirm is cancelled', async () => {
@@ -287,7 +289,7 @@ describe('InventoryPage', () => {
         fireEvent.click(screen.getByText('Delete Selected'));
       });
 
-      expect(mockDeleteProduct).not.toHaveBeenCalled();
+      expect(mockBatchProducts).not.toHaveBeenCalled();
     });
   });
 

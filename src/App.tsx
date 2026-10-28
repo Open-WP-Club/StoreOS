@@ -68,19 +68,6 @@ export function prefetchAnalyticsPages(): void {
   import('./pages/GeographicAnalyticsPage');
 }
 
-// Extend Window interface for Electron API
-declare global {
-  interface Window {
-    electronAPI?: {
-      onClearCache: (callback: () => void) => void;
-      removeClearCacheListener: (callback: () => void) => void;
-      showNotification: (payload: { title: string; body: string; route?: string }) => void;
-      onNotificationClicked: (callback: (data: { route?: string }) => void) => void;
-      removeNotificationClickedListener: () => void;
-    };
-  }
-}
-
 /**
  * Listens for Electron notification clicks and navigates to the target route.
  * Must be rendered inside <Router> to access useNavigate.
@@ -91,15 +78,11 @@ function NotificationRouter(): null {
   useEffect(() => {
     if (!window.electronAPI) return;
 
-    window.electronAPI.onNotificationClicked((data) => {
+    return window.electronAPI.onNotificationClicked((data) => {
       if (data.route) {
         navigate(data.route);
       }
     });
-
-    return () => {
-      window.electronAPI?.removeNotificationClickedListener();
-    };
   }, [navigate]);
 
   return null;
@@ -226,12 +209,7 @@ function AppContent(): React.ReactElement {
         }, 1000);
       };
 
-      window.electronAPI.onClearCache(handleClearCache);
-
-      // Cleanup listener on unmount
-      return () => {
-        window.electronAPI?.removeClearCacheListener(handleClearCache);
-      };
+      return window.electronAPI.onClearCache(handleClearCache);
     }
     return undefined;
   }, [clearCache, toast]);

@@ -122,9 +122,7 @@ function OrderDetailPage(): ReactElement {
         </Link>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Order #{order.id}
-            </h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Order #{order.id}</h1>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               Placed on {new Date(order.date_created).toLocaleString()}
             </p>
@@ -138,7 +136,11 @@ function OrderDetailPage(): ReactElement {
             )}
             <button
               onClick={() =>
-                exportOrderInvoice(order, activeStore?.name || 'Store', order.currency || 'USD')
+                exportOrderInvoice(
+                  order,
+                  activeStore?.name || 'Store',
+                  order.currency || 'USD'
+                ).catch(() => showToast('PDF export failed', 'error'))
               }
               className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
               title="Export Invoice PDF"
@@ -148,7 +150,9 @@ function OrderDetailPage(): ReactElement {
             </button>
             <button
               onClick={() =>
-                exportPackingSlip(order, activeStore?.name || 'Store')
+                exportPackingSlip(order, activeStore?.name || 'Store').catch(() =>
+                  showToast('PDF export failed', 'error')
+                )
               }
               className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
               title="Export Packing Slip PDF"
@@ -156,8 +160,11 @@ function OrderDetailPage(): ReactElement {
               <ClipboardList className="w-4 h-4" />
               Packing Slip
             </button>
-            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getOrderStatusColor(order.status)}`}>
-              {(order.status || 'pending').charAt(0).toUpperCase() + (order.status || 'pending').slice(1)}
+            <span
+              className={`px-3 py-1 rounded-full text-sm font-semibold ${getOrderStatusColor(order.status)}`}
+            >
+              {(order.status || 'pending').charAt(0).toUpperCase() +
+                (order.status || 'pending').slice(1)}
             </span>
           </div>
         </div>
@@ -172,7 +179,9 @@ function OrderDetailPage(): ReactElement {
           {order.customer_note && (
             <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden transition-colors">
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Бележка от клиента</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Бележка от клиента
+                </h2>
               </div>
               <div className="px-6 py-4">
                 <p className="text-sm text-gray-700 dark:text-gray-300">{order.customer_note}</p>

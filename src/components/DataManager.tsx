@@ -3,6 +3,7 @@ import { useStoreConfig, useCache, useSettings } from '../stores';
 import useNotifications from '../stores/notificationStore';
 import { useToast } from '../contexts/ToastContext';
 import WooCommerceService from '../services/woocommerce';
+import { TIME } from '../constants/config';
 import { useProgressiveLoading } from '../hooks/useProgressiveLoading';
 import { playNotificationSound } from '../utils/notificationSound';
 import type { WooCommerceOrder, WooCommerceProduct, BatchLoadProgress } from '../types';
@@ -16,13 +17,14 @@ function sendNotification(
   body: string,
   route?: string,
   storeId?: string,
-  celebrationData?: OrderCelebrationData,
+  celebrationData?: OrderCelebrationData
 ): void {
   // Native Electron notification
   window.electronAPI?.showNotification({ title, body, route });
 
   // Store in notification center
-  const { addNotification, soundEnabled, confettiEnabled, triggerCelebration } = useNotifications.getState();
+  const { addNotification, soundEnabled, confettiEnabled, triggerCelebration } =
+    useNotifications.getState();
   addNotification({ type, title, body, route, storeId });
 
   // Play sound if enabled
@@ -44,6 +46,65 @@ interface LoadingRefState {
 interface LastFetchRefState {
   orders: number | null;
   products: number | null;
+}
+
+/** Notify about orders not seen in the previous load (new orders, failed payments). */
+function detectNewOrders(
+  orders: WooCommerceOrder[],
+  knownRef: { current: Set<number> | null },
+  storeId: string
+): void {
+  // Detect new orders for notifications
+  const { notifyNewOrders } = useSettings.getState();
+  if (notifyNewOrders) {
+    const currentIds = new Set(orders.map((o) => o.id));
+    if (knownRef.current !== null) {
+      const newOrders = orders.filter((o) => !knownRef.current!.has(o.id));
+      if (newOrders.length > 0) {
+        const first = newOrders[0]!;
+        const notifBody =
+          newOrders.length === 1
+            ? `Order #${first.id} — ${first.billing?.first_name || ''} ${first.billing?.last_name || ''}`
+            : `${newOrders.length} new orders received`;
+        const customerName =
+          newOrders.length === 1
+            ? `${first.billing?.first_name || ''} ${first.billing?.last_name || ''}`.trim() ||
+              undefined
+            : undefined;
+        sendNotification('new_order', 'New Order', notifBody, '/orders', storeId, {
+          orderCount: newOrders.length,
+          orderId: newOrders.length === 1 ? first.id : undefined,
+          orderTotal: newOrders.length === 1 ? first.total : undefined,
+          customerName,
+        });
+
+        // Also detect failed payments
+        const failedOrders = newOrders.filter((o) => o.status === 'failed');
+        if (failedOrders.length > 0) {
+          const failedBody =
+            failedOrders.length === 1
+              ? `Order #${failedOrders[0]!.id} payment failed`
+              : `${failedOrders.length} orders with failed payments`;
+          sendNotification('failed_payment', 'Failed Payment', failedBody, '/orders', storeId);
+        }
+      }
+    }
+    knownRef.current = currentIds;
+  }
+}
+
+/** Newest modified date among the orders (ISO), used as the next delta-sync cursor. */
+function latestModified(orders: WooCommerceOrder[], fallback: string | null = null): string | null {
+  return orders.reduce<string | null>((latest, o) => {
+    const d = o.date_modified_gmt;
+    return d && (!latest || d > latest) ? d : latest;
+  }, fallback);
+}
+
+function loadFailureMessage(what: string, result: { code?: string }): string {
+  return result.code === 'invalid_credentials'
+    ? `Invalid credentials – check the store keys in Setup (${what} not loaded).`
+    : `Failed to load ${what}. Please try again.`;
 }
 
 /**
@@ -73,6 +134,9 @@ function DataManager(): null {
     products: null,
   });
 
+  // Orders delta sync state (in-memory): when the last full load ran and the newest modified date
+  const ordersSyncRef = useRef<{ at: number; lastSync: string | null }>({ at: 0, lastSync: null });
+
   // Track known order IDs for new-order detection
   const knownOrderIdsRef = useRef<Set<number> | null>(null);
 
@@ -85,9 +149,45 @@ function DataManager(): null {
 
       try {
         const service = new WooCommerceService(currentStore);
-        const loadingSettings = currentStore.loadingSettings || { batchSize: 50, batchDelay: 500 };
+        const loadingSettings = currentStore.loadingSettings || {
+          batchSize: 50,
+          batchDelay: 500,
+        };
 
         startLoading('orders', 0);
+
+        // Delta sync: after a full load, only fetch orders modified since (full re-sync hourly,
+        // because delta cannot see deletions)
+        const cached = useCache.getState().cache.orders;
+        const cachedData = cached?.data;
+        const { at, lastSync } = ordersSyncRef.current;
+        if (
+          lastSync &&
+          Date.now() - at < TIME.HOUR &&
+          cached?.storeId === currentStore.id &&
+          !cached.partial &&
+          cachedData && cachedData.length > 0
+        ) {
+          try {
+            const delta = await service.getOrdersSince(lastSync, { per_page: 100 });
+            if (delta.success) {
+              if (delta.data.length > 0) {
+                const known = new Set(cachedData.map((o) => o.id));
+                const updated = new Map(delta.data.map((o) => [o.id, o]));
+                const merged = [
+                  ...delta.data.filter((o) => !known.has(o.id)),
+                  ...cachedData.map((o) => updated.get(o.id) ?? o),
+                ];
+                await setCachedData('orders', merged);
+                detectNewOrders(merged, knownOrderIdsRef, currentStore.id);
+                ordersSyncRef.current = { at, lastSync: latestModified(delta.data, lastSync) };
+              }
+              return;
+            }
+          } catch {
+            // Delta sync failed, fall through to the full fetch
+          }
+        }
 
         const result = await service.getAllOrders(
           { per_page: loadingSettings.batchSize },
@@ -141,48 +241,15 @@ function DataManager(): null {
         );
 
         if (!result.success) {
-          toast.error(`Failed to load orders. Please try again.`);
+          toast.error(loadFailureMessage('orders', result));
         } else if (!('cancelled' in result && result.cancelled)) {
           await setCachedData('orders', result.data);
 
-          // Detect new orders for notifications
-          const { notifyNewOrders } = useSettings.getState();
-          if (notifyNewOrders) {
-            const currentIds = new Set((result.data as WooCommerceOrder[]).map((o) => o.id));
-            if (knownOrderIdsRef.current !== null) {
-              const newOrders = (result.data as WooCommerceOrder[]).filter(
-                (o) => !knownOrderIdsRef.current!.has(o.id)
-              );
-              if (newOrders.length > 0) {
-                const first = newOrders[0]!;
-                const notifBody =
-                  newOrders.length === 1
-                    ? `Order #${first.id} — ${first.billing?.first_name || ''} ${first.billing?.last_name || ''}`
-                    : `${newOrders.length} new orders received`;
-                const customerName =
-                  newOrders.length === 1
-                    ? `${first.billing?.first_name || ''} ${first.billing?.last_name || ''}`.trim() || undefined
-                    : undefined;
-                sendNotification('new_order', 'New Order', notifBody, '/orders', currentStore.id, {
-                  orderCount: newOrders.length,
-                  orderId: newOrders.length === 1 ? first.id : undefined,
-                  orderTotal: newOrders.length === 1 ? first.total : undefined,
-                  customerName,
-                });
-
-                // Also detect failed payments
-                const failedOrders = newOrders.filter((o) => o.status === 'failed');
-                if (failedOrders.length > 0) {
-                  const failedBody =
-                    failedOrders.length === 1
-                      ? `Order #${failedOrders[0]!.id} payment failed`
-                      : `${failedOrders.length} orders with failed payments`;
-                  sendNotification('failed_payment', 'Failed Payment', failedBody, '/orders', currentStore.id);
-                }
-              }
-            }
-            knownOrderIdsRef.current = currentIds;
-          }
+          detectNewOrders(result.data as WooCommerceOrder[], knownOrderIdsRef, currentStore.id);
+          ordersSyncRef.current = {
+            at: Date.now(),
+            lastSync: latestModified(result.data as WooCommerceOrder[]),
+          };
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unknown error';
@@ -204,7 +271,10 @@ function DataManager(): null {
 
       try {
         const service = new WooCommerceService(currentStore);
-        const loadingSettings = currentStore.loadingSettings || { batchSize: 50, batchDelay: 500 };
+        const loadingSettings = currentStore.loadingSettings || {
+          batchSize: 50,
+          batchDelay: 500,
+        };
 
         const cachedState = useCache.getState().cache.products;
         if (cachedState?.lastSync) {
@@ -274,7 +344,7 @@ function DataManager(): null {
         );
 
         if (!result.success) {
-          toast.error(`Failed to load products. Please try again.`);
+          toast.error(loadFailureMessage('products', result));
         } else if (!('cancelled' in result && result.cancelled)) {
           const latestModified = result.data.reduce<string | null>((latest, product) => {
             const productDate = product.date_modified_gmt || product.date_modified;
@@ -304,7 +374,13 @@ function DataManager(): null {
                 lowStockItems.length === 1
                   ? `${firstItem.name} has only ${firstItem.stock_quantity} left`
                   : `${lowStockItems.length} products are running low on stock`;
-              sendNotification('low_stock', 'Low Stock Alert', stockBody, '/inventory', currentStore.id);
+              sendNotification(
+                'low_stock',
+                'Low Stock Alert',
+                stockBody,
+                '/inventory',
+                currentStore.id
+              );
             }
           }
         }
@@ -316,7 +392,16 @@ function DataManager(): null {
         finishLoading();
       }
     },
-    [currentStore, setCachedData, setProductsLastSync, startLoading, updateProgress, finishLoading, isCancelled, toast]
+    [
+      currentStore,
+      setCachedData,
+      setProductsLastSync,
+      startLoading,
+      updateProgress,
+      finishLoading,
+      isCancelled,
+      toast,
+    ]
   );
 
   const loadAllData = useCallback(async (): Promise<void> => {
@@ -388,12 +473,21 @@ function DataManager(): null {
 
     loadAllDataRef.current();
 
-    const refreshInterval = setInterval(() => {
-      refreshStaleDataRef.current();
-    }, 5 * 60 * 1000);
+    // Skip while the window is hidden or offline (a tick every 5 min is the backoff when
+    // offline); catch up as soon as the window is visible / back online.
+    const canRefresh = (): boolean =>
+      document.visibilityState !== 'hidden' && navigator.onLine !== false;
+    const tick = (): void => {
+      if (canRefresh()) refreshStaleDataRef.current();
+    };
+    const refreshInterval = setInterval(tick, 5 * 60 * 1000);
+    document.addEventListener('visibilitychange', tick);
+    window.addEventListener('online', tick);
 
     return () => {
       clearInterval(refreshInterval);
+      document.removeEventListener('visibilitychange', tick);
+      window.removeEventListener('online', tick);
     };
   }, [currentStore?.id]);
 

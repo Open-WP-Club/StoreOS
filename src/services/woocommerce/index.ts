@@ -1,5 +1,5 @@
 import type { WooCommerceStore } from '../../types';
-import { WooCommerceServiceTaxReviews } from './tax-reviews';
+import { WooCommerceServiceAdmin } from './admin';
 
 /**
  * WooCommerce Service
@@ -12,10 +12,11 @@ import { WooCommerceServiceTaxReviews } from './tax-reviews';
  *   customers.ts     — customers
  *   coupons.ts       — coupons
  *   tax-reviews.ts   — tax rates/classes + product reviews
+ *   admin.ts         — reports, payment gateways, shipping zones, webhooks, settings
  *
  * Import path is unchanged: `import WooCommerceService from '../services/woocommerce'`
  */
-class WooCommerceService extends WooCommerceServiceTaxReviews {
+class WooCommerceService extends WooCommerceServiceAdmin {
   constructor(storeConfig: WooCommerceStore) {
     super(storeConfig);
   }

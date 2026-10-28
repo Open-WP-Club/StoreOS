@@ -4,10 +4,14 @@ export interface ApiSuccessResponse<T> {
   headers?: Record<string, string>;
 }
 
+export type ApiErrorCode = 'invalid_credentials' | 'offline' | 'timeout';
+
 export interface ApiErrorResponse {
   success: false;
   error: string;
   cancelled?: boolean;
+  /** Typed failure reason; 'invalid_credentials' should link the user to Setup. */
+  code?: ApiErrorCode;
 }
 
 export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;

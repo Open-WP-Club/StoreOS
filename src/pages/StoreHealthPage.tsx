@@ -15,6 +15,11 @@ import {
 import { useStoreConfig } from '../stores';
 import WooCommerceService from '../services/woocommerce';
 import type { SystemStatus } from '../types';
+import type {
+  WooCommercePaymentGateway,
+  WooCommerceShippingZone,
+  WooCommerceWebhook,
+} from '../services/woocommerce/admin';
 
 type HealthStatus = 'good' | 'warning' | 'error';
 
@@ -73,6 +78,11 @@ function StoreHealthPage(): ReactElement | null {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
+  const [integrations, setIntegrations] = useState<{
+    gateways: WooCommercePaymentGateway[];
+    zones: WooCommerceShippingZone[];
+    webhooks: WooCommerceWebhook[];
+  } | null>(null);
 
   const fetchHealth = useCallback(async () => {
     if (!activeStore) return;
@@ -84,6 +94,17 @@ function StoreHealthPage(): ReactElement | null {
       if (result.success) {
         setSystemStatus(result.data);
         setLastChecked(new Date());
+        // Optional extras: a key without access to these endpoints just hides the section
+        const [gateways, zones, webhooks] = await Promise.all([
+          service.getPaymentGateways(),
+          service.getShippingZones(),
+          service.getWebhooks(),
+        ]);
+        setIntegrations(
+          gateways.success && zones.success && webhooks.success
+            ? { gateways: gateways.data, zones: zones.data, webhooks: webhooks.data }
+            : null
+        );
       } else {
         setError(result.error || 'Failed to fetch system status');
       }
@@ -356,6 +377,36 @@ function StoreHealthPage(): ReactElement | null {
             <InfoRow label="Site URL" value={env.site_url} />
           </div>
         </div>
+
+        {/* Integrations */}
+        {integrations && (
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden lg:col-span-2">
+            <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex items-center gap-2">
+              <Puzzle className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white">Integrations</h2>
+            </div>
+            <div className="divide-y divide-gray-100 dark:divide-gray-700">
+              <InfoRow
+                label="Payment gateways"
+                value={
+                  integrations.gateways
+                    .filter((g) => g.enabled)
+                    .map((g) => g.title)
+                    .join(', ') || 'None enabled'
+                }
+              />
+              <InfoRow label="Shipping zones" value={String(integrations.zones.length)} />
+              <InfoRow
+                label="Webhooks"
+                value={
+                  integrations.webhooks.length === 0
+                    ? 'None'
+                    : `${integrations.webhooks.filter((w) => w.status === 'active').length} active / ${integrations.webhooks.length} total`
+                }
+              />
+            </div>
+          </div>
+        )}
 
         {/* Active Plugins */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden lg:col-span-2">

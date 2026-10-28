@@ -2,7 +2,37 @@ import { defineConfig, externalizeDepsPlugin } from 'electron-vite';
 import react from '@vitejs/plugin-react';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import { resolve } from 'path';
+import type { Plugin } from 'vite';
 import packageJson from './package.json' with { type: 'json' };
+
+// Content-Security-Policy, delivered via <meta> so it also covers file:// production loads.
+// Production: no inline/eval scripts. Dev only adds what Vite HMR / React Refresh needs.
+function cspPlugin(): Plugin {
+  return {
+    name: 'storeos-csp',
+    transformIndexHtml: {
+      order: 'pre',
+      handler(html, ctx) {
+        const dev = !!ctx.server;
+        const policy = [
+          "default-src 'self'",
+          dev ? "script-src 'self' 'unsafe-inline'" : "script-src 'self'",
+          "style-src 'self' 'unsafe-inline'", // React inline styles + Chart.js
+          "img-src 'self' data: blob: https:",
+          "font-src 'self' data:",
+          // WooCommerce stores are user-supplied https origins; localhost for local dev stores.
+          `connect-src 'self' https: http://localhost:* http://127.0.0.1:*${dev ? ' ws://localhost:*' : ''}`,
+          "worker-src 'self' blob:",
+          "object-src 'none'",
+          "frame-src 'none'", // WP Admin opens in an isolated main-process window instead
+          "base-uri 'self'",
+          "form-action 'none'",
+        ].join('; ');
+        return html.replace('__CSP__', policy);
+      },
+    },
+  };
+}
 
 export default defineConfig({
   // Main process configuration
@@ -40,6 +70,7 @@ export default defineConfig({
   renderer: {
     root: '.',
     plugins: [
+      cspPlugin(),
       react({
         babel: {
           plugins: [['babel-plugin-react-compiler', { target: '19' }]],

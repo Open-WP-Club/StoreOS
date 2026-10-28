@@ -13,7 +13,8 @@ vi.mock('../../stores');
 vi.mock('../../hooks/useOrderDetail');
 vi.mock('../../hooks/useOrderNotes');
 vi.mock('../../utils/pdfExport', () => ({
-  exportOrderInvoice: vi.fn(),
+  exportOrderInvoice: vi.fn(() => Promise.resolve()),
+  exportPackingSlip: vi.fn(() => Promise.resolve()),
 }));
 vi.mock('../../constants', () => ({
   getOrderStatusColor: () => 'bg-blue-100 text-blue-800',

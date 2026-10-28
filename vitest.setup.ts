@@ -26,7 +26,11 @@ const localStorageMock = {
   },
   key: vi.fn((index: number) => Object.keys(localStorageStore)[index] ?? null),
 };
-global.localStorage = localStorageMock as unknown as Storage;
+Object.defineProperty(globalThis, 'localStorage', {
+  value: localStorageMock,
+  configurable: true,
+  writable: true,
+});
 
 // Mock IndexedDB
 global.indexedDB = {

@@ -2,7 +2,8 @@
  * Backup & Restore utilities
  *
  * Creates and restores backups of all application state:
- * - Store configurations (with API credentials)
+ * - Store configurations (API credentials are EXCLUDED unless a passphrase is given;
+ *   then they are AES-GCM encrypted with a PBKDF2-derived key)
  * - App settings (language, printer, PIN)
  * - Settings (auto-refresh, notifications)
  * - Theme preferences
@@ -58,7 +59,79 @@ export interface BackupData {
       lastSyncAttempt: number | null;
     };
     products?: Record<string, unknown[]>;
+    /** AES-GCM encrypted `{[storeId]: {consumerKey, consumerSecret}}` (present only with passphrase). */
+    encryptedCredentials?: { salt: string; iv: string; ct: string; iterations: number };
   };
+}
+
+type Credentials = Record<string, { consumerKey: string; consumerSecret: string }>;
+const PBKDF2_ITERATIONS = 250_000;
+const b64 = (u: Uint8Array): string => btoa(String.fromCharCode(...u));
+const unb64 = (s: string): Uint8Array<ArrayBuffer> =>
+  Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+
+async function deriveKey(
+  passphrase: string,
+  salt: Uint8Array<ArrayBuffer>,
+  iterations: number
+): Promise<CryptoKey> {
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(passphrase), 'PBKDF2', false, [
+    'deriveKey',
+  ]);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', hash: 'SHA-256', salt, iterations },
+    base,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+/** Add passphrase-encrypted store credentials (taken from live state) to a backup. */
+export async function encryptCredentials(
+  backup: BackupData,
+  passphrase: string
+): Promise<BackupData> {
+  if (!passphrase) throw new Error('Passphrase required');
+  const creds: Credentials = {};
+  for (const st of useStoreConfig.getState().stores) {
+    creds[st.id] = { consumerKey: st.consumerKey, consumerSecret: st.consumerSecret };
+  }
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(passphrase, salt, PBKDF2_ITERATIONS);
+  const ct = new Uint8Array(
+    await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(JSON.stringify(creds)))
+  );
+  return {
+    ...backup,
+    data: {
+      ...backup.data,
+      encryptedCredentials: { salt: b64(salt), iv: b64(iv), ct: b64(ct), iterations: PBKDF2_ITERATIONS },
+    },
+  };
+}
+
+/** Decrypt credentials and merge them back into the backup's stores. Throws on wrong passphrase. */
+export async function decryptCredentials(
+  backup: BackupData,
+  passphrase: string
+): Promise<BackupData> {
+  const enc = backup.data.encryptedCredentials;
+  if (!enc || !backup.data.storeConfig) return backup;
+  let creds: Credentials;
+  try {
+    const key = await deriveKey(passphrase, unb64(enc.salt), enc.iterations);
+    const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(enc.iv) }, key, unb64(enc.ct));
+    creds = JSON.parse(new TextDecoder().decode(plain)) as Credentials;
+  } catch {
+    throw new Error('Wrong passphrase or corrupted backup');
+  }
+  const stores = (backup.data.storeConfig.stores as Array<{ id: string }>).map((st) => ({
+    ...st,
+    ...(creds[st.id] ?? {}),
+  }));
+  return { ...backup, data: { ...backup.data, storeConfig: { ...backup.data.storeConfig, stores } } };
 }
 
 export interface RestoreResult {
@@ -91,7 +164,12 @@ export function createBackup(options: { includeProducts: boolean }): BackupData 
     includesProducts: options.includeProducts,
     data: {
       storeConfig: {
-        stores: storeConfigState.stores,
+        // Credentials are never written in plaintext (see encryptCredentials)
+        stores: storeConfigState.stores.map((st) => ({
+          ...st,
+          consumerKey: '',
+          consumerSecret: '',
+        })),
         currentStoreId: storeConfigState.currentStoreId,
       },
       appSettings: {
@@ -236,8 +314,22 @@ export function restoreBackup(backup: BackupData): RestoreResult {
   // Restore store configurations
   if (data.storeConfig) {
     try {
+      // Backups without credentials must not wipe credentials already on this machine.
+      const existing = useStoreConfig.getState().stores;
+      const stores = (
+        data.storeConfig.stores as ReturnType<typeof useStoreConfig.getState>['stores']
+      ).map((st) => {
+        const prev = existing.find((e) => e.id === st.id);
+        return prev
+          ? {
+              ...st,
+              consumerKey: st.consumerKey || prev.consumerKey,
+              consumerSecret: st.consumerSecret || prev.consumerSecret,
+            }
+          : st;
+      });
       useStoreConfig.setState({
-        stores: data.storeConfig.stores as ReturnType<typeof useStoreConfig.getState>['stores'],
+        stores,
         currentStoreId: data.storeConfig.currentStoreId,
       });
       restored.push('storeConfig');

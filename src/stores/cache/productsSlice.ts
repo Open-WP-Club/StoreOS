@@ -1,10 +1,11 @@
 import type { StateCreator } from 'zustand';
-import { saveToCache, getFromCache, STORES } from '../../utils/indexedDBCache';
+import { saveToCache, getCollection, getFromCache, STORES } from '../../utils/indexedDBCache';
 import { CACHE_EXPIRY, TIME } from '../../constants/config';
 import useStoreConfig from '../storeConfigStore';
 import useSettings from '../settingsStore';
 import type { WooCommerceProduct } from '../../types';
 import type { CacheStore, ProductsSlice } from './types';
+import { persistCollection } from './persist';
 
 type Mutators = [['zustand/immer', never]];
 
@@ -32,7 +33,7 @@ export const createProductsSlice: StateCreator<CacheStore, Mutators, [], Product
     } else {
       // Try IndexedDB
       try {
-        recentProducts = (await getFromCache(
+        recentProducts = (await getCollection(
           STORES.PRODUCTS,
           `${currentStoreId}_recent`,
           CACHE_EXPIRY.PRODUCTS_RECENT
@@ -63,7 +64,7 @@ export const createProductsSlice: StateCreator<CacheStore, Mutators, [], Product
     } else {
       // Try IndexedDB
       try {
-        oldProducts = (await getFromCache(
+        oldProducts = (await getCollection(
           STORES.PRODUCTS,
           `${currentStoreId}_old`,
           CACHE_EXPIRY.PRODUCTS_OLD
@@ -135,6 +136,10 @@ export const createProductsSlice: StateCreator<CacheStore, Mutators, [], Product
       }
     }
 
+    const prev = get().cache;
+    const prevRecent = prev.productsRecent.storeId === currentStoreId ? prev.productsRecent.data : null;
+    const prevOld = prev.productsOld.storeId === currentStoreId ? prev.productsOld.data : null;
+
     // Update memory cache
     set((state) => {
       state.cache.products.data = data;
@@ -147,9 +152,8 @@ export const createProductsSlice: StateCreator<CacheStore, Mutators, [], Product
     // Persist to IndexedDB
     try {
       await Promise.all([
-        saveToCache(STORES.PRODUCTS, currentStoreId, data),
-        saveToCache(STORES.PRODUCTS, `${currentStoreId}_recent`, recentProducts),
-        saveToCache(STORES.PRODUCTS, `${currentStoreId}_old`, oldProducts),
+        persistCollection(STORES.PRODUCTS, `${currentStoreId}_recent`, prevRecent, recentProducts),
+        persistCollection(STORES.PRODUCTS, `${currentStoreId}_old`, prevOld, oldProducts),
       ]);
     } catch {
       // Error handled silently

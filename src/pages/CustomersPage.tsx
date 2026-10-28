@@ -1,10 +1,18 @@
-import React, { useEffect, useState, useMemo, useCallback, ChangeEvent } from 'react';
+import React, {
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+  useDeferredValue,
+  ChangeEvent,
+} from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useStoreConfig, useCache } from '../stores';
 import WooCommerceService from '../services/woocommerce';
 import { formatPrice } from '../utils/currency';
 import { exportToCSV } from '../utils/csvExport';
 import { exportTableToPDF } from '../utils/pdfExport';
+import { useVirtualRows } from '../hooks/useVirtualRows';
 import ExportMenu from '../components/ExportMenu';
 import Pagination from '../components/Pagination';
 import ToastContainer from '../components/ToastContainer';
@@ -102,21 +110,17 @@ function CustomersPage(): React.ReactElement {
     const paying = customers.filter((c) => c.is_paying_customer).length;
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const newThisMonth = customers.filter(
-      (c) => new Date(c.date_created) >= monthStart
-    ).length;
-    const totalRevenue = customers.reduce(
-      (sum, c) => sum + parseFloat(c.total_spent || '0'),
-      0
-    );
+    const newThisMonth = customers.filter((c) => new Date(c.date_created) >= monthStart).length;
+    const totalRevenue = customers.reduce((sum, c) => sum + parseFloat(c.total_spent || '0'), 0);
 
     return { total, paying, newThisMonth, totalRevenue };
   }, [customers]);
 
   // Search customers
+  const deferredSearch = useDeferredValue(searchTerm);
   const searchedCustomers = useMemo(() => {
-    if (searchTerm.trim() === '') return customers;
-    const term = searchTerm.toLowerCase();
+    if (deferredSearch.trim() === '') return customers;
+    const term = deferredSearch.toLowerCase();
     return customers.filter(
       (c) =>
         c.email?.toLowerCase().includes(term) ||
@@ -125,13 +129,20 @@ function CustomersPage(): React.ReactElement {
         `${c.first_name} ${c.last_name}`.toLowerCase().includes(term) ||
         c.billing?.phone?.includes(term)
     );
-  }, [customers, searchTerm]);
+  }, [customers, deferredSearch]);
 
   // Pagination
   const paginatedCustomers = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
     return searchedCustomers.slice(startIndex, startIndex + pageSize);
   }, [searchedCustomers, currentPage, pageSize]);
+  const {
+    scrollContainer,
+    enabled: virtualized,
+    rows: visibleRows,
+    padTop,
+    padBottom,
+  } = useVirtualRows(paginatedCustomers);
 
   // Reset to page 1 when search changes
   const [prevSearchTerm, setPrevSearchTerm] = useState(searchTerm);
@@ -173,7 +184,11 @@ function CustomersPage(): React.ReactElement {
       { key: 'last_name', label: 'Last Name' },
       { key: 'billing.phone', label: 'Phone' },
       { key: 'orders_count', label: 'Orders' },
-      { key: 'total_spent', label: 'Total Spent', format: (val: unknown) => formatPrice(val as string) },
+      {
+        key: 'total_spent',
+        label: 'Total Spent',
+        format: (val: unknown) => formatPrice(val as string),
+      },
       { key: 'date_created', label: 'Registered' },
     ];
 
@@ -190,33 +205,42 @@ function CustomersPage(): React.ReactElement {
       { key: 'first_name', label: 'First Name' },
       { key: 'last_name', label: 'Last Name' },
       { key: 'orders_count', label: 'Orders' },
-      { key: 'total_spent', label: 'Total Spent', format: (val: unknown) => formatPrice(val as string) },
+      {
+        key: 'total_spent',
+        label: 'Total Spent',
+        format: (val: unknown) => formatPrice(val as string),
+      },
     ];
 
     exportTableToPDF(searchedCustomers, columns, {
       title: `Customers - ${currentStore.name}`,
-    });
+    }).catch(() => showToast('PDF export failed', 'error'));
   };
 
-  const handleViewCustomer = useCallback(async (customer: Customer): Promise<void> => {
-    setSelectedCustomer(customer);
-    setLoadingOrders(true);
+  const handleViewCustomer = useCallback(
+    async (customer: Customer): Promise<void> => {
+      setSelectedCustomer(customer);
+      setLoadingOrders(true);
 
-    if (!currentStore) return;
+      if (!currentStore) return;
 
-    try {
-      const service = new WooCommerceService(currentStore);
-      const result = await service.getCustomerOrders(customer.id, { per_page: 10 });
+      try {
+        const service = new WooCommerceService(currentStore);
+        const result = await service.getCustomerOrders(customer.id, {
+          per_page: 10,
+        });
 
-      if (result.success && result.data) {
-        setCustomerOrders(result.data);
+        if (result.success && result.data) {
+          setCustomerOrders(result.data);
+        }
+      } catch {
+        // Silent fail for orders
+      } finally {
+        setLoadingOrders(false);
       }
-    } catch {
-      // Silent fail for orders
-    } finally {
-      setLoadingOrders(false);
-    }
-  }, [currentStore]);
+    },
+    [currentStore]
+  );
 
   const handlePageChange = (page: number): void => {
     setCurrentPage(page);
@@ -229,7 +253,9 @@ function CustomersPage(): React.ReactElement {
   };
 
   if (!currentStore) {
-    return <EmptyState title="No store selected" message="Please select a store to view customers" />;
+    return (
+      <EmptyState title="No store selected" message="Please select a store to view customers" />
+    );
   }
 
   return (
@@ -244,7 +270,12 @@ function CustomersPage(): React.ReactElement {
         <StatCard label="Total Customers" value={stats.total} icon={User} />
         <StatCard label="Paying Customers" value={stats.paying} color="green" icon={ShoppingBag} />
         <StatCard label="New This Month" value={stats.newThisMonth} color="blue" icon={User} />
-        <StatCard label="Total Revenue" value={formatPrice(stats.totalRevenue.toString())} color="purple" icon={DollarSign} />
+        <StatCard
+          label="Total Revenue"
+          value={formatPrice(stats.totalRevenue.toString())}
+          color="purple"
+          icon={DollarSign}
+        />
       </div>
 
       {/* Search and Actions */}
@@ -286,10 +317,7 @@ function CustomersPage(): React.ReactElement {
           <span className="font-semibold text-gray-900 dark:text-white">
             {searchedCustomers.length}
           </span>{' '}
-          of{' '}
-          <span className="font-semibold text-gray-900 dark:text-white">
-            {customers.length}
-          </span>{' '}
+          of <span className="font-semibold text-gray-900 dark:text-white">{customers.length}</span>{' '}
           customers
         </div>
       </div>
@@ -301,9 +329,14 @@ function CustomersPage(): React.ReactElement {
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-colors">
-          <div className="overflow-x-auto">
+          <div
+            ref={scrollContainer}
+            className={virtualized ? 'overflow-auto max-h-[70vh]' : 'overflow-x-auto'}
+          >
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
+              <thead
+                className={`bg-gray-50 dark:bg-gray-700${virtualized ? ' sticky top-0 z-10' : ''}`}
+              >
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Customer
@@ -329,6 +362,11 @@ function CustomersPage(): React.ReactElement {
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {padTop > 0 && (
+                  <tr aria-hidden="true" style={{ height: padTop }}>
+                    <td colSpan={99} className="p-0" />
+                  </tr>
+                )}
                 {paginatedCustomers.length === 0 ? (
                   <tr>
                     <td
@@ -339,7 +377,7 @@ function CustomersPage(): React.ReactElement {
                     </td>
                   </tr>
                 ) : (
-                  paginatedCustomers.map((customer) => (
+                  visibleRows.map((customer) => (
                     <tr
                       key={customer.id}
                       className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
@@ -418,6 +456,11 @@ function CustomersPage(): React.ReactElement {
                     </tr>
                   ))
                 )}
+                {padBottom > 0 && (
+                  <tr aria-hidden="true" style={{ height: padBottom }}>
+                    <td colSpan={99} className="p-0" />
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -487,8 +530,14 @@ function CustomersPage(): React.ReactElement {
                 </div>
                 <div className="bg-purple-50 dark:bg-purple-900/30 rounded-lg p-4 text-center">
                   <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                    {selectedCustomer.orders_count && parseFloat(selectedCustomer.total_spent || '0') > 0
-                      ? formatPrice((parseFloat(selectedCustomer.total_spent || '0') / selectedCustomer.orders_count).toFixed(2))
+                    {selectedCustomer.orders_count &&
+                    parseFloat(selectedCustomer.total_spent || '0') > 0
+                      ? formatPrice(
+                          (
+                            parseFloat(selectedCustomer.total_spent || '0') /
+                            selectedCustomer.orders_count
+                          ).toFixed(2)
+                        )
                       : formatPrice('0')}
                   </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Avg Order</p>
@@ -497,18 +546,26 @@ function CustomersPage(): React.ReactElement {
 
               {/* Contact Info */}
               <div className="mb-6">
-                <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Contact Information</h4>
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-3">
+                  Contact Information
+                </h4>
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-2">
                   <p className="text-sm flex items-center gap-2">
                     <Mail className="w-4 h-4 text-gray-400" />
-                    <a href={`mailto:${selectedCustomer.email}`} className="text-blue-600 dark:text-blue-400 hover:underline">
+                    <a
+                      href={`mailto:${selectedCustomer.email}`}
+                      className="text-blue-600 dark:text-blue-400 hover:underline"
+                    >
                       {selectedCustomer.email}
                     </a>
                   </p>
                   {selectedCustomer.billing?.phone && (
                     <p className="text-sm flex items-center gap-2">
                       <Phone className="w-4 h-4 text-gray-400" />
-                      <a href={`tel:${selectedCustomer.billing.phone}`} className="text-blue-600 dark:text-blue-400 hover:underline">
+                      <a
+                        href={`tel:${selectedCustomer.billing.phone}`}
+                        className="text-blue-600 dark:text-blue-400 hover:underline"
+                      >
                         {selectedCustomer.billing.phone}
                       </a>
                     </p>
@@ -519,12 +576,17 @@ function CustomersPage(): React.ReactElement {
               {/* Billing Address */}
               {selectedCustomer.billing && (
                 <div className="mb-6">
-                  <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Billing Address</h4>
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-3">
+                    Billing Address
+                  </h4>
                   <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 text-sm text-gray-600 dark:text-gray-300">
                     <p>{selectedCustomer.billing.address_1}</p>
-                    {selectedCustomer.billing.address_2 && <p>{selectedCustomer.billing.address_2}</p>}
+                    {selectedCustomer.billing.address_2 && (
+                      <p>{selectedCustomer.billing.address_2}</p>
+                    )}
                     <p>
-                      {selectedCustomer.billing.city}, {selectedCustomer.billing.state} {selectedCustomer.billing.postcode}
+                      {selectedCustomer.billing.city}, {selectedCustomer.billing.state}{' '}
+                      {selectedCustomer.billing.postcode}
                     </p>
                     <p>{selectedCustomer.billing.country}</p>
                   </div>
@@ -563,13 +625,15 @@ function CustomersPage(): React.ReactElement {
                           </span>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                            order.status === 'completed'
-                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                              : order.status === 'processing'
-                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-                              : 'bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-300'
-                          }`}>
+                          <span
+                            className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                              order.status === 'completed'
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                : order.status === 'processing'
+                                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                                  : 'bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-300'
+                            }`}
+                          >
                             {order.status}
                           </span>
                           <span className="text-sm font-medium text-gray-900 dark:text-white">

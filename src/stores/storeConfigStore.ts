@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
+import { createSecureStorage } from '../utils/secureStorage';
 import type { WooCommerceStore, StoreLoadingSettings } from '../types';
 import useActivityLog from './activityLogStore';
 
@@ -152,8 +153,8 @@ const useStoreConfig = create<StoreConfigStore>()(
     })),
     {
       name: 'woocommerce-stores',
-      // Explicitly use localStorage with JSON serialization
-      storage: createJSONStorage(() => localStorage),
+      // localStorage with JSON serialization; credentials encrypted via OS keychain in Electron
+      storage: createJSONStorage(() => createSecureStorage()),
       partialize: (state): StoreConfigState => ({
         stores: state.stores,
         currentStoreId: state.currentStoreId,

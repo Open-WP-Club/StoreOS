@@ -284,8 +284,8 @@ export function useProductActions(
 
     try {
       const service = new WooCommerceService(currentStore);
-      const deletePromises = selectedProductIds.map((id) => service.deleteProduct(id));
-      await Promise.all(deletePromises);
+      const deleteResult = await service.batchProducts({ delete: selectedProductIds });
+      if (!deleteResult.success) throw new Error(deleteResult.error);
 
       const updatedProducts = products.filter((p) => !selectedProductIds.includes(p.id));
       setProducts(updatedProducts);

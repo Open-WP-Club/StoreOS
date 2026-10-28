@@ -2,6 +2,8 @@ import type {
   WooCommerceStore,
   SystemStatus,
   ApiResponse,
+  ApiErrorResponse,
+  BatchOperationResponse,
   PaginatedApiResponse,
   BatchLoadProgress,
   OnBatchLoaded,
@@ -23,7 +25,9 @@ export interface PaginatedFetchOptions {
 }
 
 export interface WooCommerceApiError {
+  code?: string;
   response?: {
+    status?: number;
     data?: {
       message?: string;
       code?: string;
@@ -87,6 +91,7 @@ export class WooCommerceServiceBase {
         consumerSecret: this.storeConfig.consumerSecret,
         version: 'wc/v3',
         queryStringAuth: true,
+        timeout: 30000,
       });
     }
     return this.api;
@@ -94,6 +99,52 @@ export class WooCommerceServiceBase {
 
   protected getErrorMessage(error: WooCommerceApiError): string {
     return error.response?.data?.message || error.message || 'Unknown error';
+  }
+
+  /** Map any thrown API error to an ApiErrorResponse with a typed `code` the UI can branch on. */
+  protected fail(error: unknown): ApiErrorResponse {
+    const e = error as WooCommerceApiError;
+    const status = e?.response?.status;
+    if (status === 401 || status === 403) {
+      return { success: false, error: 'Invalid credentials', code: 'invalid_credentials' };
+    }
+    if (e?.code === 'ECONNABORTED' || e?.code === 'ETIMEDOUT') {
+      return { success: false, error: 'Request timed out', code: 'timeout' };
+    }
+    if (!e?.response && (e?.code === 'ERR_NETWORK' || e?.message === 'Network Error')) {
+      return { success: false, error: 'Network error - check your connection', code: 'offline' };
+    }
+    return { success: false, error: this.getErrorMessage(e) };
+  }
+
+  /** POST `<resource>/batch`, chunking create/update/delete into groups of BATCH_SIZE (API max 100). */
+  protected async batchResource<T>(
+    resource: string,
+    ops: { create?: unknown[]; update?: unknown[]; delete?: number[] }
+  ): Promise<ApiResponse<BatchOperationResponse<T>>> {
+    try {
+      const api = await this.getApi();
+      const out: BatchOperationResponse<T> = {};
+      const n = this.BATCH_SIZE;
+      const len = Math.max(ops.create?.length ?? 0, ops.update?.length ?? 0, ops.delete?.length ?? 0);
+      for (let i = 0; i < len; i += n) {
+        const body = {
+          create: ops.create?.slice(i, i + n),
+          update: ops.update?.slice(i, i + n),
+          delete: ops.delete?.slice(i, i + n),
+        };
+        const res: WooCommerceApiResponse<BatchOperationResponse<T>> = await api.post(
+          `${resource}/batch`,
+          body
+        );
+        for (const k of ['create', 'update', 'delete'] as const) {
+          if (res.data[k]) out[k] = [...(out[k] ?? []), ...res.data[k]];
+        }
+      }
+      return { success: true, data: out };
+    } catch (error) {
+      return this.fail(error);
+    }
   }
 
   protected async paginatedFetch<T, P extends object = Record<string, unknown>>(
@@ -112,6 +163,7 @@ export class WooCommerceServiceBase {
       let allItems: T[] = [];
       let page = 1;
       let totalPages = 1;
+      let totalItems = 0;
 
       do {
         if (cancelCheck && cancelCheck()) {
@@ -126,7 +178,7 @@ export class WooCommerceServiceBase {
 
         const headers = response.headers || {};
         totalPages = parseInt(headers['x-wp-totalpages'] || '1', 10);
-        const totalItems = parseInt(headers['x-wp-total'] || String(allItems.length), 10);
+        totalItems = parseInt(headers['x-wp-total'] || String(allItems.length), 10);
 
         if (onBatchLoaded) {
           const progress: BatchLoadProgress<T> = {
@@ -147,9 +199,9 @@ export class WooCommerceServiceBase {
         }
       } while (page <= totalPages);
 
-      return { success: true, data: allItems, totalPages };
+      return { success: true, data: allItems, totalPages, totalItems };
     } catch (error) {
-      return { success: false, error: this.getErrorMessage(error as WooCommerceApiError) };
+      return this.fail(error);
     }
   }
 
@@ -163,7 +215,7 @@ export class WooCommerceServiceBase {
         await (await this.getApi()).get('system_status');
       return { success: true, data: response.data };
     } catch (error) {
-      return { success: false, error: this.getErrorMessage(error as WooCommerceApiError) };
+      return this.fail(error);
     }
   }
 }

@@ -21,6 +21,7 @@ let mockActiveStore: WooCommerceStore | undefined;
 const mockShowToast = vi.fn();
 const mockUpdateProduct = vi.fn();
 const mockDeleteProduct = vi.fn();
+const mockBatchProducts = vi.fn();
 const mockCreateProduct = vi.fn();
 const mockBatchUpdateProducts = vi.fn();
 const mockSetCachedData = vi.fn().mockResolvedValue(undefined);
@@ -58,6 +59,7 @@ beforeEach(() => {
   (WooCommerceService as Mock).mockImplementation(function () { return {
     updateProduct: mockUpdateProduct,
     deleteProduct: mockDeleteProduct,
+    batchProducts: mockBatchProducts,
     createProduct: mockCreateProduct,
     batchUpdateProducts: mockBatchUpdateProducts,
   }; });
@@ -365,7 +367,7 @@ describe('useProductActions', () => {
 
   describe('handleBulkDelete', () => {
     it('deletes multiple products', async () => {
-      mockDeleteProduct.mockResolvedValue({ success: true });
+      mockBatchProducts.mockResolvedValue({ success: true, data: {} });
 
       const products = [
         createMockProduct({ id: 1 }),
@@ -384,7 +386,7 @@ describe('useProductActions', () => {
         await result.current.handleBulkDelete(products, setProducts);
       });
 
-      expect(mockDeleteProduct).toHaveBeenCalledTimes(2);
+      expect(mockBatchProducts).toHaveBeenCalledWith({ delete: [1, 2] });
       expect(setProducts).toHaveBeenCalledWith([products[2]]);
       expect(mockLogActivity).toHaveBeenCalledWith(
         expect.objectContaining({

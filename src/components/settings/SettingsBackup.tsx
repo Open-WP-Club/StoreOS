@@ -2,7 +2,14 @@ import { memo, useState, useRef } from 'react';
 import { HardDrive, AlertTriangle, Download, Upload, X } from 'lucide-react';
 import { t } from '../../utils/i18n';
 import type { Language } from '../../utils/i18n';
-import { createBackup, downloadBackup, readBackupFile, restoreBackup } from '../../utils/backup';
+import {
+  createBackup,
+  downloadBackup,
+  readBackupFile,
+  restoreBackup,
+  encryptCredentials,
+  decryptCredentials,
+} from '../../utils/backup';
 import type { BackupData } from '../../utils/backup';
 import type { ToastType } from '../../types/ui';
 
@@ -17,12 +24,15 @@ const SettingsBackup = memo(function SettingsBackup({ language, showToast }: Set
   const [isRestoring, setIsRestoring] = useState(false);
   const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
   const [pendingRestore, setPendingRestore] = useState<BackupData | null>(null);
+  const [passphrase, setPassphrase] = useState('');
+  const [restorePassphrase, setRestorePassphrase] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleCreateBackup = (): void => {
+  const handleCreateBackup = async (): Promise<void> => {
     setIsBackingUp(true);
     try {
-      const backup = createBackup({ includeProducts });
+      let backup = createBackup({ includeProducts });
+      if (passphrase) backup = await encryptCredentials(backup, passphrase);
       downloadBackup(backup);
       showToast(t('backupSuccess', language), 'success');
     } catch {
@@ -39,20 +49,31 @@ const SettingsBackup = memo(function SettingsBackup({ language, showToast }: Set
     try {
       const backup = await readBackupFile(file);
       setPendingRestore(backup);
+      setRestorePassphrase('');
       setShowRestoreConfirm(true);
     } catch {
       showToast(t('invalidBackupFile', language), 'error');
     }
   };
 
-  const handleConfirmRestore = (): void => {
+  const handleConfirmRestore = async (): Promise<void> => {
     if (!pendingRestore) return;
+
+    let toRestore = pendingRestore;
+    if (pendingRestore.data.encryptedCredentials) {
+      try {
+        toRestore = await decryptCredentials(pendingRestore, restorePassphrase);
+      } catch {
+        showToast(language === 'bg' ? 'Грешна парола' : 'Wrong passphrase', 'error');
+        return; // keep the dialog open to retry
+      }
+    }
 
     setIsRestoring(true);
     setShowRestoreConfirm(false);
 
     try {
-      const result = restoreBackup(pendingRestore);
+      const result = restoreBackup(toRestore);
 
       if (result.success) {
         showToast(t('restoreSuccess', language), 'success');
@@ -113,6 +134,22 @@ const SettingsBackup = memo(function SettingsBackup({ language, showToast }: Set
               {t('createBackup', language)}
             </button>
           </div>
+
+          <label htmlFor="settings-backup-passphrase" className="flex flex-col gap-1 ml-4">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {language === 'bg'
+                ? 'Парола за криптиране на API ключовете (по избор)'
+                : 'Passphrase to encrypt API keys (optional)'}
+            </span>
+            <input
+              id="settings-backup-passphrase"
+              type="password"
+              autoComplete="new-password"
+              value={passphrase}
+              onChange={(e) => setPassphrase(e.target.value)}
+              className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            />
+          </label>
 
           <label htmlFor="settings-include-products" className="flex items-center gap-3 ml-4 cursor-pointer">
             <input
@@ -205,6 +242,22 @@ const SettingsBackup = memo(function SettingsBackup({ language, showToast }: Set
             <p className="text-gray-600 dark:text-gray-400 mb-4">
               {t('restoreConfirmMessage', language)}
             </p>
+
+            {pendingRestore.data.encryptedCredentials && (
+              <label htmlFor="settings-restore-passphrase" className="flex flex-col gap-1 mb-4">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {language === 'bg' ? 'Парола на backup-а' : 'Backup passphrase'}
+                </span>
+                <input
+                  id="settings-restore-passphrase"
+                  type="password"
+                  autoComplete="off"
+                  value={restorePassphrase}
+                  onChange={(e) => setRestorePassphrase(e.target.value)}
+                  className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </label>
+            )}
 
             <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-4 text-sm space-y-1">
               <p className="text-gray-600 dark:text-gray-400">

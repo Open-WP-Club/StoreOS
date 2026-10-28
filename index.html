@@ -2,22 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!-- Injected at build/dev time by the csp plugin in electron.vite.config.ts -->
+    <meta http-equiv="Content-Security-Policy" content="__CSP__" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>StoreOS - Built for WooCommerce</title>
-    <script>
-      // Apply dark mode immediately to prevent flash
-      (function() {
-        try {
-          const stored = localStorage.getItem('settings-storage');
-          if (stored) {
-            const data = JSON.parse(stored);
-            if (data.state && data.state.theme === 'dark') {
-              document.documentElement.classList.add('dark');
-            }
-          }
-        } catch (e) {}
-      })();
-    </script>
+    <script type="module" src="/src/themeInit.ts"></script>
     <style>
       /* Match the loading screen before the renderer CSS is available. */
       html,

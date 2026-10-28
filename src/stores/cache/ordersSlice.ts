@@ -1,8 +1,9 @@
 import type { StateCreator } from 'zustand';
-import { saveToCache, getFromCache, STORES } from '../../utils/indexedDBCache';
+import { getCollection, STORES } from '../../utils/indexedDBCache';
 import { CACHE_EXPIRY } from '../../constants/config';
 import type { WooCommerceOrder } from '../../types';
 import type { CacheStore, OrdersSlice } from './types';
+import { persistCollection } from './persist';
 
 type Mutators = [['zustand/immer', never]];
 
@@ -32,7 +33,7 @@ export const createOrdersSlice: StateCreator<CacheStore, Mutators, [], OrdersSli
     } else {
       // Try IndexedDB
       try {
-        recentOrders = (await getFromCache(
+        recentOrders = (await getCollection(
           STORES.ORDERS,
           `${currentStoreId}_recent`,
           CACHE_EXPIRY.ORDERS_RECENT
@@ -63,7 +64,7 @@ export const createOrdersSlice: StateCreator<CacheStore, Mutators, [], OrdersSli
     } else {
       // Try IndexedDB
       try {
-        oldOrders = (await getFromCache(
+        oldOrders = (await getCollection(
           STORES.ORDERS,
           `${currentStoreId}_old`,
           CACHE_EXPIRY.ORDERS_COMPLETED
@@ -116,6 +117,10 @@ export const createOrdersSlice: StateCreator<CacheStore, Mutators, [], OrdersSli
       }
     }
 
+    const prev = get().cache;
+    const prevRecent = prev.ordersRecent.storeId === currentStoreId ? prev.ordersRecent.data : null;
+    const prevOld = prev.ordersOld.storeId === currentStoreId ? prev.ordersOld.data : null;
+
     // ordersRecent = active orders (short cache); ordersOld = final orders (long cache)
     set((state) => {
       state.cache.orders = { data, timestamp: now, storeId: currentStoreId };
@@ -126,9 +131,8 @@ export const createOrdersSlice: StateCreator<CacheStore, Mutators, [], OrdersSli
     // Persist to IndexedDB
     try {
       await Promise.all([
-        saveToCache(STORES.ORDERS, currentStoreId, data),
-        saveToCache(STORES.ORDERS, `${currentStoreId}_recent`, activeOrders),
-        saveToCache(STORES.ORDERS, `${currentStoreId}_old`, finalOrders),
+        persistCollection(STORES.ORDERS, `${currentStoreId}_recent`, prevRecent, activeOrders),
+        persistCollection(STORES.ORDERS, `${currentStoreId}_old`, prevOld, finalOrders),
       ]);
     } catch {
       // Error handled silently

@@ -26,12 +26,15 @@ vi.mock('../../utils/currency', () => ({
 let mockActiveStore: WooCommerceStore | undefined;
 
 beforeEach(() => {
+  (exportTableToPDF as Mock).mockResolvedValue(undefined);
   mockActiveStore = createMockStore({ name: 'Test Store' });
 
-  (useStoreConfig as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
-    const state = { getCurrentStore: () => mockActiveStore };
-    return selector ? selector(state) : state;
-  });
+  (useStoreConfig as unknown as Mock).mockImplementation(
+    (selector?: (state: unknown) => unknown) => {
+      const state = { getCurrentStore: () => mockActiveStore };
+      return selector ? selector(state) : state;
+    }
+  );
 });
 
 // ============================================
@@ -61,9 +64,15 @@ describe('useProductExport', () => {
           expect.objectContaining({ key: 'name', label: 'Product Name' }),
           expect.objectContaining({ key: 'sku', label: 'SKU' }),
           expect.objectContaining({ key: 'price', label: 'Price' }),
-          expect.objectContaining({ key: 'regular_price', label: 'Regular Price' }),
+          expect.objectContaining({
+            key: 'regular_price',
+            label: 'Regular Price',
+          }),
           expect.objectContaining({ key: 'stock_quantity', label: 'Stock' }),
-          expect.objectContaining({ key: 'stock_status', label: 'Stock Status' }),
+          expect.objectContaining({
+            key: 'stock_status',
+            label: 'Stock Status',
+          }),
           expect.objectContaining({ key: 'status', label: 'Status' }),
         ]),
         expect.stringContaining('products-Test Store-')
@@ -120,7 +129,10 @@ describe('useProductExport', () => {
           expect.objectContaining({ key: 'sku', label: 'SKU' }),
           expect.objectContaining({ key: 'price', label: 'Price' }),
           expect.objectContaining({ key: 'stock_quantity', label: 'Stock' }),
-          expect.objectContaining({ key: 'stock_status', label: 'Stock Status' }),
+          expect.objectContaining({
+            key: 'stock_status',
+            label: 'Stock Status',
+          }),
           expect.objectContaining({ key: 'status', label: 'Status' }),
         ]),
         expect.objectContaining({

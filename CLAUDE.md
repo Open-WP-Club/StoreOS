@@ -43,7 +43,7 @@ StoreOS - Built for WooCommerce is an Electron-based desktop application for man
 - **@testing-library/react** + **jest-dom** matchers + **user-event**
 - **ESLint 9.x** - Flat config (`eslint.config.js`, not `.eslintrc.json`), includes `eslint-plugin-react-compiler`
 - **Prettier** - Code formatting
-- **typescript-eslint 8.x** - blocks bumping `typescript` past `<6.1.0` (peer dep constraint); separately, `eslint-plugin-react`'s peer range (`^9.7`) blocks bumping `eslint` past 9.x — check `TODO.md` "🔵 Пакети за следене" before upgrading either
+- **typescript-eslint 8.x** - blocks bumping `typescript` past `<6.1.0` (peer dep constraint); separately, `eslint-plugin-react`'s peer range (`^9.7`) blocks bumping `eslint` past 9.x — check before upgrading either
 
 ## Codebase Structure
 
@@ -76,12 +76,12 @@ StoreOS/
 │   │   ├── storeConfigStore.ts, themeStore.ts, settingsStore.ts, searchStore.ts, cacheStore.ts,
 │   │   │   appSettingsStore.ts, offlineStore.ts, notificationStore.ts, activityLogStore.ts, posStore.ts
 │   │   ├── storeUtils.ts     # Shared helpers: prependAndTrim<T>(), nowMs(), nowISO()
-│   │   └── index.ts          # Barrel export + `useStore` backward-compat combined-selector shim
+│   │   └── index.ts          # Barrel export + convenience hooks
 │   ├── hooks/                 # useProgressiveLoading, useOfflineMutation, useCouponForm, usePOS*, ...
 │   ├── contexts/ToastContext.tsx
 │   ├── utils/
 │   │   ├── indexedDBCache.ts, csvExport.ts, pdfExport.ts, currency.ts, dateTime.ts, i18n.ts
-│   │   ├── kpiCalculator.ts, memoryMonitor.ts, backup.ts, deferredInit.ts, startupMetrics.ts
+│   │   ├── kpiCalculator.ts, memoryMonitor.ts, backup.ts, startupMetrics.ts
 │   │   └── search/            # searchService.ts re-exports from here: fuzzy, orders, products, customers, utils
 │   ├── types/                  # Domain-split TS types (11 files): orders, products, customers, coupons, tax,
 │   │   │                        cache, activity, analytics, offline, store, ui, common, api, global.d.ts
@@ -118,7 +118,7 @@ Zustand state is **split into 9 domain stores** (not one monolithic store). Each
 | `useActivityLog` | User activity log |
 | `posStore` (separate module) | POS cart/checkout state — imported directly, not via `src/stores` barrel |
 
-`src/stores/index.ts` also exports a **backward-compatibility `useStore()`** that combines several of the above into one selector-style API (deprecated — prefer the individual hooks for fewer re-renders).
+Always use the individual hooks (the old combined `useStore()` shim was removed).
 
 ```typescript
 // Preferred (current) pattern
@@ -288,7 +288,7 @@ pnpm run typecheck:watch
 
 Flat config (`eslint.config.js`), ESLint 9.x — **not** `.eslintrc.json`. Includes `eslint-plugin-react`, `eslint-plugin-react-hooks`, `eslint-plugin-jsx-a11y`, `typescript-eslint`, and `eslint-plugin-react-compiler` (warns when React Compiler has to skip optimizing a component due to disabled React rules).
 
-**Do not bump `eslint` past `9.x` or `typescript` past `6.0.x`** — `typescript-eslint@8.65.0`'s peer range is `typescript: '>=4.8.4 <6.1.0'`; a TS7 or ESLint 10 bump breaks lint parsing until `typescript-eslint` ships v9. Tracked in `TODO.md`.
+**Do not bump `eslint` past `9.x` or `typescript` past `6.0.x`** — `typescript-eslint@8.65.0`'s peer range is `typescript: '>=4.8.4 <6.1.0'`; a TS7 or ESLint 10 bump breaks lint parsing until `typescript-eslint` ships v9.
 
 ### TypeScript Gotchas
 
@@ -373,7 +373,7 @@ showToast('Order updated successfully', 'success');
 ## Common Patterns & Best Practices
 
 1. **Always check for a store before API calls** — `if (!currentStore) return <EmptyState .../>;`
-2. **Prefer individual store hooks over the `useStore` compat shim** for fewer re-renders — `useCache(state => state.cache.products.data)` not `useStore().cache.products.data`.
+2. **Use individual store hooks with selectors** for fewer re-renders — `useCache(state => state.cache.products.data)`.
 3. **Route mutations through `useOfflineMutation`** rather than calling `service.update*` directly, so they survive offline periods.
 4. **Progressive loading for 100+ item datasets** — `useProgressiveLoading`.
 5. **Error handling** — always branch on `result.success`, show a toast, never let a rejected promise reach the UI unhandled.
@@ -447,7 +447,6 @@ The project has a full **Vitest** suite (97 files, ~1,777 tests) — this is not
 - [Zustand Documentation](https://docs.pmnd.rs/zustand/getting-started/introduction)
 - [Vitest Documentation](https://vitest.dev/)
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
-- `TODO.md` — live roadmap, known issues, and packages intentionally pinned/blocked
 
 ## Quick Reference Commands
 
@@ -465,7 +464,7 @@ pnpm run restart            # Custom restart script (restart-app.js)
 
 ## Key Files to Know
 
-- **`src/stores/index.ts`** — barrel export + backward-compat `useStore` shim; start here to see all state
+- **`src/stores/index.ts`** — barrel export + convenience hooks; start here to see all state
 - **`src/stores/cacheStore.ts`** — cache freshness/expiry logic per resource
 - **`src/services/woocommerce/index.ts`** — entry point into the split service layer
 - **`src/components/DataManager.tsx`** — global headless data-fetch manager (mounted once in `App.tsx`)
@@ -473,7 +472,6 @@ pnpm run restart            # Custom restart script (restart-app.js)
 - **`src/constants/config.js`** — all magic numbers (cache TTLs, thresholds, delays)
 - **`electron/main.js`** / **`electron/preload.js`** — Electron process code
 - **`electron.vite.config.ts`** — build config, path aliases, chunk splitting
-- **`TODO.md`** — current roadmap + package upgrade blockers
 
 ## AI Assistant Guidelines
 

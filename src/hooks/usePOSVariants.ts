@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useStoreConfig } from '../stores';
 import WooCommerceService from '../services/woocommerce';
 import type { WooCommerceProduct, ProductVariation } from '../types';
@@ -24,6 +24,7 @@ export function usePOSVariants(
   const getCurrentStore = useStoreConfig((state) => state.getCurrentStore);
   const currentStore = getCurrentStore();
 
+  const requestId = useRef(0);
   const [showVariantPicker, setShowVariantPicker] = useState(false);
   const [selectedVariableProduct, setSelectedVariableProduct] = useState<WooCommerceProduct | null>(null);
   const [productVariations, setProductVariations] = useState<ProductVariation[]>([]);
@@ -40,7 +41,9 @@ export function usePOSVariants(
 
   const handleProductClick = useCallback(async (product: WooCommerceProduct): Promise<void> => {
     if (product.type === 'variable' && product.variations && product.variations.length > 0) {
+      const id = ++requestId.current;
       setSelectedVariableProduct(product);
+      setProductVariations([]);
       setShowVariantPicker(true);
       setLoadingVariations(true);
 
@@ -48,14 +51,14 @@ export function usePOSVariants(
         if (currentStore) {
           const service = new WooCommerceService(currentStore);
           const result = await service.getProductVariations(product.id);
-          if (result.success && result.data) {
+          if (id === requestId.current && result.success && result.data) {
             setProductVariations(result.data);
           }
         }
       } catch {
         // Error loading variations - silently handled
       } finally {
-        setLoadingVariations(false);
+        if (id === requestId.current) setLoadingVariations(false);
       }
     } else {
       addToCart(product);
@@ -85,6 +88,8 @@ export function usePOSVariants(
   };
 
   const closeVariantPicker = (): void => {
+    requestId.current++;
+    setLoadingVariations(false);
     setShowVariantPicker(false);
     setSelectedVariableProduct(null);
     setProductVariations([]);

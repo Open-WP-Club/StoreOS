@@ -1,7 +1,8 @@
 import type { StateCreator } from 'zustand';
-import { saveToCache, getFromCache, STORES } from '../../utils/indexedDBCache';
+import { getCollection, STORES } from '../../utils/indexedDBCache';
 import { CACHE_EXPIRY } from '../../constants/config';
 import type { WooCommerceCustomer } from '../../types';
+import { persistCollection } from './persist';
 import type { CacheStore, CustomersSlice } from './types';
 
 type Mutators = [['zustand/immer', never]];
@@ -24,7 +25,7 @@ export const createCustomersSlice: StateCreator<CacheStore, Mutators, [], Custom
 
     // Try IndexedDB
     try {
-      const customers = (await getFromCache(
+      const customers = (await getCollection(
         STORES.CUSTOMERS,
         currentStoreId,
         CACHE_EXPIRY.CUSTOMERS
@@ -47,12 +48,14 @@ export const createCustomersSlice: StateCreator<CacheStore, Mutators, [], Custom
   },
 
   setCachedCustomers: async (data: WooCommerceCustomer[], currentStoreId: string, now: number) => {
+    const prevEntry = get().cache.customers;
+    const prev = prevEntry.storeId === currentStoreId ? prevEntry.data : null;
     set((state) => {
       state.cache.customers = { data, timestamp: now, storeId: currentStoreId };
     });
 
     try {
-      await saveToCache(STORES.CUSTOMERS, currentStoreId, data);
+      await persistCollection(STORES.CUSTOMERS, currentStoreId, prev, data);
     } catch {
       // Error handled silently
     }

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Language } from '../utils/i18n';
+import { hashPin, verifyPinHash, isLegacyHash } from '../utils/pinHash';
 
 // ============================================
 // Types
@@ -19,6 +20,8 @@ export interface AppSettingsState {
   pinTimeout: number; // Minutes of inactivity before lock (default 30)
   lastActivity: number | null; // Timestamp of last activity
   isLocked: boolean;
+  failedPinAttempts: number;
+  pinLockedUntil: number | null; // epoch ms; verifyPin refuses until then
 
   // App initialization
   isInitialized: boolean;
@@ -33,13 +36,14 @@ export interface AppSettingsActions {
 
   // PIN Lock
   setPinEnabled: (enabled: boolean) => void;
-  setPinCode: (code: string | null) => void;
+  setPinCode: (code: string | null) => Promise<void>;
   setPinTimeout: (minutes: number) => void;
   updateLastActivity: () => void;
   checkPinTimeout: () => boolean; // Returns true if should be locked
   lock: () => void;
   unlock: () => void;
-  verifyPin: (code: string) => boolean;
+  /** Throttled: after repeated failures returns false without checking until pinLockedUntil. */
+  verifyPin: (code: string) => Promise<boolean>;
 
   // App initialization
   setInitialized: (initialized: boolean) => void;
@@ -54,15 +58,14 @@ export type AppSettingsStore = AppSettingsState & AppSettingsActions;
 // Helper Functions
 // ============================================
 
-// Simple hash function for PIN (not cryptographically secure, but sufficient for local app)
-function hashPin(pin: string): string {
-  let hash = 0;
-  for (let i = 0; i < pin.length; i++) {
-    const char = pin.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  return hash.toString(36);
+const FREE_ATTEMPTS = 5;
+const BASE_LOCKOUT_MS = 30_000;
+const MAX_LOCKOUT_MS = 15 * 60_000;
+
+// 30s after the 5th failure, doubling each further failure, capped at 15 min.
+export function lockoutMs(failures: number): number {
+  if (failures < FREE_ATTEMPTS) return 0;
+  return Math.min(BASE_LOCKOUT_MS * 2 ** (failures - FREE_ATTEMPTS), MAX_LOCKOUT_MS);
 }
 
 // ============================================
@@ -80,6 +83,8 @@ const useAppSettings = create<AppSettingsStore>()(
       pinTimeout: 30, // 30 minutes default
       lastActivity: null,
       isLocked: false,
+      failedPinAttempts: 0,
+      pinLockedUntil: null,
       isInitialized: false,
 
       // Language
@@ -100,8 +105,12 @@ const useAppSettings = create<AppSettingsStore>()(
         }
       },
 
-      setPinCode: (code: string | null) => {
-        set({ pinCode: code ? hashPin(code) : null });
+      setPinCode: async (code: string | null) => {
+        set({
+          pinCode: code ? await hashPin(code) : null,
+          failedPinAttempts: 0,
+          pinLockedUntil: null,
+        });
       },
 
       setPinTimeout: (minutes: number) => {
@@ -138,10 +147,21 @@ const useAppSettings = create<AppSettingsStore>()(
         set({ isLocked: false, lastActivity: Date.now() });
       },
 
-      verifyPin: (code: string): boolean => {
-        const state = get();
-        if (!state.pinCode) return true;
-        return hashPin(code) === state.pinCode;
+      verifyPin: async (code: string): Promise<boolean> => {
+        const { pinCode, pinLockedUntil, failedPinAttempts } = get();
+        if (!pinCode) return true;
+        if (pinLockedUntil && Date.now() < pinLockedUntil) return false;
+
+        if (await verifyPinHash(code, pinCode)) {
+          set({ failedPinAttempts: 0, pinLockedUntil: null });
+          // Migrate legacy 32-bit hash to salted PBKDF2 on successful unlock.
+          if (isLegacyHash(pinCode)) set({ pinCode: await hashPin(code) });
+          return true;
+        }
+        const failures = failedPinAttempts + 1;
+        const wait = lockoutMs(failures);
+        set({ failedPinAttempts: failures, pinLockedUntil: wait ? Date.now() + wait : null });
+        return false;
       },
 
       // App initialization
@@ -159,6 +179,8 @@ const useAppSettings = create<AppSettingsStore>()(
           pinTimeout: 30,
           lastActivity: null,
           isLocked: false,
+          failedPinAttempts: 0,
+          pinLockedUntil: null,
         });
       },
     }),
@@ -171,6 +193,8 @@ const useAppSettings = create<AppSettingsStore>()(
         pinCode: state.pinCode,
         pinTimeout: state.pinTimeout,
         lastActivity: state.lastActivity,
+        failedPinAttempts: state.failedPinAttempts,
+        pinLockedUntil: state.pinLockedUntil,
       }),
     }
   )
