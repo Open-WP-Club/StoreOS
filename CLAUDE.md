@@ -39,7 +39,7 @@ StoreOS - Built for WooCommerce is an Electron-based desktop application for man
 - **IndexedDB** - Browser-based persistent storage
 
 ### Development & Testing Tools
-- **Vitest 4.x** - Test runner (`jsdom` environment), **not Jest** — 96 test files, ~1,675 tests
+- **Vitest 4.x** - Test runner (`jsdom` environment), **not Jest** — 108 test files, ~1,734 tests
 - **@testing-library/react** + **jest-dom** matchers + **user-event**
 - **ESLint 9.x** - Flat config (`eslint.config.js`, not `.eslintrc.json`), includes `eslint-plugin-react-compiler`
 - **Prettier** - Code formatting
@@ -266,10 +266,11 @@ pnpm run build:electron   # build + electron-builder → distributable in dist-e
 ### Testing
 
 ```bash
-pnpm run test             # vitest run — full suite (96 files, ~1,675 tests)
+pnpm run test             # vitest run — full suite (108 files, ~1,734 tests)
 pnpm run test:watch       # vitest (watch mode)
 pnpm run test:coverage    # vitest run --coverage (v8 provider)
-pnpm run test:e2e         # end-to-end suite (script added by another branch; confirm it exists in package.json after merge)
+pnpm run e2e:build        # one-off packaged build (electron-builder --dir --mac --arm64) for the e2e suite
+pnpm run test:e2e         # Playwright e2e against the packaged app (macOS arm64 only; not part of `test`)
 ```
 
 Coverage thresholds (see `vitest.config.ts`): branches 25%, functions 30%, lines 35%, statements 35%.
@@ -407,7 +408,7 @@ Verify field names match the data shape (e.g. `billing.email`, not `email`) and 
 
 ## Testing Guidelines
 
-The project has a full **Vitest** suite (96 files, ~1,675 tests) — this is not a "manual testing only" project. Key points:
+The project has a full **Vitest** suite (108 files, ~1,734 tests) — this is not a "manual testing only" project. Key points:
 
 - `clearMocks: true` in `vitest.config.ts` — mock implementations reset between tests automatically.
 - Set up mocks in `beforeEach()`, not inside `vi.mock()` factories.
@@ -440,6 +441,15 @@ The project has a full **Vitest** suite (96 files, ~1,675 tests) — this is not
 2. Add the route in `src/App.tsx`.
 3. Add a navigation link in `src/components/Layout.tsx`.
 4. Add a corresponding test in `src/pages/__tests__/`.
+
+### Recent Additions (reference)
+
+- **Routing**: `HashRouter` (not `BrowserRouter`) — packaged builds load from `file://`, where path routing breaks on reload. `DataManager` renders outside the Router, so it navigates via `window.location.hash`.
+- **Store logo**: `src/utils/storeLogo.ts` fetches the site icon from public `/wp-json/` (no credentials, https only, cached per store in localStorage for a day); `src/components/StoreLogo.tsx` shows it in the Layout title bar and falls back to the app icon.
+- **Batch results**: `src/utils/batchResult.ts` (`batchErrorIds`) reads per-item `error` entries from WooCommerce batch responses — batch call sites report "X of Y failed" instead of treating the HTTP 200 as success.
+- **Load errors**: `src/utils/loadErrors.ts` (`isInvalidCredentials`, `loadFailureMessage`, `openSetupAction`) powers the "Open Setup" toast in `DataManager` and `StoreHealthPage`.
+- **PIN length**: `appSettingsStore.pinLength` (default 4) is saved with the PIN; the lock screen shows that many dots and submits on the last digit. The app always starts locked when a PIN is enabled.
+- **Packaging**: `scripts/adhocSign.cjs` (`build.afterSign`) re-signs ad-hoc only when `codesign --verify` fails after the Electron fuse flip (otherwise arm64 builds are SIGKILLed on launch). e2e launches use `--use-mock-keychain` to avoid Keychain prompts.
 
 ## Resources & Documentation
 

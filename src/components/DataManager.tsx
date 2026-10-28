@@ -6,6 +6,7 @@ import WooCommerceService from '../services/woocommerce';
 import { TIME } from '../constants/config';
 import { useProgressiveLoading } from '../hooks/useProgressiveLoading';
 import { playNotificationSound } from '../utils/notificationSound';
+import { isInvalidCredentials, loadFailureMessage, openSetupAction } from '../utils/loadErrors';
 import type { WooCommerceOrder, WooCommerceProduct, BatchLoadProgress } from '../types';
 import type { OrdersSync } from '../stores/cache/types';
 import type { NotificationType } from '../stores/notificationStore';
@@ -102,10 +103,19 @@ function latestModified(orders: WooCommerceOrder[], fallback: string | null = nu
   }, fallback);
 }
 
-function loadFailureMessage(what: string, result: { code?: string }): string {
-  return result.code === 'invalid_credentials'
-    ? `Invalid credentials – check the store keys in Setup (${what} not loaded).`
-    : `Failed to load ${what}. Please try again.`;
+// DataManager renders outside <Router>, so navigate via the hash (App uses HashRouter).
+const goTo = (to: string): void => {
+  window.location.hash = to;
+};
+
+function showLoadFailure(
+  toast: ReturnType<typeof useToast>,
+  what: string,
+  result: { code?: string }
+): void {
+  const message = loadFailureMessage(what, result);
+  if (isInvalidCredentials(result)) toast.error(message, undefined, openSetupAction(goTo));
+  else toast.error(message);
 }
 
 /**
@@ -260,7 +270,7 @@ function DataManager(): null {
         );
 
         if (!result.success) {
-          toast.error(loadFailureMessage('orders', result));
+          showLoadFailure(toast, 'orders', result);
         } else if (!('cancelled' in result && result.cancelled)) {
           await setCachedData('orders', result.data);
 
@@ -365,7 +375,7 @@ function DataManager(): null {
         );
 
         if (!result.success) {
-          toast.error(loadFailureMessage('products', result));
+          showLoadFailure(toast, 'products', result);
         } else if (!('cancelled' in result && result.cancelled)) {
           const latestModified = result.data.reduce<string | null>((latest, product) => {
             const productDate = product.date_modified_gmt || product.date_modified;

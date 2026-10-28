@@ -64,3 +64,4 @@ Thumbs.db
 *.swo
 *~
 .claude/worktrees/
+e2e/artifacts/
