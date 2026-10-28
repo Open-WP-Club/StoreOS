@@ -1,5 +1,5 @@
 import React, { useEffect, lazy, Suspense, useState, useCallback } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useStoreConfig, useTheme, useCache, useAppSettings } from './stores';
 import Layout from './components/Layout';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -125,6 +125,12 @@ function AppContent(): React.ReactElement {
     setInitialized(true);
     updateLastActivity();
   }, [setInitialized, updateLastActivity]);
+
+  // A fresh launch always starts locked (otherwise restarting the app within the inactivity
+  // timeout would skip the PIN and its failed-attempt lockout). lock() is a no-op without a PIN.
+  useEffect(() => {
+    useAppSettings.getState().lock();
+  }, []);
 
   // Check PIN timeout periodically
   useEffect(() => {

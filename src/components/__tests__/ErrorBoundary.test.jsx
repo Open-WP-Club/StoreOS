@@ -170,7 +170,7 @@ describe('ErrorBoundary', () => {
       fireEvent.click(reloadButton);
     });
 
-    it('should set href when Go Home is clicked', () => {
+    it('should navigate to the root hash when Go Home is clicked', () => {
       render(
         <ErrorBoundary>
           <ErrorComponent />
@@ -182,8 +182,8 @@ describe('ErrorBoundary', () => {
 
       // Click the button - we verify it attempts to navigate
       fireEvent.click(homeButton);
-      // The href will include the full URL in test environment
-      expect(window.location.href).toContain('/');
+      // HashRouter: go to the root route via the hash, then reload
+      expect(window.location.hash).toBe('#/');
     });
   });
 

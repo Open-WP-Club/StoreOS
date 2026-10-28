@@ -85,6 +85,11 @@ export async function startMockWoo(
     if (req.method === 'OPTIONS') return void res.writeHead(204).end();
     log.push(`${req.method} ${u.pathname}`);
 
+    if (!u.pathname.startsWith('/wp-json/')) {
+      res.setHeader('content-type', 'text/html');
+      return void res.end('<title>Mock WP Admin</title><h1>Mock WP Admin</h1>');
+    }
+
     // http stores use OAuth1 (Authorization header or query), https use query-string keys.
     const auth = `${req.headers.authorization ?? ''} ${u.search}`;
     if (!auth.includes(CK)) {
@@ -107,6 +112,17 @@ export async function startMockWoo(
     }
     const make = makers[name];
     if (!make) return void res.end('[]');
+    const one = /^\/wp-json\/wc\/v3\/[a-z_]+\/(\d+)$/.exec(u.pathname)?.[1];
+    if (one) {
+      // Single-item read / update (PUT merges the JSON body into the generated item).
+      let body = '';
+      req.on('data', (c) => (body += c));
+      req.on('end', () => {
+        const patch = req.method === 'PUT' && body ? JSON.parse(body) : {};
+        res.end(JSON.stringify({ ...(make(Number(one)) as object), ...patch }));
+      });
+      return;
+    }
     const perPage = Math.min(Number(u.searchParams.get('per_page') ?? 10), 100);
     const page = Number(u.searchParams.get('page') ?? 1);
     const n = total[name] ?? 0;

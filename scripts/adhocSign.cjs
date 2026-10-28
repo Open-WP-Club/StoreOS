@@ -7,10 +7,7 @@ const path = require('node:path');
 
 exports.default = async function adhocSign(context) {
   if (context.electronPlatformName !== 'darwin') return;
-  const app = path.join(
-    context.appOutDir,
-    `${context.packager.appInfo.productFilename}.app`
-  );
+  const app = path.join(context.appOutDir, `${context.packager.appInfo.productFilename}.app`);
   try {
     execFileSync('codesign', ['--verify', '--deep', '--strict', app], { stdio: 'ignore' });
   } catch {

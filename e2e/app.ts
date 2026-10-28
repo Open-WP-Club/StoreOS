@@ -1,4 +1,4 @@
-import { chromium, type Browser, type Page } from '@playwright/test';
+import { chromium, test, type Browser, type Page } from '@playwright/test';
 import { spawn, type ChildProcess } from 'node:child_process';
 import fs from 'node:fs';
 import net from 'node:net';
@@ -24,6 +24,13 @@ const freePort = () =>
     });
   });
 
+// Every launched app is tracked and force-killed after each test (even when it failed).
+const running = new Set<ChildProcess>();
+test.afterEach(() => {
+  for (const p of running) p.kill('SIGKILL');
+  running.clear();
+});
+
 export const newProfile = () => fs.mkdtempSync(path.join(os.tmpdir(), 'storeos-e2e-'));
 
 export interface RunningApp {
@@ -40,9 +47,14 @@ export async function launchApp(userData: string): Promise<RunningApp> {
     throw new Error(`App binary not found: ${APP_BIN} (run pnpm run e2e:build)`);
   }
   const port = await freePort();
-  const proc = spawn(APP_BIN, [`--user-data-dir=${userData}`, `--remote-debugging-port=${port}`], {
-    stdio: 'ignore',
-  });
+  const proc = spawn(
+    APP_BIN,
+    [`--user-data-dir=${userData}`, `--remote-debugging-port=${port}`, '--use-mock-keychain'],
+    {
+      stdio: 'ignore',
+    }
+  );
+  running.add(proc);
   let browser: Browser | undefined;
   for (let i = 0; i < 60 && !browser; i++) {
     try {
