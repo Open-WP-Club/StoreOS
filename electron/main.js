@@ -1,7 +1,10 @@
 import { app, BrowserWindow, Menu, ipcMain, Notification, safeStorage, shell } from 'electron';
-import { autoUpdater } from 'electron-updater';
+import electronUpdater from 'electron-updater';
 import path from 'path';
 import { sanitizeNotificationPayload } from './ipcValidation';
+
+// electron-updater is CommonJS: named imports fail in the packaged ESM bundle.
+const { autoUpdater } = electronUpdater;
 
 // electron-vite provides these environment variables
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
