@@ -1,6 +1,7 @@
 import React, { useState, useDeferredValue, ChangeEvent, KeyboardEvent } from 'react';
 import { useStoreConfig, useCache, useActivityLog, useSettings } from '../stores';
 import WooCommerceService from '../services/woocommerce';
+import { batchErrorIds } from '../utils/batchResult';
 import { formatPrice } from '../utils/currency';
 import { exportToCSV } from '../utils/csvExport';
 import { exportTableToPDF } from '../utils/pdfExport';
@@ -271,8 +272,15 @@ const InventoryPage: React.FC = (): React.ReactElement => {
 
       const deleteResult = await service.batchProducts({ delete: selectedProductIds });
       if (!deleteResult.success) throw new Error(deleteResult.error);
+      const failedIds = batchErrorIds(deleteResult.data, 'delete');
+      const deletedIds = selectedProductIds.filter((id) => !failedIds.includes(id));
+      const failedCount = failedIds.length;
+      if (deletedIds.length === 0) {
+        showToast(`Error deleting products: ${failedCount} of ${selectedProductIds.length} failed`, 'error');
+        return;
+      }
 
-      const updatedProducts = products.filter((p) => !selectedProductIds.includes(p.id));
+      const updatedProducts = products.filter((p) => !deletedIds.includes(p.id));
       setProducts(updatedProducts);
       await setCachedData('products', updatedProducts);
       logActivity({
@@ -280,10 +288,14 @@ const InventoryPage: React.FC = (): React.ReactElement => {
         entityType: 'product',
         storeId: currentStore?.id ?? null,
         storeName: currentStore?.name,
-        details: `Bulk deleted ${selectedProductIds.length} products`,
+        details: `Bulk deleted ${deletedIds.length} products`,
       });
-      setSelectedProductIds([]);
-      showToast(`Successfully deleted ${selectedProductIds.length} products`, 'success');
+      setSelectedProductIds(failedIds);
+      if (failedCount > 0) {
+        showToast(`${failedCount} of ${selectedProductIds.length} products failed to delete`, 'warning');
+      } else {
+        showToast(`Successfully deleted ${deletedIds.length} products`, 'success');
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       showToast(`Error deleting products: ${errorMessage}`, 'error');
@@ -314,8 +326,10 @@ const InventoryPage: React.FC = (): React.ReactElement => {
           showToast('No products were updated', 'warning');
           return;
         }
+        const failedIds = batchErrorIds(result.data, 'update');
         const updatedProducts = [...products];
         result.data.update.forEach((updatedProduct: Product) => {
+          if (failedIds.includes(updatedProduct.id)) return;
           const index = updatedProducts.findIndex((p) => p.id === updatedProduct.id);
           if (index !== -1) updatedProducts[index] = updatedProduct;
         });
@@ -329,7 +343,11 @@ const InventoryPage: React.FC = (): React.ReactElement => {
           details: `Bulk updated ${updates.length} products`,
         });
         setSelectedProductIds([]);
-        showToast(`Successfully updated ${updates.length} products`, 'success', 5000, {
+        const saveMsg =
+          failedIds.length > 0
+            ? `${failedIds.length} of ${updates.length} products failed to update`
+            : `Successfully updated ${updates.length} products`;
+        showToast(saveMsg, failedIds.length > 0 ? 'warning' : 'success', 5000, {
           label: 'Undo',
           onClick: async () => {
             try {
@@ -343,14 +361,20 @@ const InventoryPage: React.FC = (): React.ReactElement => {
               }));
               const undoResult = await service.batchUpdateProducts(undoUpdates);
               if (undoResult.success) {
+                const undoFailed = batchErrorIds(undoResult.data, 'update');
                 const restoredProducts = [...updatedProducts];
                 previousProducts.forEach((prev) => {
+                  if (undoFailed.includes(prev.id)) return;
                   const idx = restoredProducts.findIndex((p) => p.id === prev.id);
                   if (idx !== -1) restoredProducts[idx] = prev;
                 });
                 setProducts(restoredProducts);
                 await setCachedData('products', restoredProducts);
-                showToast('Changes reverted', 'info');
+                if (undoFailed.length > 0) {
+                  showToast(`${undoFailed.length} of ${undoUpdates.length} products failed to revert`, 'warning');
+                } else {
+                  showToast('Changes reverted', 'info');
+                }
               } else {
                 showToast('Failed to revert changes', 'error');
               }

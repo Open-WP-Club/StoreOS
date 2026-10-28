@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo, useCallback, ChangeEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useStoreConfig, useCache, useActivityLog } from '../stores';
+import { batchErrorIds } from '../utils/batchResult';
 import WooCommerceService from '../services/woocommerce';
 import { formatPrice } from '../utils/currency';
 import { exportToCSV } from '../utils/csvExport';
@@ -60,7 +61,7 @@ function CouponsPage(): React.ReactElement {
   const logActivity = useActivityLog((state) => state.logActivity);
   const currentStore = getCurrentStore();
   const toast = useToast();
-  const { mutate: offlineMutate } = useOfflineMutation();
+  const { mutate: offlineMutate, isOnline } = useOfflineMutation();
 
   const [coupons, setCoupons] = useState<Coupon[]>(couponsFromCache);
   const [loading, setLoading] = useState<boolean>(couponsFromCache.length === 0);
@@ -71,6 +72,7 @@ function CouponsPage(): React.ReactElement {
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'expired'>('all');
   const [filterDiscountType, setFilterDiscountType] = useState<'all' | CouponDiscountType>('all');
   const [showBulkModal, setShowBulkModal] = useState<boolean>(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   const { loadingState } = useProgressiveLoading();
 
@@ -349,6 +351,66 @@ function CouponsPage(): React.ReactElement {
     [currentStore, coupons, setCachedData, logActivity, toast, offlineMutate]
   );
 
+  const handleBulkDelete = useCallback(async (): Promise<void> => {
+    if (selectedIds.length === 0 || !currentStore) return;
+    if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} coupons?`)) return;
+    // OfflineIndicator replay only understands single-id delete_coupon entries, so don't queue bulk.
+    if (!isOnline) {
+      toast.showToast('Bulk delete requires an internet connection', 'warning');
+      return;
+    }
+    const ids = selectedIds;
+
+    await offlineMutate({
+      operationType: 'delete_coupon',
+      queueData: { ids },
+      storeId: currentStore.id,
+      execute: async () => {
+        const service = new WooCommerceService(currentStore);
+        const result = await service.batchCoupons({ delete: ids });
+        if (!result.success) throw new Error(result.error);
+        return result.data;
+      },
+      onSuccess: async (data) => {
+        const failedIds = batchErrorIds(data, 'delete');
+        const deletedIds = ids.filter((id) => !failedIds.includes(id));
+        const updated = coupons.filter((c) => !deletedIds.includes(c.id));
+        setCoupons(updated);
+        await setCachedData('coupons', updated);
+        logActivity({
+          action: 'coupon_deleted',
+          entityType: 'coupon',
+          storeId: currentStore.id ?? null,
+          storeName: currentStore.name,
+          details: `Bulk deleted ${deletedIds.length} coupons`,
+        });
+        setSelectedIds(failedIds);
+        if (failedIds.length > 0) {
+          toast.showToast(`${failedIds.length} of ${ids.length} coupons failed to delete`, 'warning');
+        } else {
+          toast.showToast(`Deleted ${deletedIds.length} coupons`, 'success');
+        }
+      },
+      onError: (error) => toast.showToast(`Failed to delete coupons: ${error}`, 'error'),
+    });
+  }, [selectedIds, currentStore, coupons, setCachedData, logActivity, toast, offlineMutate, isOnline]);
+
+  const toggleSelected = useCallback((id: number): void => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
+  }, []);
+
+  const allPageSelected =
+    paginatedCoupons.length > 0 && paginatedCoupons.every((c) => selectedIds.includes(c.id));
+
+  const toggleAllOnPage = useCallback((): void => {
+    const pageIds = paginatedCoupons.map((c) => c.id);
+    setSelectedIds((prev) =>
+      pageIds.every((id) => prev.includes(id))
+        ? prev.filter((id) => !pageIds.includes(id))
+        : [...new Set([...prev, ...pageIds])]
+    );
+  }, [paginatedCoupons]);
+
   const getDiscountDisplay = useCallback((coupon: Coupon): string => {
     switch (coupon.discount_type) {
       case 'percent':
@@ -454,6 +516,15 @@ function CouponsPage(): React.ReactElement {
             <Zap className="w-4 h-4" />
             Bulk Generate
           </button>
+          {selectedIds.length > 0 && (
+            <button
+              onClick={handleBulkDelete}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete selected ({selectedIds.length})
+            </button>
+          )}
           <ExportMenu onExportCSV={handleExportCSV} onExportPDF={handleExportPDF} />
           <button
             onClick={handleRefresh}
@@ -487,6 +558,14 @@ function CouponsPage(): React.ReactElement {
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
+                  <th className="px-4 py-3 w-8">
+                    <input
+                      type="checkbox"
+                      aria-label="Select all coupons on page"
+                      checked={allPageSelected}
+                      onChange={toggleAllOnPage}
+                    />
+                  </th>
                   {['Code', 'Type', 'Amount', 'Usage', 'Expires', 'Status', 'Actions'].map((h) => (
                     <th
                       key={h}
@@ -501,7 +580,7 @@ function CouponsPage(): React.ReactElement {
                 {paginatedCoupons.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={7}
+                      colSpan={8}
                       className="px-6 py-8 text-center text-gray-500 dark:text-gray-400"
                     >
                       No coupons found
@@ -515,6 +594,14 @@ function CouponsPage(): React.ReactElement {
                         key={coupon.id}
                         className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${expired ? 'opacity-60' : ''}`}
                       >
+                        <td className="px-4 py-4">
+                          <input
+                            type="checkbox"
+                            aria-label={`Select coupon ${coupon.code}`}
+                            checked={selectedIds.includes(coupon.id)}
+                            onChange={() => toggleSelected(coupon.id)}
+                          />
+                        </td>
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-2">
                             <Tag className="w-4 h-4 text-gray-400" />

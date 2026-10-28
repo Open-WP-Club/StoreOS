@@ -366,6 +366,50 @@ describe('useProductActions', () => {
   });
 
   describe('handleBulkDelete', () => {
+    it('reports partial failure and only removes deleted products', async () => {
+      mockBatchProducts.mockResolvedValue({
+        success: true,
+        data: { delete: [{ id: 1 }, { id: 2, error: { code: 'cant', message: 'no' } }] },
+      });
+      const products = [
+        createMockProduct({ id: 1 }),
+        createMockProduct({ id: 2 }),
+        createMockProduct({ id: 3 }),
+      ];
+      const setProducts = vi.fn();
+      const { result } = renderHook(() => useProductActions(mockShowToast));
+      act(() => {
+        result.current.setSelectedProductIds([1, 2]);
+      });
+
+      await act(async () => {
+        await result.current.handleBulkDelete(products, setProducts);
+      });
+
+      expect(setProducts).toHaveBeenCalledWith([products[1], products[2]]);
+      expect(result.current.selectedProductIds).toEqual([2]);
+      expect(mockShowToast).toHaveBeenCalledWith('1 of 2 products failed to delete', 'warning');
+    });
+
+    it('shows an error and keeps products when every delete fails', async () => {
+      mockBatchProducts.mockResolvedValue({
+        success: true,
+        data: { delete: [{ id: 1, error: {} }] },
+      });
+      const setProducts = vi.fn();
+      const { result } = renderHook(() => useProductActions(mockShowToast));
+      act(() => {
+        result.current.setSelectedProductIds([1]);
+      });
+
+      await act(async () => {
+        await result.current.handleBulkDelete([createMockProduct({ id: 1 })], setProducts);
+      });
+
+      expect(setProducts).not.toHaveBeenCalled();
+      expect(mockShowToast).toHaveBeenCalledWith(expect.stringContaining('1 of 1 failed'), 'error');
+    });
+
     it('deletes multiple products', async () => {
       mockBatchProducts.mockResolvedValue({ success: true, data: {} });
 

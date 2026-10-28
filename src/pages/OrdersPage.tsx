@@ -2,6 +2,7 @@ import React, { useState, useMemo, useCallback, useDeferredValue, ChangeEvent } 
 import { useSearchParams } from 'react-router-dom';
 import { RefreshCw, Filter } from 'lucide-react';
 import { useStoreConfig, useCache, useSettings, useActivityLog } from '../stores';
+import { batchErrorIds } from '../utils/batchResult';
 import WooCommerceService from '../services/woocommerce';
 import { formatPrice } from '../utils/currency';
 import { formatDate } from '../utils/dateTime';
@@ -232,9 +233,18 @@ function OrdersPage(): React.ReactElement {
         update: selectedOrderIds.map((id) => ({ id, status: newStatus })),
       });
       if (!batchResult.success) throw new Error(batchResult.error);
+      const failedIds = batchErrorIds(batchResult.data, 'update');
+      const succeededIds = selectedOrderIds.filter((id) => !failedIds.includes(id));
+      if (succeededIds.length === 0) {
+        showToast(
+          `Грешка при обновяване: ${failedIds.length} от ${selectedOrderIds.length} неуспешни`,
+          'error'
+        );
+        return;
+      }
 
       const updatedOrders = orders.map((order) =>
-        selectedOrderIds.includes(order.id) ? { ...order, status: newStatus } : order
+        succeededIds.includes(order.id) ? { ...order, status: newStatus } : order
       );
       setOrders(updatedOrders);
       await setCachedData('orders', updatedOrders);
@@ -243,30 +253,40 @@ function OrdersPage(): React.ReactElement {
         entityType: 'order',
         storeId: currentStore?.id ?? null,
         storeName: currentStore?.name,
-        details: `Bulk updated ${selectedOrderIds.length} orders to "${newStatus}"`,
+        details: `Bulk updated ${succeededIds.length} orders to "${newStatus}"`,
         changes: { status: { from: 'various', to: newStatus } },
       });
-      setSelectedOrderIds([]);
+      setSelectedOrderIds(failedIds);
       showToast(
-        `Успешно обновени ${selectedOrderIds.length} поръчки към "${newStatus}"`,
-        'success',
+        failedIds.length > 0
+          ? `${failedIds.length} от ${selectedOrderIds.length} поръчки не бяха обновени`
+          : `Успешно обновени ${succeededIds.length} поръчки към "${newStatus}"`,
+        failedIds.length > 0 ? 'warning' : 'success',
         5000,
         {
           label: 'Отмени',
           onClick: async () => {
             try {
               const undoService = new WooCommerceService(currentStore);
+              const toUndo = previousStatuses.filter(({ id }) => succeededIds.includes(id));
               const undoResult = await undoService.batchOrders({
-                update: previousStatuses.map(({ id, status }) => ({ id, status })),
+                update: toUndo.map(({ id, status }) => ({ id, status })),
               });
               if (!undoResult.success) throw new Error(undoResult.error);
+              const undoFailed = batchErrorIds(undoResult.data, 'update');
               const restoredOrders = updatedOrders.map((order) => {
-                const prev = previousStatuses.find((p) => p.id === order.id);
-                return prev ? { ...order, status: prev.status } : order;
+                const prev = toUndo.find((p) => p.id === order.id);
+                return prev && !undoFailed.includes(order.id)
+                  ? { ...order, status: prev.status }
+                  : order;
               });
               setOrders(restoredOrders);
               await setCachedData('orders', restoredOrders);
-              showToast('Статусите са възстановени', 'info');
+              if (undoFailed.length > 0) {
+                showToast(`${undoFailed.length} от ${toUndo.length} статуса не бяха възстановени`, 'warning');
+              } else {
+                showToast('Статусите са възстановени', 'info');
+              }
             } catch {
               showToast('Грешка при отмяна', 'error');
             }
@@ -327,9 +347,18 @@ function OrdersPage(): React.ReactElement {
 
       const deleteResult = await service.batchOrders({ delete: selectedOrderIds });
       if (!deleteResult.success) throw new Error(deleteResult.error);
+      const failedIds = batchErrorIds(deleteResult.data, 'delete');
+      const deletedIds = selectedOrderIds.filter((id) => !failedIds.includes(id));
+      if (deletedIds.length === 0) {
+        showToast(
+          `Грешка при изтриване: ${failedIds.length} от ${selectedOrderIds.length} неуспешни`,
+          'error'
+        );
+        return;
+      }
 
       // Update local state
-      const remainingOrders = orders.filter((order) => !selectedOrderIds.includes(order.id));
+      const remainingOrders = orders.filter((order) => !deletedIds.includes(order.id));
       setOrders(remainingOrders);
       await setCachedData('orders', remainingOrders);
       logActivity({
@@ -337,11 +366,15 @@ function OrdersPage(): React.ReactElement {
         entityType: 'order',
         storeId: currentStore?.id ?? null,
         storeName: currentStore?.name,
-        details: `Bulk deleted ${selectedOrderIds.length} orders`,
+        details: `Bulk deleted ${deletedIds.length} orders`,
       });
 
-      showToast(`Изтрити ${selectedOrderIds.length} поръчки`, 'success');
-      setSelectedOrderIds([]);
+      if (failedIds.length > 0) {
+        showToast(`${failedIds.length} от ${selectedOrderIds.length} поръчки не бяха изтрити`, 'warning');
+      } else {
+        showToast(`Изтрити ${deletedIds.length} поръчки`, 'success');
+      }
+      setSelectedOrderIds(failedIds);
     } catch (err) {
       showToast(
         `Грешка при изтриване: ${err instanceof Error ? err.message : 'Unknown error'}`,
