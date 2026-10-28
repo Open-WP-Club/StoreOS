@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useStoreConfig, useCache, useSettings, useActivityLog } from '../stores';
 import WooCommerceService from '../services/woocommerce';
+import { batchErrorIds } from '../utils/batchResult';
 import type { Product, StockStatus, ProductUpdateData, BatchProductUpdate } from '../types';
 
 interface EditData {
@@ -284,10 +285,20 @@ export function useProductActions(
 
     try {
       const service = new WooCommerceService(currentStore);
+<<<<<<< HEAD
       const deleteResult = await service.batchProducts({ delete: selectedProductIds });
       if (!deleteResult.success) throw new Error(deleteResult.error);
+=======
+      const results = await Promise.all(selectedProductIds.map((id) => service.deleteProduct(id)));
+      const deletedIds = selectedProductIds.filter((_, i) => results[i]?.success);
+      const failedCount = selectedProductIds.length - deletedIds.length;
+      if (deletedIds.length === 0) {
+        showToast(`Error deleting products: ${failedCount} of ${selectedProductIds.length} failed`, 'error');
+        return;
+      }
+>>>>>>> 4ab4dcf (wip: bulk ops partial-failure handling and coupon bulk delete)
 
-      const updatedProducts = products.filter((p) => !selectedProductIds.includes(p.id));
+      const updatedProducts = products.filter((p) => !deletedIds.includes(p.id));
       setProducts(updatedProducts);
       await setCachedData('products', updatedProducts);
       logActivity({
@@ -295,10 +306,14 @@ export function useProductActions(
         entityType: 'product',
         storeId: currentStore?.id ?? null,
         storeName: currentStore?.name,
-        details: `Bulk deleted ${selectedProductIds.length} products`,
+        details: `Bulk deleted ${deletedIds.length} products`,
       });
-      setSelectedProductIds([]);
-      showToast(`Successfully deleted ${selectedProductIds.length} products`, 'success');
+      setSelectedProductIds(selectedProductIds.filter((id) => !deletedIds.includes(id)));
+      if (failedCount > 0) {
+        showToast(`${failedCount} of ${selectedProductIds.length} products failed to delete`, 'warning');
+      } else {
+        showToast(`Successfully deleted ${deletedIds.length} products`, 'success');
+      }
     } catch (err) {
       showToast(
         `Error deleting products: ${err instanceof Error ? err.message : 'Unknown error'}`,
@@ -315,9 +330,11 @@ export function useProductActions(
       const result = await service.batchUpdateProducts(updates);
 
       if (result.success) {
+        const failedIds = batchErrorIds(result.data, 'update');
         if (result.data?.update) {
           const updatedProducts = [...products];
           result.data.update.forEach((updatedProduct: Product) => {
+            if (failedIds.includes(updatedProduct.id)) return;
             const index = updatedProducts.findIndex((p) => p.id === updatedProduct.id);
             if (index !== -1) {
               updatedProducts[index] = updatedProduct;
@@ -335,7 +352,11 @@ export function useProductActions(
           details: `Bulk updated ${updates.length} products`,
         });
         setSelectedProductIds([]);
-        showToast(`Successfully updated ${updates.length} products`, 'success');
+        if (failedIds.length > 0) {
+          showToast(`${failedIds.length} of ${updates.length} products failed to update`, 'warning');
+        } else {
+          showToast(`Successfully updated ${updates.length} products`, 'success');
+        }
       } else {
         showToast(`Failed to update products: ${result.error}`, 'error');
       }
