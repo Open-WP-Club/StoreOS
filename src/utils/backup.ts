@@ -275,6 +275,14 @@ export function readBackupFile(file: File): Promise<BackupData> {
 /**
  * Validate backup data structure
  */
+function sameOrigin(a: unknown, b: unknown): boolean {
+  try {
+    return new URL(String(a)).origin === new URL(String(b)).origin;
+  } catch {
+    return false;
+  }
+}
+
 export function validateBackup(data: unknown): BackupData {
   if (!data || typeof data !== 'object') {
     throw new Error('Invalid backup: not an object');
@@ -320,7 +328,8 @@ export function restoreBackup(backup: BackupData): RestoreResult {
         data.storeConfig.stores as ReturnType<typeof useStoreConfig.getState>['stores']
       ).map((st) => {
         const prev = existing.find((e) => e.id === st.id);
-        return prev
+        // Only reuse local credentials for the same origin, so a crafted backup can't redirect them.
+        return prev && sameOrigin(prev.url, st.url)
           ? {
               ...st,
               consumerKey: st.consumerKey || prev.consumerKey,
