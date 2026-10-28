@@ -39,7 +39,7 @@ StoreOS - Built for WooCommerce is an Electron-based desktop application for man
 - **IndexedDB** - Browser-based persistent storage
 
 ### Development & Testing Tools
-- **Vitest 4.x** - Test runner (`jsdom` environment), **not Jest** — 97 test files, ~1,777 tests
+- **Vitest 4.x** - Test runner (`jsdom` environment), **not Jest** — 96 test files, ~1,675 tests
 - **@testing-library/react** + **jest-dom** matchers + **user-event**
 - **ESLint 9.x** - Flat config (`eslint.config.js`, not `.eslintrc.json`), includes `eslint-plugin-react-compiler`
 - **Prettier** - Code formatting
@@ -71,7 +71,7 @@ StoreOS/
 │   │   │   GeographicAnalyticsPage.tsx, KPIDashboardPage.tsx
 │   │   └── SetupPage.tsx, MultiStoreView.tsx, OrderDetailPage.tsx, ProductEditPage.tsx
 │   ├── services/woocommerce/  # WooCommerceService — split by resource (see Service Layer below)
-│   │   ├── base.ts, orders.ts, products.ts, customers.ts, coupons.ts, tax-reviews.ts, index.ts
+│   │   ├── base.ts, orders.ts, products.ts, customers.ts, coupons.ts, tax-reviews.ts, admin.ts, index.ts
 │   ├── stores/                 # Zustand — split into 9 domain stores (see State Management below)
 │   │   ├── storeConfigStore.ts, themeStore.ts, settingsStore.ts, searchStore.ts, cacheStore.ts,
 │   │   │   appSettingsStore.ts, offlineStore.ts, notificationStore.ts, activityLogStore.ts, posStore.ts
@@ -81,6 +81,7 @@ StoreOS/
 │   ├── contexts/ToastContext.tsx
 │   ├── utils/
 │   │   ├── indexedDBCache.ts, csvExport.ts, pdfExport.ts, currency.ts, dateTime.ts, i18n.ts
+│   │   ├── secureStorage.ts, pinHash.ts   # see Security Considerations
 │   │   ├── kpiCalculator.ts, memoryMonitor.ts, backup.ts, startupMetrics.ts
 │   │   └── search/            # searchService.ts re-exports from here: fuzzy, orders, products, customers, utils
 │   ├── types/                  # Domain-split TS types (11 files): orders, products, customers, coupons, tax,
@@ -130,7 +131,7 @@ const orders = useCache((state) => state.cache.orders?.data);
 
 #### Persistence Strategy
 - **localStorage**: Store configurations, theme, searches, filter presets, settings (via Zustand `persist`)
-- **IndexedDB**: Large datasets (products, orders, customers, coupons) for offline capability and performance
+- **IndexedDB** (`woocommerce-cache`, v4): products/orders/customers/coupons are stored one record per item in `<name>_items` (keyPath `id`) plus `meta:<scope>` records; use `saveCollection` / `applyCollectionDelta` / `getCollection`. Legacy whole-array blobs migrate on upgrade.
 
 ### 2. Data Caching Strategy
 
@@ -204,6 +205,7 @@ if (result.success) {
 ```
 
 **Key Methods:** `getAllOrders()` / `getAllProducts()` (auto-pagination), `getProductsSince(lastSync)` (delta sync), `batchUpdateProducts()`, progressive loading via `onBatchLoaded` callback.
+New: `getOrdersSince(lastSync)` (orders delta), `batchOrders/batchProducts/batchCustomers/batchCoupons`, and `admin.ts` read endpoints (`getSalesReport`, `getTopSellersReport`, `getPaymentGateways`, `getShippingZones`, `getWebhooks`, `getSettingGroups`).
 
 ## API Integration Patterns
 
@@ -264,9 +266,10 @@ pnpm run build:electron   # build + electron-builder → distributable in dist-e
 ### Testing
 
 ```bash
-pnpm run test             # vitest run — full suite (97 files, ~1,777 tests)
+pnpm run test             # vitest run — full suite (96 files, ~1,675 tests)
 pnpm run test:watch       # vitest (watch mode)
 pnpm run test:coverage    # vitest run --coverage (v8 provider)
+pnpm run test:e2e         # end-to-end suite (script added by another branch; confirm it exists in package.json after merge)
 ```
 
 Coverage thresholds (see `vitest.config.ts`): branches 25%, functions 30%, lines 35%, statements 35%.
@@ -404,7 +407,7 @@ Verify field names match the data shape (e.g. `billing.email`, not `email`) and 
 
 ## Testing Guidelines
 
-The project has a full **Vitest** suite (97 files, ~1,777 tests) — this is not a "manual testing only" project. Key points:
+The project has a full **Vitest** suite (96 files, ~1,675 tests) — this is not a "manual testing only" project. Key points:
 
 - `clearMocks: true` in `vitest.config.ts` — mock implementations reset between tests automatically.
 - Set up mocks in `beforeEach()`, not inside `vi.mock()` factories.
@@ -420,7 +423,7 @@ The project has a full **Vitest** suite (97 files, ~1,777 tests) — this is not
 
 ## Security Considerations
 
-- Store credentials (WooCommerce consumer key/secret) are persisted via Zustand `persist` to localStorage — never log them, never commit real ones to fixtures/scratch files (a real key pair leaked into `temp.txt` git history once — always use fake `cs_test`/`ck_test`-style values in tests and scratch files).
+- Store credentials (WooCommerce consumer key/secret) are persisted via Zustand `persist` with `createSecureStorage()` (`src/utils/secureStorage.ts`: Electron `safeStorage`/OS keychain via preload, used by `storeConfigStore` and `appSettingsStore`). POS/security PINs are stored as salted PBKDF2-SHA256 (`src/utils/pinHash.ts`: `hashPin`, `verifyPinHash`, `isLegacyHash`). Release hardening checklist: `docs/SECURITY_RELEASE.md`. Never log credentials or commit real ones to fixtures/scratch files (a real key pair leaked into `temp.txt` git history once — always use fake `cs_test`/`ck_test`-style values in tests and scratch files).
 - All API communication uses HTTPS; the WooCommerce REST API (not admin passwords) is the auth mechanism.
 - Sanitize any HTML rendered from API/user data with DOMPurify (see `VisualEditor.tsx`) — React escapes text content by default but `dangerouslySetInnerHTML` needs it.
 
