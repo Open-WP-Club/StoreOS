@@ -12,6 +12,7 @@
  * - Optionally: cached products for the active store
  */
 
+import { normalizeStoreUrl } from './urlPatterns';
 import useStoreConfig from '../stores/storeConfigStore';
 import useAppSettings from '../stores/appSettingsStore';
 import useSettings from '../stores/settingsStore';
@@ -276,8 +277,14 @@ export function readBackupFile(file: File): Promise<BackupData> {
  * Validate backup data structure
  */
 function sameOrigin(a: unknown, b: unknown): boolean {
+  // Normalize the same way WooCommerceService does, so the comparison matches where requests go.
+  const na = typeof a === 'string' ? normalizeStoreUrl(a) : null;
+  const nb = typeof b === 'string' ? normalizeStoreUrl(b) : null;
+  if (!na || !nb) return false;
   try {
-    return new URL(String(a)).origin === new URL(String(b)).origin;
+    const ua = new URL(na);
+    const ub = new URL(nb);
+    return (ua.protocol === 'https:' || ua.protocol === 'http:') && ua.origin === ub.origin;
   } catch {
     return false;
   }
