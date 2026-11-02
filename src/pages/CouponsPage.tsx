@@ -39,6 +39,7 @@ import StatCard from '../components/StatCard';
 import PageHeader from '../components/PageHeader';
 import EmptyState from '../components/EmptyState';
 import BulkGenerateCouponsModal from '../components/BulkGenerateCouponsModal';
+import CopyToStoreModal from '../components/CopyToStoreModal';
 
 interface CouponStats {
   total: number;
@@ -73,6 +74,7 @@ function CouponsPage(): React.ReactElement {
   const [filterDiscountType, setFilterDiscountType] = useState<'all' | CouponDiscountType>('all');
   const [showBulkModal, setShowBulkModal] = useState<boolean>(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [copyOpen, setCopyOpen] = useState<boolean>(false);
 
   const { loadingState } = useProgressiveLoading();
 
@@ -530,6 +532,14 @@ function CouponsPage(): React.ReactElement {
           </button>
           {selectedIds.length > 0 && (
             <button
+              onClick={() => setCopyOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+            >
+              Copy to store ({selectedIds.length})
+            </button>
+          )}
+          {selectedIds.length > 0 && (
+            <button
               onClick={handleBulkDelete}
               className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
             >
@@ -728,6 +738,15 @@ function CouponsPage(): React.ReactElement {
             form.reset();
             setShowCreateModal(false);
           }}
+        />
+      )}
+
+      {copyOpen && currentStore && (
+        <CopyToStoreModal
+          kind="coupons"
+          items={coupons.filter((c) => selectedIds.includes(c.id))}
+          sourceStore={currentStore}
+          onClose={() => setCopyOpen(false)}
         />
       )}
 
