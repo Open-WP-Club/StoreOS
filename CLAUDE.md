@@ -5,6 +5,7 @@
 StoreOS - Built for WooCommerce is an Electron-based desktop application for managing multiple WooCommerce stores. Built with React + TypeScript, it provides a streamlined interface for managing orders, products, inventory, coupons, taxes, customers, and an in-house POS across multiple WooCommerce installations.
 
 **Key Features:**
+
 - Multi-store management from a single interface
 - Advanced order management with search and filtering
 - Product CRUD operations with bulk editing, variations, attributes, categories
@@ -20,6 +21,7 @@ StoreOS - Built for WooCommerce is an Electron-based desktop application for man
 ## Technology Stack
 
 ### Core Technologies
+
 - **Electron 45.x** - Desktop application framework
 - **React 19.x** - UI library with hooks (React Compiler enabled via `babel-plugin-react-compiler`)
 - **TypeScript 6.x** - Strict mode (see `tsconfig.json` gotchas below)
@@ -29,6 +31,7 @@ StoreOS - Built for WooCommerce is an Electron-based desktop application for man
 - **React Router 7.x** - Client-side routing
 
 ### Key Dependencies
+
 - **@woocommerce/woocommerce-rest-api** - Official WooCommerce REST API wrapper
 - **Axios** - HTTP client for API requests
 - **Chart.js** / **react-chartjs-2** - Data visualization
@@ -39,7 +42,8 @@ StoreOS - Built for WooCommerce is an Electron-based desktop application for man
 - **IndexedDB** - Browser-based persistent storage
 
 ### Development & Testing Tools
-- **Vitest 5.x** - Test runner (`jsdom` environment), **not Jest** — 131 test files, ~1,973 tests
+
+- **Vitest 5.x** - Test runner (`jsdom` environment), **not Jest** — 157 test files, ~2,133 tests
 - **@testing-library/react** + **jest-dom** matchers + **user-event**
 - **ESLint 9.x** - Flat config (`eslint.config.js`, not `.eslintrc.json`), includes `eslint-plugin-react-compiler`
 - **Prettier** - Code formatting
@@ -112,19 +116,19 @@ StoreOS/
 
 Zustand state is **split into 10 domain stores** (not one monolithic store). Each has its own file in `src/stores/` and is exported from `src/stores/index.ts`:
 
-| Store | Responsibility |
-|---|---|
-| `useStoreConfig` | Configured WooCommerce stores, `currentStoreId`, add/update/remove/select |
-| `useTheme` | `light`/`dark` theme |
-| `useSettings` | Auto-refresh config, dynamic `refreshOrders`/`refreshProducts`/`refreshAll` callbacks |
-| `useSearch` | Recent searches, saved filter presets |
-| `useCache` | In-memory + IndexedDB cache for products/orders/customers/coupons |
-| `useAppSettings` | Low-stock threshold, order-split-days, and other configurable business thresholds |
-| `useOffline` | Offline mutation queue (see `useOfflineMutation` hook) |
-| `useNotifications` | Notification center, sound/confetti toggles, order-celebration overlay |
-| `useActivityLog` | User activity log |
-| `useScheduledReports` | Scheduled report settings (type, frequency, time, format, `lastRun`); persisted |
-| `posStore` (separate module) | POS cart/checkout state — imported directly, not via `src/stores` barrel |
+| Store                        | Responsibility                                                                        |
+| ---------------------------- | ------------------------------------------------------------------------------------- |
+| `useStoreConfig`             | Configured WooCommerce stores, `currentStoreId`, add/update/remove/select             |
+| `useTheme`                   | `light`/`dark` theme                                                                  |
+| `useSettings`                | Auto-refresh config, dynamic `refreshOrders`/`refreshProducts`/`refreshAll` callbacks |
+| `useSearch`                  | Recent searches, saved filter presets                                                 |
+| `useCache`                   | In-memory + IndexedDB cache for products/orders/customers/coupons                     |
+| `useAppSettings`             | Low-stock threshold, order-split-days, and other configurable business thresholds     |
+| `useOffline`                 | Offline mutation queue (see `useOfflineMutation` hook)                                |
+| `useNotifications`           | Notification center, sound/confetti toggles, order-celebration overlay                |
+| `useActivityLog`             | User activity log                                                                     |
+| `useScheduledReports`        | Scheduled report settings (type, frequency, time, format, `lastRun`); persisted       |
+| `posStore` (separate module) | POS cart/checkout state — imported directly, not via `src/stores` barrel              |
 
 Always use the individual hooks (the old combined `useStore()` shim was removed).
 
@@ -137,6 +141,7 @@ const orders = useCache((state) => state.cache.orders?.data);
 ```
 
 #### Persistence Strategy
+
 - **localStorage**: Store configurations, theme, searches, filter presets, settings (via Zustand `persist`)
 - **IndexedDB** (`woocommerce-cache`, v4): products/orders/customers/coupons are stored one record per item in `<name>_items` (keyPath `id`) plus `meta:<scope>` records; use `saveCollection` / `applyCollectionDelta` / `getCollection`. Legacy whole-array blobs migrate on upgrade.
 
@@ -151,6 +156,7 @@ CUSTOMERS: 1 hour         COUPONS: 2 hours       DEFAULT: 30 min
 ```
 
 #### Cache Tiers
+
 1. **In-Memory Cache (`useCache` store)**: Fastest access, cleared on reload
 2. **IndexedDB Cache**: Persistent, survives reloads (`src/utils/indexedDBCache.ts`)
 3. **API Fetch**: Last resort when cache is invalid/expired
@@ -273,7 +279,7 @@ pnpm run build:electron   # build + electron-builder → distributable in dist-e
 ### Testing
 
 ```bash
-pnpm run test             # vitest run — full suite (131 files, ~1,973 tests)
+pnpm run test             # vitest run — full suite (157 files, ~2,133 tests)
 pnpm run test:watch       # vitest (watch mode)
 pnpm run test:coverage    # vitest run --coverage (v8 provider)
 pnpm run e2e:build        # one-off packaged build (electron-builder --dir --mac --arm64) for the e2e suite
@@ -308,12 +314,21 @@ Flat config (`eslint.config.js`), ESLint 9.x — **not** `.eslintrc.json`. Inclu
 ### Prettier Configuration
 
 ```json
-{ "semi": true, "singleQuote": true, "tabWidth": 2, "trailingComma": "es5", "printWidth": 100, "arrowParens": "always", "endOfLine": "lf" }
+{
+  "semi": true,
+  "singleQuote": true,
+  "tabWidth": 2,
+  "trailingComma": "es5",
+  "printWidth": 100,
+  "arrowParens": "always",
+  "endOfLine": "lf"
+}
 ```
 
 ### Naming Conventions
 
 **Files:**
+
 - React components: `PascalCase.tsx` (e.g., `OrdersPage.tsx`)
 - Utilities/services: `camelCase.ts`
 - Hooks: `use*.ts` prefix
@@ -395,6 +410,7 @@ showToast('Order updated successfully', 'success');
 ## Troubleshooting Guide
 
 #### Orders/Products Not Loading
+
 1. Check browser/DevTools console for errors.
 2. Verify store is configured: `useStoreConfig.getState().getCurrentStore()`.
 3. Check cache state: `useCache.getState().cache`.
@@ -402,20 +418,24 @@ showToast('Order updated successfully', 'success');
 5. Verify API credentials.
 
 #### Cache Not Updating After Changes
+
 Call `useCache.getState().clearCacheForType('products')` after a mutation if you're not already going through `useOfflineMutation` (which handles this).
 
 #### IndexedDB Corruption
+
 DevTools → Application → IndexedDB → delete the `woocommerce-cache` database → refresh.
 
 #### Infinite Update Loops
+
 Usually a Zustand selector called during render that creates a new object/array each time. Use `useShallow` (re-exported from `src/stores`) for array/object selectors, or move the update into `useEffect`.
 
 #### Search Not Working
+
 Verify field names match the data shape (e.g. `billing.email`, not `email`) and that `src/utils/search/*` has a handler for the data type in question.
 
 ## Testing Guidelines
 
-The project has a full **Vitest** suite (131 files, ~1,973 tests) — this is not a "manual testing only" project. Key points:
+The project has a full **Vitest** suite (157 files, ~2,133 tests) — this is not a "manual testing only" project. Key points:
 
 - `clearMocks: true` in `vitest.config.ts` — mock implementations reset between tests automatically.
 - Set up mocks in `beforeEach()`, not inside `vi.mock()` factories.
@@ -424,6 +444,7 @@ The project has a full **Vitest** suite (131 files, ~1,973 tests) — this is no
 - Run `pnpm run typecheck` separately from tests — Vitest does not type-check by default, so a passing test suite doesn't guarantee no type errors (test files currently have some pre-existing `noUncheckedIndexedAccess`-driven errors; check before assuming a clean baseline).
 
 ### Before Committing
+
 1. Run `pnpm run test`, `pnpm run lint`, `pnpm run typecheck`.
 2. Check UI in both light and dark mode.
 3. Test edge cases: empty data, large datasets, API errors, offline.
@@ -438,12 +459,14 @@ The project has a full **Vitest** suite (131 files, ~1,973 tests) — this is no
 ## Extension Points
 
 ### Adding New WooCommerce Resource Support
+
 1. Add methods to the relevant module in `src/services/woocommerce/` (or a new module, wired into the inheritance chain in `index.ts`).
 2. Add types in `src/types/` (new domain file or extend an existing one), re-exported from `src/types/index.ts`.
 3. Add a cache slot in `useCache` (`src/stores/cacheStore.ts`) and an expiry entry in `CACHE_EXPIRY` (`src/constants/config.js`).
 4. Add an IndexedDB object store in `src/utils/indexedDBCache.ts` if it needs offline persistence.
 
 ### Adding New Pages
+
 1. Create the page component in `src/pages/`.
 2. Add the route in `src/App.tsx`.
 3. Add a navigation link in `src/components/Layout.tsx`.
@@ -463,6 +486,12 @@ The project has a full **Vitest** suite (131 files, ~1,973 tests) — this is no
 - **Offline POS sales**: `src/utils/posOfflineSale.ts` — when `createOrderIdempotent` fails offline the sale is queued via `useOffline` with a `_storeos_client_id` meta; `OfflineIndicator` replays it (`replayPosSale`, which de-duplicates by client id) and `resolvePendingSale` updates the recent-transactions list (`pos_recent_transactions`, `pos-transactions-changed` event); `decrementCachedStock` keeps cached stock consistent.
 - **Scheduled reports**: `useScheduledReports` store + `src/utils/reportSchedule.ts` (`lastSlot`, `nextRun`, `isDue`, `reportPeriod`); `ScheduledReportRunner` (mounted in `App.tsx` once stores exist) generates the file when due; settings UI in `settings/SettingsScheduledReports.tsx`. Files are written by the main process (`electron/reportFiles.js`) over IPC channels `reports:get-dir`, `reports:choose-dir` (native folder dialog, the only way the folder is set) and `reports:save`, exposed in `preload.js`.
 - **CSV safety**: `csvExport.ts` neutralizes spreadsheet formula injection in text cells (numbers keep their sign).
+- **Offline queue coverage**: `src/utils/offlineReplay.ts` (`replayOperation`) replays queued ops (incl. `delete_product`, `batch_products`, `batch_orders`, `batch_coupons`); `OfflineIndicator` builds the service from `operation.storeId`. Refunds are intentionally never queued (double-refund risk).
+- **Order tools**: partial refunds (`utils/refunds.ts`, `RefundModal`), shipment tracking + note templates (`utils/tracking.ts`, `OrderTrackingSection`, `NoteTemplatesModal`, bulk "mark shipped"), CSV product import (`utils/csvImport.ts`, `ImportModal`), saved views (extended filter presets + `useApplySavedView`, palette entries).
+- **Multi-store**: copy products/coupons between stores (`utils/crossStoreCopy.ts`, `CopyToStoreModal`) and store comparison table (`utils/storeComparison.ts`) in `MultiStoreView`.
+- **POS receipts**: `utils/receipt.ts` (80mm HTML, escaped) + `utils/printReceipt.ts`; IPC `receipt:print` / `receipt:get-printers`; optional ESC/POS drawer kick (CUPS `lp`, untested on hardware).
+- **Integrations & backup**: webhooks/payment gateway management (`IntegrationsManager`, `utils/webhookValidation.ts`); scheduled encrypted backup (`utils/autoBackup.ts`, `ScheduledBackupRunner`, `backupScheduleStore`, IPC `backups:*` in `electron/backupFiles.js`). Passphrase is memory-only; without it credentials are omitted.
+- **Shared helpers**: `Modal` takes an optional `title`; `getAppLocale()` in `utils/dateTime.ts`; `utils/reportRows.ts` builds report rows for the scheduled runner and POS report.
 - **Packaging**: `scripts/adhocSign.cjs` (`build.afterSign`) re-signs ad-hoc only when `codesign --verify` fails after the Electron fuse flip (otherwise arm64 builds are SIGKILLed on launch). e2e launches use `--use-mock-keychain` to avoid Keychain prompts.
 
 ## Resources & Documentation

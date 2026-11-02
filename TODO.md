@@ -6,11 +6,11 @@
 - [x] Refund в поръчката: частичен, по артикули, с ресток (`orders.ts`, `OrderDetailPage.tsx`, `useOfflineMutation`)
 - [x] Tracking номер + масово „изпратено“ + шаблони за бележки (`OrderNotesSection`, `BulkActionsBar`)
 - [x] Импорт на продукти от CSV с dry-run преглед (`utils/csvImport.ts`, `BulkEditPreview`, `batchErrorIds`)
-- [ ] Копиране на продукти/купони между магазини (ремап на категории/атрибути е трудната част)
-- [ ] Сравнение на магазините един до друг (`MultiStoreView`, `useKPIs`)
-- [ ] POS касова бележка 80mm + отваряне на чекмедже (ESC/POS през IPC)
+- [x] Копиране на продукти/купони между магазини (ремап на категории/атрибути е трудната част)
+- [x] Сравнение на магазините един до друг (`MultiStoreView`, `useKPIs`)
+- [x] POS касова бележка 80mm + отваряне на чекмедже (ESC/POS през IPC)
 - [x] Запазени изгледи (сортиране, колони, филтри) + команда в палитрата
-- [ ] UI за webhooks и платежни методи + автоматичен backup по график
+- [x] UI за webhooks и платежни методи + автоматичен backup по график
 
 ## Дублиране (ако не са влезли в текущата партида)
 - [ ] Проверка дали ProductsPage/CustomersPage/TaxRatesTab/VariationsTab викат `service.update*` директно, без `useOfflineMutation`
@@ -52,3 +52,13 @@
 - [ ] Минорни ъпдейти: electron 45.2.1, lucide-react 1.66, react-router-dom 7.18.5, @tanstack/react-virtual, @types/node, fake-indexeddb, globals (eslint остава на 9.x, typescript на 6.0.x)
 - [ ] `pnpm run format:check` не е пускан
 - [ ] Некомитнати от предишния кръг: промени в CLAUDE.md/README/docs/TESTING.md и 2 нови тест файла (`batchResult`, `useOfflineMutation`)
+
+## Остава след партида 3
+- [ ] Ръчен тест в стартирано приложение: POS офлайн, планирани отчети и backup, печат на бележка (80mm/чекмедже), refund, импорт, tracking, копиране между магазини, webhooks
+- [ ] Офлайн опашка: Categories, Attributes, Tax, Reviews, VariationsTab, `useProductEditForm`, batch delete на поръчки; създаванията (`create_product`, `create_coupon`) не са защитени срещу дубликати при replay
+- [ ] Input-ове с `parseInt(v) || default` (SettingsNotifications: low-stock праг и дни) — същият бъг като Priority ("2" става 52)
+- [ ] Праг за ниска наличност: `useDashboardStats` брои `<=`, текстът в настройките казва „под“ — изравни
+- [ ] Копиране между магазини: без йерархия на категории, без синхрон на вариации при update, related/upsell не се копират; сравнението смесва валути
+- [ ] Бележка: VAT 20% е твърдо зададен като включен; без лого
+- [ ] ProductsPage inline модал и ImageLightbox не са на `Modal`; ~70 неизползвани exports (knip) са оставени
+- [ ] Saved views: sort и колони (няма такива понятия в списъците)
