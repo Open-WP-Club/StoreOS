@@ -11,6 +11,7 @@ import { exportTableToPDF } from '../utils/pdfExport';
 import ExportMenu from '../components/ExportMenu';
 import { searchOrders, applyOrderFilters } from '../utils/searchService';
 import FilterPresetManager from '../components/FilterPresetManager';
+import { useApplySavedView } from '../hooks/useApplySavedView';
 import ToastContainer from '../components/ToastContainer';
 import LoadingIndicator from '../components/LoadingIndicator';
 import BulkActionsBar from '../components/BulkActionsBar';
@@ -432,8 +433,16 @@ function OrdersPage(): React.ReactElement {
     setSearchParams({});
   };
 
-  const handleApplyPreset = (presetFilters: Record<string, unknown>): void => {
-    setFilters(presetFilters as unknown as OrderFilters);
+  const applyView = (preset: FilterPreset): void => {
+    setFilters(preset.filters as unknown as OrderFilters);
+    setSearchTerm(preset.search ?? '');
+    if (preset.pageSize) setPageSize(preset.pageSize);
+    setCurrentPage(1);
+  };
+  useApplySavedView(applyView);
+
+  const handleApplyPreset = (_presetFilters: Record<string, unknown>, preset: FilterPreset): void => {
+    applyView(preset);
     showToast('Filter preset applied', 'success');
   };
 
@@ -519,6 +528,8 @@ function OrdersPage(): React.ReactElement {
             <FilterPresetManager
               type="orders"
               currentFilters={filters as unknown as Record<string, unknown>}
+              currentSearch={searchTerm}
+              currentPageSize={pageSize}
               onApplyPreset={handleApplyPreset}
               onSaveSuccess={(preset: FilterPreset) =>
                 showToast(`Preset "${preset.name}" saved`, 'success')

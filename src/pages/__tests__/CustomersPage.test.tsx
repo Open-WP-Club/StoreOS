@@ -11,6 +11,7 @@ vi.mock('../../stores', () => ({
 }));
 
 vi.mock('../../services/woocommerce');
+vi.mock('../../components/FilterPresetManager', () => ({ default: () => null }));
 
 vi.mock('../../hooks/useToast', () => ({
   useToast: () => ({

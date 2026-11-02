@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { Save, Star, Trash2, X } from 'lucide-react';
+import { Pencil, Save, Star, Trash2, X } from 'lucide-react';
 import { useStoreConfig, useSearch } from '../stores';
 import type { FilterPreset } from '../types';
 
-type FilterType = 'products' | 'orders';
+type FilterType = 'products' | 'orders' | 'customers';
 
 interface FilterPresetManagerProps {
   type: FilterType;
   currentFilters: Record<string, unknown>;
-  onApplyPreset?: (filters: Record<string, unknown>) => void;
+  currentSearch?: string;
+  currentPageSize?: number;
+  onApplyPreset?: (filters: Record<string, unknown>, preset: FilterPreset) => void;
   onSaveSuccess?: (preset: FilterPreset) => void;
 }
 
@@ -18,6 +20,8 @@ interface FilterPresetManagerProps {
 function FilterPresetManager({
   type,
   currentFilters,
+  currentSearch,
+  currentPageSize,
   onApplyPreset,
   onSaveSuccess,
 }: FilterPresetManagerProps): React.ReactElement {
@@ -30,6 +34,7 @@ function FilterPresetManager({
   const getFilterPresetsForType = useSearch((state) => state.getFilterPresetsForType);
   const addFilterPreset = useSearch((state) => state.addFilterPreset);
   const deleteFilterPreset = useSearch((state) => state.deleteFilterPreset);
+  const renameFilterPreset = useSearch((state) => state.renameFilterPreset);
 
   const currentStore = getCurrentStore();
   const presets = getFilterPresetsForType(type, currentStore?.id ?? null);
@@ -41,6 +46,8 @@ function FilterPresetManager({
       name: presetName.trim(),
       type,
       filters: currentFilters,
+      search: currentSearch,
+      pageSize: currentPageSize,
       storeId: saveAsGlobal ? 'all' : (currentStore?.id ?? null),
     });
 
@@ -56,7 +63,7 @@ function FilterPresetManager({
 
   const handleApplyPreset = (preset: FilterPreset): void => {
     if (onApplyPreset) {
-      onApplyPreset(preset.filters);
+      onApplyPreset(preset.filters, preset);
     }
     setIsOpen(false);
   };
@@ -67,13 +74,19 @@ function FilterPresetManager({
     }
   };
 
-  // Check if there are any active filters
+  const handleRenamePreset = (preset: FilterPreset): void => {
+    const name = window.prompt('Rename view', preset.name);
+    if (name) renameFilterPreset(preset.id, name);
+  };
+
+  // Check if there are any active filters (a search term counts)
   const hasActiveFilters =
-    currentFilters &&
+    !!currentSearch?.trim() ||
+    (currentFilters &&
     Object.keys(currentFilters).some((key) => {
       const value = currentFilters[key];
       return value !== undefined && value !== null && value !== '' && value !== 'all';
-    });
+    }));
 
   return (
     <div className="relative">
@@ -146,7 +159,15 @@ function FilterPresetManager({
                         <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                           {Object.keys(preset.filters).length} filter
                           {Object.keys(preset.filters).length !== 1 ? 's' : ''}
+                          {preset.pageSize ? ` · ${preset.pageSize}/page` : ''}
                         </div>
+                      </button>
+                      <button
+                        onClick={() => handleRenamePreset(preset)}
+                        aria-label={`Rename ${preset.name}`}
+                        className="ml-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Pencil className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDeletePreset(preset.id)}

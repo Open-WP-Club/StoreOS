@@ -20,9 +20,10 @@ import {
   Box,
   Command,
   ArrowRight,
+  Bookmark,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { useCache, useTheme } from '../stores';
+import { useCache, useSearch, useStoreConfig, useTheme } from '../stores';
 import { useKeyboardShortcut, getShortcutDisplay } from '../hooks/useKeyboardShortcut';
 import { searchProducts, searchOrders } from '../utils/searchService';
 import type { WooCommerceProduct, WooCommerceOrder, WooCommerceCustomer, WooCommerceCoupon } from '../types';
@@ -35,7 +36,7 @@ interface CommandAction {
   sublabel?: string;
   shortcut?: string;
   action: () => void | Promise<void>;
-  category: 'Navigation' | 'Actions' | 'Search Results' | 'Recent';
+  category: 'Navigation' | 'Actions' | 'Saved Views' | 'Search Results' | 'Recent';
   keywords?: string[];
 }
 
@@ -65,6 +66,8 @@ function CommandPalette(): React.ReactElement | null {
     (state) => (state.cache.coupons?.data as WooCommerceCoupon[] | undefined) || EMPTY_ARRAY
   );
   const { theme, toggleTheme } = useTheme();
+  const savedPresets = useSearch((state) => state.savedFilterPresets);
+  const currentStoreId = useStoreConfig((state) => state.currentStoreId);
   const clearCache = useCache((state) => state.clearCache);
   const clearCacheForType = useCache((state) => state.clearCacheForType);
 
@@ -270,8 +273,21 @@ function CommandPalette(): React.ReactElement | null {
       },
     ];
 
-    return [...navCommands, ...actionCommands];
-  }, [navigate, theme, toggleTheme, clearCache, clearCacheForType, location.pathname]);
+    // One entry per saved view (store-specific or global): go to the page and apply it
+    const viewCommands: CommandAction[] = savedPresets
+      .filter((p) => !currentStoreId || p.storeId === currentStoreId || p.storeId === 'all')
+      .map((p) => ({
+        id: `view-${p.id}`,
+        icon: Bookmark,
+        label: `View: ${p.name}`,
+        sublabel: `Saved ${p.type} view`,
+        action: () => { navigate(`/${p.type}?view=${encodeURIComponent(p.id)}`); setIsOpen(false); },
+        category: 'Saved Views',
+        keywords: ['view', 'saved', 'preset', 'filter', p.type, p.name.toLowerCase()],
+      }));
+
+    return [...navCommands, ...viewCommands, ...actionCommands];
+  }, [navigate, savedPresets, currentStoreId, theme, toggleTheme, clearCache, clearCacheForType, location.pathname]);
 
   // Search results
   const searchResults = useMemo((): CommandAction[] => {

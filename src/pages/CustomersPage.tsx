@@ -14,6 +14,8 @@ import { exportToCSV } from '../utils/csvExport';
 import { exportTableToPDF } from '../utils/pdfExport';
 import { useVirtualRows } from '../hooks/useVirtualRows';
 import ExportMenu from '../components/ExportMenu';
+import FilterPresetManager from '../components/FilterPresetManager';
+import { useApplySavedView } from '../hooks/useApplySavedView';
 import Pagination from '../components/Pagination';
 import ToastContainer from '../components/ToastContainer';
 import LoadingIndicator from '../components/LoadingIndicator';
@@ -56,6 +58,12 @@ function CustomersPage(): React.ReactElement {
   const [loadingOrders, setLoadingOrders] = useState<boolean>(false);
 
   const { loadingState } = useProgressiveLoading();
+
+  useApplySavedView((preset) => {
+    setSearchTerm(preset.search ?? '');
+    if (preset.pageSize) setPageSize(preset.pageSize);
+    setCurrentPage(1);
+  });
 
   // Load customers from cache or API
   useEffect(() => {
@@ -299,6 +307,19 @@ function CustomersPage(): React.ReactElement {
               className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
+          <FilterPresetManager
+            type="customers"
+            currentFilters={{}}
+            currentSearch={searchTerm}
+            currentPageSize={pageSize}
+            onApplyPreset={(_f, preset) => {
+              setSearchTerm(preset.search ?? '');
+              setSearchParams(preset.search ? { search: preset.search } : {});
+              if (preset.pageSize) setPageSize(preset.pageSize);
+              setCurrentPage(1);
+            }}
+            onSaveSuccess={(preset) => showToast(`View "${preset.name}" saved`, 'success')}
+          />
           <ExportMenu onExportCSV={handleExportCSV} onExportPDF={handleExportPDF} />
           <button
             onClick={handleRefresh}

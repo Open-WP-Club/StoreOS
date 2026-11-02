@@ -114,7 +114,7 @@ describe('FilterPresetManager', () => {
     fireEvent.click(screen.getByText('Presets'));
     fireEvent.click(screen.getByText('Low Stock'));
 
-    expect(defaultProps.onApplyPreset).toHaveBeenCalledWith({ stockMin: 5 });
+    expect(defaultProps.onApplyPreset).toHaveBeenCalledWith({ stockMin: 5 }, mockPresets[0]);
   });
 
   it('should close dropdown after applying preset', () => {
