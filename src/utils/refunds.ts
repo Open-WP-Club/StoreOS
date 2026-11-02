@@ -71,7 +71,7 @@ export type RefundBuildResult =
 export function buildRefundRequest(
   rows: RefundableItem[],
   selections: Record<number, RefundSelection | undefined>,
-  opts: { restock: boolean; reason?: string }
+  opts: { restock: boolean; reason?: string; apiRefund?: boolean }
 ): RefundBuildResult {
   const lineItems: RefundLineItemInput[] = [];
   let total = 0;
@@ -122,6 +122,7 @@ export function buildRefundRequest(
       ...(opts.reason?.trim() ? { reason: opts.reason.trim() } : {}),
       line_items: lineItems,
       api_restock: opts.restock,
+      ...(opts.apiRefund === undefined ? {} : { api_refund: opts.apiRefund }),
     },
   };
 }

@@ -3,6 +3,13 @@
  * Enhanced with Temporal API support (Chromium 144+, Node.js 24+)
  */
 
+import useAppSettings from '../stores/appSettingsStore';
+
+/** BCP-47 locale for the app language setting (bg -> bg-BG, the historic default). */
+export function getAppLocale(): string {
+  return useAppSettings.getState().language === 'en' ? 'en-GB' : 'bg-BG';
+}
+
 // ============================================
 // Types
 // ============================================

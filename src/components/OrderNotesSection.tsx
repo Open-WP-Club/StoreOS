@@ -2,6 +2,7 @@ import { ReactElement, FormEvent, useState } from 'react';
 import { MessageSquare, Send, Trash2, Loader2 } from 'lucide-react';
 import useAppSettings from '../stores/appSettingsStore';
 import NoteTemplatesModal from './NoteTemplatesModal';
+import { getAppLocale } from '../utils/dateTime';
 import type { OrderNote } from '../types';
 
 interface OrderNotesSectionProps {
@@ -121,7 +122,7 @@ export function OrderNotesSection({
                     <div className="mt-2 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                       <span>{note.author}</span>
                       <span>•</span>
-                      <span>{new Date(note.date_created).toLocaleString('bg-BG')}</span>
+                      <span>{new Date(note.date_created).toLocaleString(getAppLocale())}</span>
                       {note.customer_note && (
                         <>
                           <span>•</span>

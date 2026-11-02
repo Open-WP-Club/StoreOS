@@ -1,6 +1,6 @@
 import { ReactElement, useState } from 'react';
 import { Plus, Trash2, Check } from 'lucide-react';
-import Modal from './TitledModal';
+import Modal from './Modal';
 import useAppSettings from '../stores/appSettingsStore';
 
 const inputCls =

@@ -15,6 +15,7 @@ const mockGetCurrentStore = vi.fn();
 const mockGetFilterPresetsForType = vi.fn();
 const mockAddFilterPreset = vi.fn();
 const mockDeleteFilterPreset = vi.fn();
+const mockRenameFilterPreset = vi.fn();
 
 describe('FilterPresetManager', () => {
   const defaultProps = {
@@ -59,6 +60,7 @@ describe('FilterPresetManager', () => {
         getFilterPresetsForType: mockGetFilterPresetsForType,
         addFilterPreset: mockAddFilterPreset,
         deleteFilterPreset: mockDeleteFilterPreset,
+        renameFilterPreset: mockRenameFilterPreset,
       };
       return selector(state);
     });
@@ -257,6 +259,20 @@ describe('FilterPresetManager', () => {
       expect(window.confirm).toHaveBeenCalledWith('Delete this filter preset?');
       expect(mockDeleteFilterPreset).toHaveBeenCalledWith('preset-1');
     }
+  });
+
+  it('should rename a preset via inline modal without window.prompt', () => {
+    const promptSpy = vi.spyOn(window, 'prompt');
+    render(<FilterPresetManager {...defaultProps} />);
+
+    fireEvent.click(screen.getByText('Presets'));
+    fireEvent.click(screen.getByLabelText('Rename Low Stock'));
+    fireEvent.change(screen.getByLabelText('View name'), { target: { value: ' Renamed ' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Rename' }));
+
+    expect(promptSpy).not.toHaveBeenCalled();
+    expect(mockRenameFilterPreset).toHaveBeenCalledWith('preset-1', 'Renamed');
+    expect(screen.queryByLabelText('View name')).not.toBeInTheDocument();
   });
 
   it('should not delete preset when confirmation is cancelled', () => {

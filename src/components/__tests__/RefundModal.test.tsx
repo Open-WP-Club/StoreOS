@@ -37,8 +37,28 @@ describe('RefundModal', () => {
       amount: '25.00',
       reason: 'Broken',
       api_restock: false,
+      api_refund: true,
       line_items: [{ id: 7, quantity: 1, refund_total: '25.00', refund_tax: [] }],
     });
+  });
+
+  it('sends api_refund false when gateway refund is unchecked', () => {
+    const onSubmit = vi.fn();
+    render(
+      <RefundModal
+        order={order}
+        refunds={[]}
+        submitting={false}
+        onCancel={vi.fn()}
+        onSubmit={onSubmit}
+      />
+    );
+    fireEvent.change(screen.getByLabelText('Quantity to refund for Widget'), {
+      target: { value: '1' },
+    });
+    fireEvent.click(screen.getByLabelText('Refund via payment gateway'));
+    fireEvent.click(screen.getByRole('button', { name: 'Refund' }));
+    expect(onSubmit.mock.calls[0]![0]).toMatchObject({ api_refund: false });
   });
 
   it('clamps quantity to remaining and blocks over-refund amount', () => {

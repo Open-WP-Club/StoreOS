@@ -6,6 +6,7 @@ import React, {
   useDeferredValue,
   ChangeEvent,
 } from 'react';
+import Modal from '../components/Modal';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useStoreConfig, useCache } from '../stores';
 import WooCommerceService from '../services/woocommerce';
@@ -499,199 +500,200 @@ function CustomersPage(): React.ReactElement {
 
       {/* Customer Detail Modal */}
       {selectedCustomer && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-6">
-                <div className="flex items-center gap-4">
-                  {selectedCustomer.avatar_url ? (
-                    <img
-                      src={selectedCustomer.avatar_url}
-                      alt={`${selectedCustomer.first_name} ${selectedCustomer.last_name}`}
-                      className="w-16 h-16 rounded-full"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                      <User className="w-8 h-8 text-blue-600 dark:text-blue-400" />
-                    </div>
-                  )}
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                      {selectedCustomer.first_name} {selectedCustomer.last_name}
-                    </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Customer #{selectedCustomer.id}
-                    </p>
+        <Modal
+          onClose={() => setSelectedCustomer(null)}
+          className="mx-4 bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        >
+          <div className="p-6">
+            <div className="flex justify-between items-start mb-6">
+              <div className="flex items-center gap-4">
+                {selectedCustomer.avatar_url ? (
+                  <img
+                    src={selectedCustomer.avatar_url}
+                    alt={`${selectedCustomer.first_name} ${selectedCustomer.last_name}`}
+                    className="w-16 h-16 rounded-full"
+                  />
+                ) : (
+                  <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                    <User className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                   </div>
-                </div>
-                <button
-                  onClick={() => {
-                    setSelectedCustomer(null);
-                    setCustomerOrders([]);
-                  }}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-
-              {/* Customer Stats */}
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 text-center">
-                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {selectedCustomer.orders_count || 0}
+                )}
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                    {selectedCustomer.first_name} {selectedCustomer.last_name}
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Customer #{selectedCustomer.id}
                   </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Orders</p>
-                </div>
-                <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-4 text-center">
-                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    {formatPrice(selectedCustomer.total_spent || '0')}
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Total Spent</p>
-                </div>
-                <div className="bg-purple-50 dark:bg-purple-900/30 rounded-lg p-4 text-center">
-                  <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                    {selectedCustomer.orders_count &&
-                    parseFloat(selectedCustomer.total_spent || '0') > 0
-                      ? formatPrice(
-                          (
-                            parseFloat(selectedCustomer.total_spent || '0') /
-                            selectedCustomer.orders_count
-                          ).toFixed(2)
-                        )
-                      : formatPrice('0')}
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Avg Order</p>
                 </div>
               </div>
+              <button
+                onClick={() => {
+                  setSelectedCustomer(null);
+                  setCustomerOrders([]);
+                }}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
 
-              {/* Contact Info */}
-              <div className="mb-6">
-                <h4 className="font-semibold text-gray-900 dark:text-white mb-3">
-                  Contact Information
-                </h4>
-                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-2">
+            {/* Customer Stats */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 text-center">
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {selectedCustomer.orders_count || 0}
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Orders</p>
+              </div>
+              <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-4 text-center">
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                  {formatPrice(selectedCustomer.total_spent || '0')}
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Total Spent</p>
+              </div>
+              <div className="bg-purple-50 dark:bg-purple-900/30 rounded-lg p-4 text-center">
+                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                  {selectedCustomer.orders_count &&
+                  parseFloat(selectedCustomer.total_spent || '0') > 0
+                    ? formatPrice(
+                        (
+                          parseFloat(selectedCustomer.total_spent || '0') /
+                          selectedCustomer.orders_count
+                        ).toFixed(2)
+                      )
+                    : formatPrice('0')}
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Avg Order</p>
+              </div>
+            </div>
+
+            {/* Contact Info */}
+            <div className="mb-6">
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-3">
+                Contact Information
+              </h4>
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-2">
+                <p className="text-sm flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-gray-400" />
+                  <a
+                    href={`mailto:${selectedCustomer.email}`}
+                    className="text-blue-600 dark:text-blue-400 hover:underline"
+                  >
+                    {selectedCustomer.email}
+                  </a>
+                </p>
+                {selectedCustomer.billing?.phone && (
                   <p className="text-sm flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-gray-400" />
+                    <Phone className="w-4 h-4 text-gray-400" />
                     <a
-                      href={`mailto:${selectedCustomer.email}`}
+                      href={`tel:${selectedCustomer.billing.phone}`}
                       className="text-blue-600 dark:text-blue-400 hover:underline"
                     >
-                      {selectedCustomer.email}
+                      {selectedCustomer.billing.phone}
                     </a>
-                  </p>
-                  {selectedCustomer.billing?.phone && (
-                    <p className="text-sm flex items-center gap-2">
-                      <Phone className="w-4 h-4 text-gray-400" />
-                      <a
-                        href={`tel:${selectedCustomer.billing.phone}`}
-                        className="text-blue-600 dark:text-blue-400 hover:underline"
-                      >
-                        {selectedCustomer.billing.phone}
-                      </a>
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Billing Address */}
-              {selectedCustomer.billing && (
-                <div className="mb-6">
-                  <h4 className="font-semibold text-gray-900 dark:text-white mb-3">
-                    Billing Address
-                  </h4>
-                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 text-sm text-gray-600 dark:text-gray-300">
-                    <p>{selectedCustomer.billing.address_1}</p>
-                    {selectedCustomer.billing.address_2 && (
-                      <p>{selectedCustomer.billing.address_2}</p>
-                    )}
-                    <p>
-                      {selectedCustomer.billing.city}, {selectedCustomer.billing.state}{' '}
-                      {selectedCustomer.billing.postcode}
-                    </p>
-                    <p>{selectedCustomer.billing.country}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Recent Orders */}
-              <div>
-                <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Recent Orders</h4>
-                {loadingOrders ? (
-                  <div className="text-center py-4">
-                    <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                  </div>
-                ) : customerOrders.length > 0 ? (
-                  <div className="space-y-2">
-                    {customerOrders.map((order) => (
-                      <div
-                        key={order.id}
-                        onClick={() => navigate(`/orders/${order.id}`)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            navigate(`/orders/${order.id}`);
-                          }
-                        }}
-                        role="button"
-                        tabIndex={0}
-                        className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 rounded-lg p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                      >
-                        <div>
-                          <span className="text-sm font-medium text-gray-900 dark:text-white">
-                            Order #{order.id}
-                          </span>
-                          <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
-                            {new Date(order.date_created).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span
-                            className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                              order.status === 'completed'
-                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                : order.status === 'processing'
-                                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-                                  : 'bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-300'
-                            }`}
-                          >
-                            {order.status}
-                          </span>
-                          <span className="text-sm font-medium text-gray-900 dark:text-white">
-                            {formatPrice(order.total)}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
-                    No orders found
                   </p>
                 )}
               </div>
+            </div>
 
-              {/* Actions */}
-              <div className="flex gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <button
-                  onClick={() => navigate(`/orders?customer=${selectedCustomer.id}`)}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  View All Orders
-                </button>
-                <button
-                  onClick={() => {
-                    setSelectedCustomer(null);
-                    setCustomerOrders([]);
-                  }}
-                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                >
-                  Close
-                </button>
+            {/* Billing Address */}
+            {selectedCustomer.billing && (
+              <div className="mb-6">
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-3">
+                  Billing Address
+                </h4>
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 text-sm text-gray-600 dark:text-gray-300">
+                  <p>{selectedCustomer.billing.address_1}</p>
+                  {selectedCustomer.billing.address_2 && (
+                    <p>{selectedCustomer.billing.address_2}</p>
+                  )}
+                  <p>
+                    {selectedCustomer.billing.city}, {selectedCustomer.billing.state}{' '}
+                    {selectedCustomer.billing.postcode}
+                  </p>
+                  <p>{selectedCustomer.billing.country}</p>
+                </div>
               </div>
+            )}
+
+            {/* Recent Orders */}
+            <div>
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Recent Orders</h4>
+              {loadingOrders ? (
+                <div className="text-center py-4">
+                  <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                </div>
+              ) : customerOrders.length > 0 ? (
+                <div className="space-y-2">
+                  {customerOrders.map((order) => (
+                    <div
+                      key={order.id}
+                      onClick={() => navigate(`/orders/${order.id}`)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          navigate(`/orders/${order.id}`);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 rounded-lg p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                    >
+                      <div>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                          Order #{order.id}
+                        </span>
+                        <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                          {new Date(order.date_created).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                            order.status === 'completed'
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                              : order.status === 'processing'
+                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                                : 'bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-300'
+                          }`}
+                        >
+                          {order.status}
+                        </span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                          {formatPrice(order.total)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                  No orders found
+                </p>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => navigate(`/orders?customer=${selectedCustomer.id}`)}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                View All Orders
+              </button>
+              <button
+                onClick={() => {
+                  setSelectedCustomer(null);
+                  setCustomerOrders([]);
+                }}
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              >
+                Close
+              </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );
