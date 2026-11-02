@@ -195,7 +195,7 @@ function OrderDetailPage(): ReactElement {
             order={order}
             showToast={showToast}
             onSaved={() => {
-              void fetchOrderFromApi();
+              void fetchOrderFromApi(false);
               void notesHook.refreshNotes();
             }}
           />
