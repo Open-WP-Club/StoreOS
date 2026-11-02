@@ -1,44 +1,20 @@
-import React, { useState, useEffect, useCallback, useMemo, ChangeEvent } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useCache, useTheme } from '../stores';
 import type { WooCommerceOrder } from '../types';
-import { formatCurrency as formatCurrencyUtil, getCurrencyCode } from '../utils/currency';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  LineElement,
-  PointElement,
-  Title,
-  Tooltip,
-  Legend,
-  ChartOptions,
-} from 'chart.js';
+import { getCurrencyCode } from '../utils/currency';
+import type { ChartOptions } from 'chart.js';
+import '../utils/chartSetup';
+import { useAnalyticsBase } from '../hooks/useAnalyticsBase';
+import TimeRangeSelect from '../components/analytics/TimeRangeSelect';
+import { formatShortDate as formatDate } from '../utils/dateTime';
 import { Bar, Line } from 'react-chartjs-2';
-import { Calendar, TrendingUp, DollarSign, ShoppingCart, ArrowUp, ArrowDown, Package, Award } from 'lucide-react';
+import { TrendingUp, DollarSign, ShoppingCart, ArrowUp, ArrowDown, Package, Award } from 'lucide-react';
 import ExportMenu from '../components/ExportMenu';
 import { useReportExport } from '../hooks/useReportExport';
 import TopSellingDays from '../components/TopSellingDays';
 import OrderFunnel from '../components/OrderFunnel';
 import type { Order, Product } from '../types';
 import { EMPTY_ARRAY } from '../constants';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  LineElement,
-  PointElement,
-  Title,
-  Tooltip,
-  Legend
-);
-
-interface TimeRange {
-  value: number;
-  label: string;
-  days: number;
-}
 
 interface DailySalesData {
   date: string;
@@ -84,15 +60,6 @@ interface SalesData {
   inventoryValue: number;
 }
 
-const TIME_RANGES: TimeRange[] = [
-  { value: 7, label: '7 Days', days: 7 },
-  { value: 14, label: '14 Days', days: 14 },
-  { value: 30, label: '1 Month', days: 30 },
-  { value: 90, label: '3 Months', days: 90 },
-  { value: 180, label: '6 Months', days: 180 },
-  { value: 365, label: '12 Months', days: 365 },
-];
-
 const SalesAnalyticsPage: React.FC = (): React.ReactElement => {
   const getCachedData = useCache((state) => state.getCachedData);
   const theme = useTheme((state) => state.theme);
@@ -101,8 +68,7 @@ const SalesAnalyticsPage: React.FC = (): React.ReactElement => {
   );
 
   const [loading, setLoading] = useState<boolean>(true);
-  const [currencyCode, setCurrencyCode] = useState<string>('USD');
-  const [selectedTimeRange, setSelectedTimeRange] = useState<number>(30);
+  const { setCurrencyCode, selectedTimeRange, handleTimeRangeChange, timeRangeLabel, formatCurrency } = useAnalyticsBase();
   const [salesData, setSalesData] = useState<SalesData>({
     totalSales: 0,
     completedSales: 0,
@@ -298,7 +264,7 @@ const SalesAnalyticsPage: React.FC = (): React.ReactElement => {
       topProducts,
       inventoryValue,
     });
-  }, []);
+  }, [setCurrencyCode]);
 
   const loadSalesAnalytics = useCallback(async (): Promise<void> => {
     setLoading(true);
@@ -321,23 +287,10 @@ const SalesAnalyticsPage: React.FC = (): React.ReactElement => {
     void Promise.resolve().then(loadSalesAnalytics);
   }, [loadSalesAnalytics]);
 
-  const formatCurrency = (amount: number): string => {
-    return formatCurrencyUtil(amount, currencyCode);
-  };
-
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
-
   const formatMonth = (monthString: string): string => {
     const [year = '0', month = '1'] = monthString.split('-');
     const date = new Date(parseInt(year), parseInt(month) - 1);
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
-  };
-
-  const handleTimeRangeChange = (e: ChangeEvent<HTMLSelectElement>): void => {
-    setSelectedTimeRange(parseInt(e.target.value));
   };
 
   // Chart data
@@ -403,7 +356,6 @@ const SalesAnalyticsPage: React.FC = (): React.ReactElement => {
     },
   }), [theme]);
 
-  const timeRangeLabel = TIME_RANGES.find(r => r.value === selectedTimeRange)?.label || '';
 
   const { handleExportCSV, handleExportPDF, handlePrint } = useReportExport({
     reportName: 'Sales Analytics',
@@ -445,22 +397,7 @@ const SalesAnalyticsPage: React.FC = (): React.ReactElement => {
 
         {/* Time Range Selector + Export */}
         <div className="flex items-center gap-3">
-          <label htmlFor="time-range-select" className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-            <Calendar className="w-4 h-4" />
-            <span>Time Range:</span>
-          </label>
-          <select
-            id="time-range-select"
-            value={selectedTimeRange}
-            onChange={handleTimeRangeChange}
-            className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500"
-          >
-            {TIME_RANGES.map((range) => (
-              <option key={range.value} value={range.value}>
-                {range.label}
-              </option>
-            ))}
-          </select>
+          <TimeRangeSelect value={selectedTimeRange} onChange={handleTimeRangeChange} />
           <ExportMenu
             onExportCSV={handleExportCSV}
             onExportPDF={handleExportPDF}
@@ -536,7 +473,7 @@ const SalesAnalyticsPage: React.FC = (): React.ReactElement => {
       {/* Sales Trend Chart */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Sales Trend ({TIME_RANGES.find(r => r.value === selectedTimeRange)?.label})
+          Sales Trend ({timeRangeLabel})
         </h2>
         <Line data={salesTrendData} options={chartOptions as ChartOptions<'line'>} />
       </div>
@@ -544,7 +481,7 @@ const SalesAnalyticsPage: React.FC = (): React.ReactElement => {
       {/* Order Volume Chart */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Order Volume ({TIME_RANGES.find(r => r.value === selectedTimeRange)?.label})
+          Order Volume ({timeRangeLabel})
         </h2>
         <Bar data={orderVolumeData} options={chartOptions as ChartOptions<'bar'>} />
       </div>
