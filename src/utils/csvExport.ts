@@ -29,7 +29,12 @@ function escapeCSVValue(value: unknown): string {
     return '';
   }
 
-  const stringValue = String(value);
+  let stringValue = String(value);
+
+  // Neutralize spreadsheet formulas in text cells (numbers keep their sign)
+  if (typeof value === 'string' && /^[=+\-@\t\r]/.test(stringValue)) {
+    stringValue = `'${stringValue}`;
+  }
 
   // If value contains comma, quote, or newline, wrap in quotes and escape quotes
   if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
