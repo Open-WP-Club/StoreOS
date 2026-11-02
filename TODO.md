@@ -1,15 +1,15 @@
 # TODO
 
-Отложени задачи от прегледа на 2026-11-02 (партида 1 — low-stock, reorder report, POS офлайн, планирани отчети, дедупликация, тестове — е слята в main; партида 2 е в работа: refund, tracking, CSV импорт, saved views, бъг-фиксове, docs).
+Отложени задачи от прегледа на 2026-11-02 (партида 1 — low-stock, reorder report, POS офлайн, планирани отчети, дедупликация, тестове — е слята в main; партида 2 — refund, tracking, CSV импорт, saved views, бъг-фиксове, docs — също е слята.
 
 ## Функционалности (още не са започнати)
-- [~] (в работа) Refund в поръчката: частичен, по артикули, с ресток (`orders.ts`, `OrderDetailPage.tsx`, `useOfflineMutation`)
-- [~] (в работа) Tracking номер + масово „изпратено“ + шаблони за бележки (`OrderNotesSection`, `BulkActionsBar`)
-- [~] (в работа) Импорт на продукти от CSV с dry-run преглед (`utils/csvImport.ts`, `BulkEditPreview`, `batchErrorIds`)
+- [x] Refund в поръчката: частичен, по артикули, с ресток (`orders.ts`, `OrderDetailPage.tsx`, `useOfflineMutation`)
+- [x] Tracking номер + масово „изпратено“ + шаблони за бележки (`OrderNotesSection`, `BulkActionsBar`)
+- [x] Импорт на продукти от CSV с dry-run преглед (`utils/csvImport.ts`, `BulkEditPreview`, `batchErrorIds`)
 - [ ] Копиране на продукти/купони между магазини (ремап на категории/атрибути е трудната част)
 - [ ] Сравнение на магазините един до друг (`MultiStoreView`, `useKPIs`)
 - [ ] POS касова бележка 80mm + отваряне на чекмедже (ESC/POS през IPC)
-- [~] (в работа) Запазени изгледи (сортиране, колони, филтри) + команда в палитрата
+- [x] Запазени изгледи (сортиране, колони, филтри) + команда в палитрата
 - [ ] UI за webhooks и платежни методи + автоматичен backup по график
 
 ## Дублиране (ако не са влезли в текущата партида)
@@ -21,9 +21,9 @@
 - [ ] Пусни `pnpm run test:coverage` и сравни; преди това няма базова линия след новите 9 теста
 
 ## Бъгове намерени от тестовете (не са поправени)
-- [ ] `BulkGenerateCouponsModal.handleGenerate` брои `{error}` записите от batch отговора като успешни — ползвай `batchErrorIds`, покажи „X of Y failed“ (тест на клон worktree-agent-a9bc5a7c2ba5a3081 фиксира сегашното поведение; обърни го след поправката)
-- [ ] `useCouponForm`: валидацията приема само `[A-Z0-9-]`, `.toUpperCase()` след нея е недостижим; провери дали `CouponFormModal` главни буквите при писане
-- [ ] `TaxRatesTab`: Priority `parseInt(value) || 1` — след изчистване „2“ става 12
+- [x] `BulkGenerateCouponsModal.handleGenerate` брои `{error}` записите от batch отговора като успешни — ползвай `batchErrorIds`, покажи „X of Y failed“ (тест на клон worktree-agent-a9bc5a7c2ba5a3081 фиксира сегашното поведение; обърни го след поправката)
+- [x] `useCouponForm`: валидацията приема само `[A-Z0-9-]`, `.toUpperCase()` след нея е недостижим; провери дали `CouponFormModal` главни буквите при писане
+- [x] `TaxRatesTab`: Priority `parseInt(value) || 1` — след изчистване „2“ става 12
 - [ ] `ReviewsPage` е на ~49% покритие
 - [ ] Модали, които не са мигрирани към `Modal`: BulkEditForm/Preview, CouponFormModal, BulkGenerateCouponsModal, ImageLightbox, ProductsPage/CustomersPage/ActivityLogPage (не са разгледани), QuickSwitcher, CommandPalette, KeyboardShortcutsModal, FilterPresetManager, ConfirmDialog
 - [ ] Планирани отчети: редовете на отчета се строят отделно от `useReportExport`/`usePOSDailyReport` (дублиране); ръчен тест в стартирано приложение (IPC, диалог за папка)
@@ -37,6 +37,13 @@
 - [ ] Мъртъв код от knip (не е трито): `deferredInit.ts` е маркиран unused file, но има тестове — провери; `src/utils/index.ts` barrel, много exports в `constants/config.js`, `stores/index.ts` и `__test_utils__`
 - [ ] CLAUDE.md споменава `TaxRatesTab`, а мутациите на данъци са в `TaxPage` — провери
 - [ ] Твърдо зададен `'bg-BG'` в `usePOSDailyReport`, `POSRecentTransactionsModal`, `OrderNotesSection`, `POSDailyReportModal` (няма locale helper в i18n)
+
+## Нови от партида 2
+- [ ] `pnpm run format:check` пада на ~190 файла (и преди промените) — CI го пуска; пусни `prettier --write` в отделен комит
+- [ ] Saved views: няма sort/колони в списъците; Customers пази само търсене и page size; rename ползва `window.prompt`
+- [ ] Refund: не минава през useOfflineMutation (двойно възстановяване при replay); `api_refund` е по подразбиране true — добави превключвател
+- [ ] CSV импорт и bulk "изпратено" викат batch директно (без офлайн опашка); два модала: `Modal` и `TitledModal` — обедини
+- [ ] Ръчен тест в стартирано приложение: POS офлайн, планирани отчети, refund, импорт, tracking
 
 ## Документи и зависимости
 - [ ] `docs/TESTING.md`: долните секции (списъци компоненти/утилити, `.jsx` примери) още са по старата структура
