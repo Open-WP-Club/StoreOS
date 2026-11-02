@@ -59,11 +59,13 @@ vi.mock('../../components/LoadingIndicator', () => ({
 }));
 
 vi.mock('../../components/BulkActionsBar', () => ({
-  default: function MockBulkActionsBar({ onStatusChange, onDelete }) {
+  default: function MockBulkActionsBar({ onStatusChange, onDelete, onMarkShipped }) {
     return (
       <div data-testid="bulk-actions-bar">
         <button onClick={() => onStatusChange('completed')}>Set completed</button>
         <button onClick={() => onDelete()}>Delete orders</button>
+        <button onClick={() => onMarkShipped('Shipped!')}>Ship with note</button>
+        <button onClick={() => onMarkShipped(null)}>Ship no note</button>
       </div>
     );
   },
@@ -183,6 +185,7 @@ const mockStore = {
 };
 const setCachedData = vi.fn();
 const batchOrders = vi.fn();
+const addOrderNote = vi.fn();
 
 describe('OrdersPage bulk operations', () => {
   beforeEach(() => {
@@ -194,7 +197,7 @@ describe('OrdersPage bulk operations', () => {
       selector({ setCachedData, cache: { orders: { data: mockOrders } } })
     );
     WooCommerceService.mockImplementation(function () {
-      return { batchOrders };
+      return { batchOrders, addOrderNote };
     });
   });
 
@@ -306,5 +309,76 @@ describe('OrdersPage bulk operations', () => {
     await waitFor(() => expect(showToast).toHaveBeenCalled());
     expect(showToast.mock.calls[0][1]).toBe('error');
     expect(setCachedData).not.toHaveBeenCalled();
+  });
+  describe('bulk mark shipped', () => {
+    beforeEach(() => addOrderNote.mockResolvedValue({ success: true }));
+
+    it('completes orders and sends a customer note to each', async () => {
+      batchOrders.mockResolvedValue({ success: true, data: { update: [{ id: 1001 }, { id: 1002 }] } });
+      await selectTwoAnd(userEvent.setup(), 'Ship with note');
+      await waitFor(() => expect(showToast).toHaveBeenCalled());
+      expect(batchOrders).toHaveBeenCalledWith({
+        update: [
+          { id: 1001, status: 'completed' },
+          { id: 1002, status: 'completed' },
+        ],
+      });
+      expect(addOrderNote).toHaveBeenCalledWith(1001, 'Shipped!', true);
+      expect(addOrderNote).toHaveBeenCalledWith(1002, 'Shipped!', true);
+      expect(showToast.mock.calls[0][1]).toBe('success');
+      expect(setCachedData.mock.calls[0][1].find((o) => o.id === 1001).status).toBe('completed');
+    });
+
+    it('skips notes when none is chosen', async () => {
+      batchOrders.mockResolvedValue({ success: true, data: { update: [{ id: 1001 }, { id: 1002 }] } });
+      await selectTwoAnd(userEvent.setup(), 'Ship no note');
+      await waitFor(() => expect(showToast).toHaveBeenCalled());
+      expect(addOrderNote).not.toHaveBeenCalled();
+    });
+
+    it('only notes succeeded orders and warns about the failed one', async () => {
+      batchOrders.mockResolvedValue({
+        success: true,
+        data: { update: [{ id: 1001 }, { id: 1002, error: { message: 'x' } }] },
+      });
+      await selectTwoAnd(userEvent.setup(), 'Ship with note');
+      await waitFor(() => expect(showToast).toHaveBeenCalled());
+      expect(addOrderNote).toHaveBeenCalledTimes(1);
+      expect(addOrderNote).toHaveBeenCalledWith(1001, 'Shipped!', true);
+      expect(showToast.mock.calls[0][0]).toContain('1 от 2');
+      expect(showToast.mock.calls[0][1]).toBe('warning');
+      const cached = setCachedData.mock.calls[0][1];
+      expect(cached.find((o) => o.id === 1002).status).toBe('pending');
+    });
+
+    it('warns when some notes fail but orders were completed', async () => {
+      batchOrders.mockResolvedValue({ success: true, data: { update: [{ id: 1001 }, { id: 1002 }] } });
+      addOrderNote.mockResolvedValueOnce({ success: false }).mockResolvedValueOnce({ success: true });
+      await selectTwoAnd(userEvent.setup(), 'Ship with note');
+      await waitFor(() => expect(showToast).toHaveBeenCalled());
+      expect(showToast.mock.calls[0][0]).toContain('1 от 2 бележки');
+      expect(showToast.mock.calls[0][1]).toBe('warning');
+    });
+
+    it('shows an error and skips cache write when the batch request fails', async () => {
+      batchOrders.mockResolvedValue({ success: false, error: 'boom' });
+      await selectTwoAnd(userEvent.setup(), 'Ship with note');
+      await waitFor(() => expect(showToast).toHaveBeenCalled());
+      expect(showToast.mock.calls[0][0]).toContain('boom');
+      expect(showToast.mock.calls[0][1]).toBe('error');
+      expect(addOrderNote).not.toHaveBeenCalled();
+      expect(setCachedData).not.toHaveBeenCalled();
+    });
+
+    it('does not touch the cache when every status update fails', async () => {
+      batchOrders.mockResolvedValue({
+        success: true,
+        data: { update: [{ id: 1001, error: {} }, { id: 1002, error: {} }] },
+      });
+      await selectTwoAnd(userEvent.setup(), 'Ship with note');
+      await waitFor(() => expect(showToast).toHaveBeenCalled());
+      expect(setCachedData).not.toHaveBeenCalled();
+      expect(addOrderNote).not.toHaveBeenCalled();
+    });
   });
 });
