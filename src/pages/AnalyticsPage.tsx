@@ -1,39 +1,16 @@
 import React, { useEffect, useMemo, useState, ChangeEvent } from 'react';
 import { useStoreConfig, useCache, useTheme } from '../stores';
 import { formatCurrency as formatCurrencyUtil } from '../utils/currency';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  LineElement,
-  PointElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement,
-  type ChartOptions,
-} from 'chart.js';
+import type { ChartOptions } from 'chart.js';
+import '../utils/chartSetup';
+import { TIME_RANGES } from '../constants/timeRanges';
+import { formatShortDate as formatDate } from '../utils/dateTime';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import LoadingIndicator from '../components/LoadingIndicator';
 import AnalyticsRevenueCards from '../components/analytics/AnalyticsRevenueCards';
 import AnalyticsTopProducts from '../components/analytics/AnalyticsTopProducts';
 import { useAnalyticsData } from '../hooks/useAnalyticsData';
 import { Calendar } from 'lucide-react';
-
-ChartJS.register(
-  CategoryScale, LinearScale, BarElement, LineElement,
-  PointElement, Title, Tooltip, Legend, ArcElement
-);
-
-const TIME_RANGES = [
-  { value: 7, label: '7 Days' },
-  { value: 14, label: '14 Days' },
-  { value: 30, label: '1 Month' },
-  { value: 90, label: '3 Months' },
-  { value: 180, label: '6 Months' },
-  { value: 365, label: '12 Months' },
-];
 
 const AnalyticsPage: React.FC = () => {
   const getCachedData = useCache((state) => state.getCachedData);
@@ -58,9 +35,6 @@ const AnalyticsPage: React.FC = () => {
   }, [loadAnalytics, cancelLoading]);
 
   const formatCurrency = (amount: number) => formatCurrencyUtil(amount, currencyCode);
-
-  const formatDate = (dateString: string) =>
-    new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
   const formatLastUpdated = (date: Date | null): string => {
     if (!date) return 'Never';

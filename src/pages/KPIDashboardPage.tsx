@@ -1,14 +1,6 @@
 import React from 'react';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ChartOptions,
-} from 'chart.js';
+import type { ChartOptions } from 'chart.js';
+import '../utils/chartSetup';
 import { Bar } from 'react-chartjs-2';
 import {
   DollarSign,
@@ -29,8 +21,6 @@ import ExportMenu from '../components/ExportMenu';
 import { useReportExport } from '../hooks/useReportExport';
 import type { KPIPeriod } from '../hooks/useKPIs';
 import { useTheme } from '../stores';
-
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const PERIODS: { value: KPIPeriod; label: string }[] = [
   { value: 7, label: '7 Days' },

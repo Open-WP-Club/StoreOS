@@ -311,3 +311,7 @@ export const formatDuration = (seconds: number): string => {
   }
   return `${secs}s`;
 };
+
+/** "Jan 5" style short date (en-US). */
+export const formatShortDate = (dateString: string): string =>
+  new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });

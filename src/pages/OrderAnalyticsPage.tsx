@@ -1,42 +1,16 @@
-import React, { useState, useEffect, useCallback, useMemo, ChangeEvent } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useCache, useTheme } from '../stores';
-import { formatCurrency as formatCurrencyUtil, getCurrencyCode } from '../utils/currency';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  ArcElement,
-  LineElement,
-  PointElement,
-  Title,
-  Tooltip,
-  Legend,
-  ChartOptions,
-} from 'chart.js';
+import { getCurrencyCode } from '../utils/currency';
+import type { ChartOptions } from 'chart.js';
+import '../utils/chartSetup';
+import { useAnalyticsBase } from '../hooks/useAnalyticsBase';
+import TimeRangeSelect from '../components/analytics/TimeRangeSelect';
+import { formatShortDate as formatDate } from '../utils/dateTime';
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
-import { Calendar, ShoppingCart, CheckCircle, Clock, XCircle, RefreshCw, AlertCircle, DollarSign, TrendingUp } from 'lucide-react';
+import { ShoppingCart, CheckCircle, Clock, XCircle, RefreshCw, AlertCircle, DollarSign, TrendingUp } from 'lucide-react';
 import ExportMenu from '../components/ExportMenu';
 import { useReportExport } from '../hooks/useReportExport';
 import type { Order } from '../types';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  ArcElement,
-  LineElement,
-  PointElement,
-  Title,
-  Tooltip,
-  Legend
-);
-
-interface TimeRange {
-  value: number;
-  label: string;
-  days: number;
-}
 
 interface DailyOrderData {
   date: string;
@@ -65,22 +39,12 @@ interface OrderData {
   averageProcessingTime: number;
 }
 
-const TIME_RANGES: TimeRange[] = [
-  { value: 7, label: '7 Days', days: 7 },
-  { value: 14, label: '14 Days', days: 14 },
-  { value: 30, label: '1 Month', days: 30 },
-  { value: 90, label: '3 Months', days: 90 },
-  { value: 180, label: '6 Months', days: 180 },
-  { value: 365, label: '12 Months', days: 365 },
-];
-
 const OrderAnalyticsPage: React.FC = (): React.ReactElement => {
   const getCachedData = useCache((state) => state.getCachedData);
   const theme = useTheme((state) => state.theme);
 
   const [loading, setLoading] = useState<boolean>(true);
-  const [currencyCode, setCurrencyCode] = useState<string>('USD');
-  const [selectedTimeRange, setSelectedTimeRange] = useState<number>(30);
+  const { setCurrencyCode, selectedTimeRange, handleTimeRangeChange, timeRangeLabel, formatCurrency } = useAnalyticsBase();
   const [orderData, setOrderData] = useState<OrderData>({
     totalOrders: 0,
     completedOrders: 0,
@@ -229,7 +193,7 @@ const OrderAnalyticsPage: React.FC = (): React.ReactElement => {
       ordersByPaymentMethod: paymentMethodMap,
       averageProcessingTime,
     });
-  }, []);
+  }, [setCurrencyCode]);
 
   const loadOrderAnalytics = useCallback(async (): Promise<void> => {
     setLoading(true);
@@ -249,15 +213,6 @@ const OrderAnalyticsPage: React.FC = (): React.ReactElement => {
     void Promise.resolve().then(loadOrderAnalytics);
   }, [loadOrderAnalytics]);
 
-  const formatCurrency = (amount: number): string => {
-    return formatCurrencyUtil(amount, currencyCode);
-  };
-
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
-
   const formatProcessingTime = (hours: number): string => {
     if (hours < 1) {
       return `${Math.round(hours * 60)} minutes`;
@@ -266,10 +221,6 @@ const OrderAnalyticsPage: React.FC = (): React.ReactElement => {
     } else {
       return `${(hours / 24).toFixed(1)} days`;
     }
-  };
-
-  const handleTimeRangeChange = (e: ChangeEvent<HTMLSelectElement>): void => {
-    setSelectedTimeRange(parseInt(e.target.value));
   };
 
   // Chart data
@@ -353,7 +304,6 @@ const OrderAnalyticsPage: React.FC = (): React.ReactElement => {
     },
   }) satisfies ChartOptions<'line'>, [theme]);
 
-  const timeRangeLabel = TIME_RANGES.find(r => r.value === selectedTimeRange)?.label || '';
 
   const orderStatusData = Object.entries(orderData.ordersByStatus).map(([status, count]) => ({
     status,
@@ -400,22 +350,7 @@ const OrderAnalyticsPage: React.FC = (): React.ReactElement => {
 
         {/* Time Range Selector + Export */}
         <div className="flex items-center gap-3">
-          <label htmlFor="time-range-select" className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-            <Calendar className="w-4 h-4" />
-            <span>Time Range:</span>
-          </label>
-          <select
-            id="time-range-select"
-            value={selectedTimeRange}
-            onChange={handleTimeRangeChange}
-            className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500"
-          >
-            {TIME_RANGES.map((range) => (
-              <option key={range.value} value={range.value}>
-                {range.label}
-              </option>
-            ))}
-          </select>
+          <TimeRangeSelect value={selectedTimeRange} onChange={handleTimeRangeChange} />
           <ExportMenu
             onExportCSV={handleExportCSV}
             onExportPDF={handleExportPDF}
@@ -592,7 +527,7 @@ const OrderAnalyticsPage: React.FC = (): React.ReactElement => {
         {/* Orders Trend */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Order Trend ({TIME_RANGES.find(r => r.value === selectedTimeRange)?.label})
+            Order Trend ({timeRangeLabel})
           </h2>
           <Line data={ordersTrendData} options={chartOptions} />
         </div>
