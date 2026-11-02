@@ -2,7 +2,8 @@ import { useState, useCallback, useMemo, useDeferredValue } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { searchProducts, applyProductFilters } from '../utils/searchService';
 import useSettings from '../stores/settingsStore';
-import type { Product } from '../types';
+import { useApplySavedView } from './useApplySavedView';
+import type { FilterPreset, Product } from '../types';
 
 export interface ProductFilters {
   stockStatus: string;
@@ -36,7 +37,7 @@ interface UseProductFiltersResult {
   handlePageChange: (page: number) => void;
   handlePageSizeChange: (size: number) => void;
   clearAllFilters: () => void;
-  handleApplyPreset: (presetFilters: Record<string, unknown>, showToast: (msg: string, type: 'success' | 'error' | 'info') => void) => void;
+  handleApplyPreset: (presetFilters: Record<string, unknown>, showToast: (msg: string, type: 'success' | 'error' | 'info') => void, preset?: FilterPreset) => void;
   searchParams: URLSearchParams;
   setSearchParams: ReturnType<typeof useSearchParams>[1];
 }
@@ -118,8 +119,15 @@ export function useProductFilters(products: Product[]): UseProductFiltersResult 
     setSearchTerm('');
   };
 
-  const handleApplyPreset = (presetFilters: Record<string, unknown>, showToast: (msg: string, type: 'success' | 'error' | 'info') => void): void => {
+  useApplySavedView((preset) => {
+    setFilters(preset.filters as unknown as ProductFilters);
+    if (preset.pageSize) handlePageSizeChange(preset.pageSize);
+  });
+
+  const handleApplyPreset = (presetFilters: Record<string, unknown>, showToast: (msg: string, type: 'success' | 'error' | 'info') => void, preset?: FilterPreset): void => {
     setFilters(presetFilters as unknown as ProductFilters);
+    if (preset?.pageSize) handlePageSizeChange(preset.pageSize);
+    if (preset?.search !== undefined) setSearchTerm(preset.search);
     showToast('Filter preset applied', 'success');
   };
 

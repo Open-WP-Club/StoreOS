@@ -93,7 +93,8 @@ function ProductsPage(): React.ReactElement {
         filteredProductsCount={filtersHook.filteredProducts.length}
         totalProductsCount={products.length}
         onClearAllFilters={filtersHook.clearAllFilters}
-        onApplyPreset={(presetFilters) => filtersHook.handleApplyPreset(presetFilters, showToast)}
+        pageSize={filtersHook.pageSize}
+        onApplyPreset={(presetFilters, preset) => filtersHook.handleApplyPreset(presetFilters, showToast, preset)}
         onExportCSV={() => exportHook.handleExportCSV(filtersHook.filteredProducts)}
         onExportPDF={() => exportHook.handleExportPDF(filtersHook.filteredProducts)}
         onImport={() => setImportOpen(true)}

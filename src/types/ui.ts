@@ -23,8 +23,11 @@ export interface RecentSearch {
 export interface FilterPreset {
   id: string;
   name: string;
-  type: 'orders' | 'products';
+  type: 'orders' | 'products' | 'customers';
   filters: Record<string, unknown>;
+  /** Saved-view extras (optional so legacy presets still load) */
+  search?: string;
+  pageSize?: number;
   storeId: string | null;
   createdAt: string;
   updatedAt?: string;

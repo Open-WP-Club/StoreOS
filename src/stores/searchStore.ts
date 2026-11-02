@@ -9,7 +9,7 @@ import type { RecentSearch, FilterPreset } from '../types';
 // ============================================
 
 type SearchType = 'global' | 'orders' | 'products' | 'customers';
-type FilterPresetType = 'orders' | 'products';
+type FilterPresetType = 'orders' | 'products' | 'customers';
 
 interface NewSearchInput {
   query: string;
@@ -21,6 +21,8 @@ interface NewFilterPresetInput {
   name: string;
   type?: FilterPresetType;
   filters?: Record<string, unknown>;
+  search?: string;
+  pageSize?: number;
   storeId?: string | null;
 }
 
@@ -38,6 +40,8 @@ interface SearchActions {
   addFilterPreset: (preset: NewFilterPresetInput) => FilterPreset;
   updateFilterPreset: (id: string, updates: Partial<FilterPreset>) => void;
   deleteFilterPreset: (id: string) => void;
+  renameFilterPreset: (id: string, name: string) => void;
+  getSavedViews: (storeId?: string | null) => FilterPreset[];
   getFilterPresetsForType: (type: FilterPresetType, storeId?: string | null) => FilterPreset[];
   clearFilterPresets: () => void;
 }
@@ -139,13 +143,15 @@ const useSearch = create<SearchStore>()(
        * Add a new filter preset
        */
       addFilterPreset: (preset: NewFilterPresetInput): FilterPreset => {
-        const { name, type, filters, storeId } = preset;
+        const { name, type, filters, storeId, search, pageSize } = preset;
 
         const presetItem: FilterPreset = {
           id: crypto.randomUUID(),
           name: name.trim(),
           type: type || 'products',
           filters: filters || {},
+          ...(search ? { search } : {}),
+          ...(pageSize ? { pageSize } : {}),
           storeId: storeId || null,
           createdAt: new Date().toISOString(),
         };
@@ -179,6 +185,25 @@ const useSearch = create<SearchStore>()(
           if (index !== -1) state.savedFilterPresets.splice(index, 1);
         });
       },
+
+      /** Rename a saved view (blank names are ignored) */
+      renameFilterPreset: (id: string, name: string) => {
+        const trimmed = name.trim();
+        if (!trimmed) return;
+        set((state) => {
+          const preset = state.savedFilterPresets.find((p) => p.id === id);
+          if (preset) {
+            preset.name = trimmed;
+            preset.updatedAt = new Date().toISOString();
+          }
+        });
+      },
+
+      /** All saved views (any page) visible for a store: its own plus global ('all') */
+      getSavedViews: (storeId: string | null = null): FilterPreset[] =>
+        get().savedFilterPresets.filter(
+          (p) => !storeId || p.storeId === storeId || p.storeId === 'all'
+        ),
 
       /**
        * Get filter presets for a specific type and optional store

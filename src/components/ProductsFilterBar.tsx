@@ -17,7 +17,8 @@ interface ProductsFilterBarProps {
   filteredProductsCount: number;
   totalProductsCount: number;
   onClearAllFilters: () => void;
-  onApplyPreset: (presetFilters: Record<string, unknown>) => void;
+  onApplyPreset: (presetFilters: Record<string, unknown>, preset: FilterPreset) => void;
+  pageSize?: number;
   onExportCSV: () => void;
   onExportPDF: () => void;
   onImport?: () => void;
@@ -46,6 +47,7 @@ export function ProductsFilterBar({
   totalProductsCount,
   onClearAllFilters,
   onApplyPreset,
+  pageSize,
   onExportCSV,
   onExportPDF,
   onImport,
@@ -95,6 +97,8 @@ export function ProductsFilterBar({
           <FilterPresetManager
             type="products"
             currentFilters={filters as unknown as Record<string, unknown>}
+            currentSearch={searchTerm}
+            currentPageSize={pageSize}
             onApplyPreset={onApplyPreset}
             onSaveSuccess={(preset: FilterPreset) =>
               showToast(`Preset "${preset.name}" saved`, 'success')
