@@ -7,7 +7,15 @@ import { hashPin, verifyPinHash, isLegacyHash } from '../utils/pinHash';
 // Types
 // ============================================
 
+export interface NoteTemplate {
+  id: string;
+  text: string;
+}
+
 export interface AppSettingsState {
+  // Canned order-note templates
+  noteTemplates: NoteTemplate[];
+
   // Language
   language: Language;
 
@@ -46,8 +54,13 @@ export interface AppSettingsActions {
   /** Throttled: after repeated failures returns false without checking until pinLockedUntil. */
   verifyPin: (code: string) => Promise<boolean>;
 
+  // Note templates
+  addNoteTemplate: (text: string) => void;
+  updateNoteTemplate: (id: string, text: string) => void;
+  deleteNoteTemplate: (id: string) => void;
+
   // App initialization
-  setInitialized: (initialized: boolean) => void;
+  setInitialized:(initialized: boolean) => void;
 
   // Reset
   resetAppSettings: () => void;
@@ -88,6 +101,23 @@ const useAppSettings = create<AppSettingsStore>()(
       failedPinAttempts: 0,
       pinLockedUntil: null,
       isInitialized: false,
+      noteTemplates: [],
+
+      addNoteTemplate: (text: string) => {
+        const t = text.trim();
+        if (!t) return;
+        set((s) => ({ noteTemplates: [...s.noteTemplates, { id: crypto.randomUUID(), text: t }] }));
+      },
+      updateNoteTemplate: (id: string, text: string) => {
+        const t = text.trim();
+        if (!t) return;
+        set((s) => ({
+          noteTemplates: s.noteTemplates.map((n) => (n.id === id ? { ...n, text: t } : n)),
+        }));
+      },
+      deleteNoteTemplate: (id: string) => {
+        set((s) => ({ noteTemplates: s.noteTemplates.filter((n) => n.id !== id) }));
+      },
 
       // Language
       setLanguage: (language: Language) => {
@@ -185,6 +215,7 @@ const useAppSettings = create<AppSettingsStore>()(
           isLocked: false,
           failedPinAttempts: 0,
           pinLockedUntil: null,
+          noteTemplates: [],
         });
       },
     }),
@@ -200,6 +231,7 @@ const useAppSettings = create<AppSettingsStore>()(
         lastActivity: state.lastActivity,
         failedPinAttempts: state.failedPinAttempts,
         pinLockedUntil: state.pinLockedUntil,
+        noteTemplates: state.noteTemplates,
       }),
     }
   )

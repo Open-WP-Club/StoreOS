@@ -1,6 +1,7 @@
 import { vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import BulkActionsBar from '../BulkActionsBar';
+import useAppSettings from '../../stores/appSettingsStore';
 import { createMockOrder } from '../../__test_utils__/mockFactories';
 
 function createOrders(count: number) {
@@ -24,6 +25,28 @@ const defaultProps = {
 function renderBar(overrides = {}) {
   return render(<BulkActionsBar {...defaultProps} {...overrides} />);
 }
+
+describe('BulkActionsBar mark shipped', () => {
+  it('passes the chosen template text to onMarkShipped', async () => {
+    useAppSettings.setState({ noteTemplates: [{ id: 'a', text: 'Your order shipped' }] });
+    const onMarkShipped = vi.fn(() => Promise.resolve());
+    renderBar({ onMarkShipped });
+    fireEvent.click(screen.getByTitle('Маркирай като изпратени'));
+    fireEvent.change(screen.getByLabelText('Шаблон за бележка'), {
+      target: { value: 'Your order shipped' },
+    });
+    fireEvent.click(screen.getByText('Потвърди'));
+    expect(onMarkShipped).toHaveBeenCalledWith('Your order shipped');
+  });
+
+  it('passes null when no template chosen', () => {
+    const onMarkShipped = vi.fn(() => Promise.resolve());
+    renderBar({ onMarkShipped });
+    fireEvent.click(screen.getByTitle('Маркирай като изпратени'));
+    fireEvent.click(screen.getByText('Потвърди'));
+    expect(onMarkShipped).toHaveBeenCalledWith(null);
+  });
+});
 
 describe('BulkActionsBar', () => {
   describe('selection info', () => {
