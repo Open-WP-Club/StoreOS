@@ -7,7 +7,8 @@ import { TIME } from '../constants/config';
 import { useProgressiveLoading } from '../hooks/useProgressiveLoading';
 import { playNotificationSound } from '../utils/notificationSound';
 import { isInvalidCredentials, loadFailureMessage, openSetupAction } from '../utils/loadErrors';
-import type { WooCommerceOrder, WooCommerceProduct, BatchLoadProgress } from '../types';
+import { detectLowStockCrossings, lowStockMessage } from '../utils/lowStock';
+import type { WooCommerceOrder,WooCommerceProduct, BatchLoadProgress } from '../types';
 import type { OrdersSync } from '../stores/cache/types';
 import type { NotificationType } from '../stores/notificationStore';
 
@@ -38,6 +39,22 @@ function sendNotification(
   if (type === 'new_order' && confettiEnabled && celebrationData) {
     triggerCelebration(celebrationData);
   }
+}
+
+// Product ids already alerted as low-stock, per store (cleared on reload).
+const alertedLowStock = new Map<string, Set<number>>();
+
+function notifyLowStockCrossings(products: WooCommerceProduct[], storeId: string): void {
+  const { notifyLowStock, lowStockThreshold } = useSettings.getState();
+  if (!notifyLowStock) return;
+  const { crossed, next } = detectLowStockCrossings(
+    products,
+    lowStockThreshold,
+    alertedLowStock.get(storeId) ?? new Set()
+  );
+  alertedLowStock.set(storeId, next);
+  const body = lowStockMessage(crossed);
+  if (body) sendNotification('low_stock', 'Low Stock Alert', body, '/inventory', storeId);
 }
 
 interface LoadingRefState {
@@ -335,6 +352,7 @@ function DataManager(): null {
               await setCachedData('products', merged);
               // Persist lastSync to IndexedDB for cross-session recovery
               await setProductsLastSync(latestModified);
+              notifyLowStockCrossings(merged, currentStore.id);
 
               loadingRef.current.products = false;
               return;
@@ -390,30 +408,7 @@ function DataManager(): null {
           }
 
           // Check for low stock items
-          const { notifyLowStock, lowStockThreshold } = useSettings.getState();
-          if (notifyLowStock) {
-            const lowStockItems = (result.data as WooCommerceProduct[]).filter(
-              (p) =>
-                p.manage_stock &&
-                p.stock_quantity !== null &&
-                p.stock_quantity <= lowStockThreshold &&
-                p.stock_quantity > 0
-            );
-            if (lowStockItems.length > 0) {
-              const firstItem = lowStockItems[0]!;
-              const stockBody =
-                lowStockItems.length === 1
-                  ? `${firstItem.name} has only ${firstItem.stock_quantity} left`
-                  : `${lowStockItems.length} products are running low on stock`;
-              sendNotification(
-                'low_stock',
-                'Low Stock Alert',
-                stockBody,
-                '/inventory',
-                currentStore.id
-              );
-            }
-          }
+          notifyLowStockCrossings(result.data as WooCommerceProduct[], currentStore.id);
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unknown error';

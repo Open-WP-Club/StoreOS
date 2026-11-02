@@ -62,7 +62,7 @@ const useSettings = create<SettingsStore>()(
 
       // Notification preferences
       notifyNewOrders: true,
-      notifyLowStock: false,
+      notifyLowStock: true,
       lowStockThreshold: 5,
       // Business thresholds
       orderSplitDays: 7,
@@ -129,7 +129,7 @@ const useSettings = create<SettingsStore>()(
           autoRefresh: false,
           autoRefreshInterval: AUTO_REFRESH.DEFAULT_INTERVAL,
           notifyNewOrders: true,
-          notifyLowStock: false,
+          notifyLowStock: true,
           lowStockThreshold: 5,
           orderSplitDays: 7,
           refreshOrders: null,
