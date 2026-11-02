@@ -75,13 +75,11 @@ export function convertToCSV<T extends object>(
 }
 
 /**
- * Download CSV file
+ * Trigger a browser download for in-memory content.
  */
-export function downloadCSV(csvContent: string, filename: string): void {
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+export function downloadBlob(content: BlobPart, mime: string, filename: string): void {
+  const blob = new Blob([content], { type: mime });
   const link = document.createElement('a');
-
-  // Modern browsers
   link.href = URL.createObjectURL(blob);
   link.download = filename;
   link.style.display = 'none';
@@ -89,6 +87,13 @@ export function downloadCSV(csvContent: string, filename: string): void {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(link.href);
+}
+
+/**
+ * Download CSV file
+ */
+export function downloadCSV(csvContent: string, filename: string): void {
+  downloadBlob(csvContent, 'text/csv;charset=utf-8;', filename);
 }
 
 /**

@@ -18,6 +18,7 @@ vi.mock('../../services/woocommerce');
 
 vi.mock('../../utils/currency', () => ({
   formatPrice: (v: string | number) => `$${v}`,
+  storeCurrencySymbol: () => '',
 }));
 
 vi.mock('../../hooks/usePOSProducts', () => ({
