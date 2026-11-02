@@ -1,4 +1,6 @@
-import { app, BrowserWindow, Menu, ipcMain, Notification, safeStorage, shell } from 'electron';
+import { app, BrowserWindow, Menu, ipcMain, Notification, safeStorage, shell, dialog } from 'electron';
+import fs from 'fs';
+import { resolveReportPath } from './reportFiles';
 import electronUpdater from 'electron-updater';
 import path from 'path';
 import { sanitizeNotificationPayload } from './ipcValidation';
@@ -220,6 +222,43 @@ ipcMain.on('secure-storage:decrypt', (event, b64) => {
         : null;
   } catch {
     event.returnValue = null;
+  }
+});
+
+// IPC: scheduled-report output. The folder is only ever set by the user via a native dialog and
+// persisted here in the main process; the renderer never supplies a path, only a filename.
+const reportDirFile = () => path.join(app.getPath('userData'), 'report-dir.json');
+function getReportDir() {
+  try {
+    const dir = JSON.parse(fs.readFileSync(reportDirFile(), 'utf8')).dir;
+    return typeof dir === 'string' && path.isAbsolute(dir) ? dir : null;
+  } catch {
+    return null;
+  }
+}
+ipcMain.handle('reports:get-dir', (event) => (isTrustedSender(event) ? getReportDir() : null));
+ipcMain.handle('reports:choose-dir', async (event) => {
+  if (!isTrustedSender(event)) return null;
+  const res = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openDirectory', 'createDirectory'],
+  });
+  if (res.canceled || !res.filePaths[0]) return getReportDir();
+  fs.writeFileSync(reportDirFile(), JSON.stringify({ dir: res.filePaths[0] }));
+  return res.filePaths[0];
+});
+ipcMain.handle('reports:save', async (event, filename, data) => {
+  if (!isTrustedSender(event)) return { success: false, error: 'untrusted' };
+  const dir = getReportDir();
+  const target = dir && resolveReportPath(dir, filename);
+  const isBytes = data instanceof Uint8Array || data instanceof ArrayBuffer;
+  if (!target || !(typeof data === 'string' || isBytes)) {
+    return { success: false, error: 'invalid target' };
+  }
+  try {
+    await fs.promises.writeFile(target, data instanceof ArrayBuffer ? Buffer.from(data) : data);
+    return { success: true, path: target };
+  } catch (e) {
+    return { success: false, error: String(e && e.message) };
   }
 });
 

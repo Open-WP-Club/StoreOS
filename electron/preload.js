@@ -16,6 +16,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   onNotificationClicked: (callback) => subscribe('notification-clicked', callback),
   openWpAdmin: (url) => ipcRenderer.invoke('open-wp-admin', url),
+  reports: {
+    getDir: () => ipcRenderer.invoke('reports:get-dir'),
+    chooseDir: () => ipcRenderer.invoke('reports:choose-dir'),
+    save: (filename, data) => ipcRenderer.invoke('reports:save', filename, data),
+  },
   // OS-keychain backed encryption (returns null when unavailable)
   secureStorage: {
     encrypt: (text) => ipcRenderer.sendSync('secure-storage:encrypt', text),

@@ -10,6 +10,7 @@ import SettingsLanguage from '../components/settings/SettingsLanguage';
 import SettingsPrinter from '../components/settings/SettingsPrinter';
 import SettingsNotifications from '../components/settings/SettingsNotifications';
 import SettingsSecurity from '../components/settings/SettingsSecurity';
+import SettingsScheduledReports from '../components/settings/SettingsScheduledReports';
 import SettingsBackup from '../components/settings/SettingsBackup';
 
 export default function SettingsPage(): ReactElement {
@@ -110,6 +111,8 @@ export default function SettingsPage(): ReactElement {
           setPinCode={setPinCode}
           setPinTimeout={setPinTimeout}
         />
+
+        <SettingsScheduledReports language={language} />
 
         <SettingsBackup language={language} showToast={showToast} />
       </div>
