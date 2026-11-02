@@ -3,6 +3,8 @@ import type {
   OrderQueryParams,
   OrderUpdateData,
   OrderNote,
+  OrderRefundDetail,
+  CreateRefundRequest,
   ApiResponse,
   PaginatedApiResponse,
   OnBatchLoaded,
@@ -94,6 +96,30 @@ export class WooCommerceServiceOrders extends WooCommerceServiceBase {
       if (amount !== undefined) refundData.amount = amount.toString();
       const response: WooCommerceApiResponse<{ id: number; amount: string; reason: string }> =
         await (await this.getApi()).post(`orders/${orderId}/refunds`, refundData);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return this.fail(error);
+    }
+  }
+
+  async getOrderRefunds(orderId: number): Promise<ApiResponse<OrderRefundDetail[]>> {
+    try {
+      const response: WooCommerceApiResponse<OrderRefundDetail[]> =
+        await (await this.getApi()).get(`orders/${orderId}/refunds`, { per_page: 100 });
+      return { success: true, data: response.data };
+    } catch (error) {
+      return this.fail(error);
+    }
+  }
+
+  /** Partial / per-line-item refund (see refundOrder for the POS amount-only variant). */
+  async createRefund(
+    orderId: number,
+    request: CreateRefundRequest
+  ): Promise<ApiResponse<OrderRefundDetail>> {
+    try {
+      const response: WooCommerceApiResponse<OrderRefundDetail> =
+        await (await this.getApi()).post(`orders/${orderId}/refunds`, request);
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);

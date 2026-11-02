@@ -2,6 +2,7 @@ export type ActivityAction =
   | 'order_status_changed'
   | 'order_updated'
   | 'order_note_added'
+  | 'order_refunded'
   | 'product_created'
   | 'product_updated'
   | 'product_deleted'
