@@ -126,11 +126,11 @@ describe('TaxRatesTab', () => {
     expect(p.onRateFormChange).toHaveBeenLastCalledWith({ ...form, shipping: false });
   });
 
-  it('falls back to priority 1 for non-numeric input', async () => {
+  it('allows an empty priority while editing', async () => {
     const user = userEvent.setup();
     const p = setup({ showRateForm: true, rateForm: { ...form, priority: 4 } });
     await user.clear(screen.getByLabelText('Priority'));
-    expect(p.onRateFormChange).toHaveBeenLastCalledWith({ ...form, priority: 1 });
+    expect(p.onRateFormChange).toHaveBeenLastCalledWith({ ...form, priority: '' });
   });
 
   it('form buttons: edit label, save, cancel, saving state', async () => {

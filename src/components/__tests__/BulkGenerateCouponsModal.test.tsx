@@ -208,7 +208,7 @@ describe('BulkGenerateCouponsModal', () => {
   // BUG (documented, not fixed): WooCommerce batch responses return HTTP 200 with per-item
   // `error` entries inside `create`. The modal counts every entry as a success and passes the
   // error stubs to onGenerated, instead of using batchErrorIds like other batch call sites.
-  it('current behaviour: per-item errors in a 200 batch response are counted as successes', async () => {
+  it('per-item errors in a 200 batch response are counted as failures', async () => {
     const data = {
       create: [
         { id: 1, code: 'OK-1' },
@@ -220,8 +220,8 @@ describe('BulkGenerateCouponsModal', () => {
     renderModal();
     type(/^amount/i, '5');
     await userEvent.click(generateBtn());
-    expect(await screen.findByText(/successfully created/i)).toHaveTextContent('2');
-    expect(screen.queryByText(/failed:/i)).not.toBeInTheDocument();
-    expect(onGenerated).toHaveBeenCalledWith(data.create);
+    expect(await screen.findByText(/successfully created/i)).toHaveTextContent('1');
+    expect(screen.getByText(/failed:/i)).toHaveTextContent('1');
+    expect(onGenerated).toHaveBeenCalledWith([data.create[0]]);
   });
 });
