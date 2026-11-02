@@ -189,9 +189,10 @@ function TaxRatesTab({
                 type="number"
                 value={rateForm.priority}
                 onChange={(e) =>
-                  onRateFormChange({ ...rateForm, priority: parseInt(e.target.value) || 1 })
+                  onRateFormChange({ ...rateForm, priority: e.target.value === '' ? '' : parseInt(e.target.value) })
                 }
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500"
+                onBlur={() => rateForm.priority === '' && onRateFormChange({ ...rateForm, priority: 1 })}
                 min={1}
               />
             </div>

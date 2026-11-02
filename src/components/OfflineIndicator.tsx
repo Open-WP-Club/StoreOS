@@ -58,6 +58,9 @@ function OfflineIndicator(): React.ReactElement | null {
               operation.data as Record<string, unknown>
             );
             break;
+          case 'create_product':
+            result = await service.createProduct(operation.data);
+            break;
           case 'update_product':
             result = await service.updateProduct(
               operation.data.id as number,
