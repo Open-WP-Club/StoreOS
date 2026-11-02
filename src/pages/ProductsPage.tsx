@@ -5,6 +5,7 @@ import { useStoreConfig, useCache, useSettings } from '../stores';
 import { formatPrice } from '../utils/currency';
 import Pagination from '../components/Pagination';
 import BulkEditModal from '../components/BulkEditModal';
+import CopyToStoreModal from '../components/CopyToStoreModal';
 import ImportModal from '../components/ImportModal';
 import ToastContainer from '../components/ToastContainer';
 import LoadingIndicator from '../components/LoadingIndicator';
@@ -55,6 +56,7 @@ function ProductsPage(): React.ReactElement {
   const actions = useProductActions(showToast);
   const exportHook = useProductExport();
   const [importOpen, setImportOpen] = React.useState(false);
+  const [copyOpen, setCopyOpen] = React.useState(false);
 
   if (!currentStore) {
     return (
@@ -120,6 +122,7 @@ function ProductsPage(): React.ReactElement {
         selectedProductIds={actions.selectedProductIds}
         onBulkEdit={() => actions.setBulkEditModalOpen(true)}
         onBulkDelete={() => actions.handleBulkDelete(products, setProducts)}
+        onCopyToStore={() => setCopyOpen(true)}
         onClearSelection={() => actions.setSelectedProductIds([])}
         showToast={showToast}
       />
@@ -599,6 +602,15 @@ function ProductsPage(): React.ReactElement {
             </div>
           </div>
         </div>
+      )}
+
+      {copyOpen && (
+        <CopyToStoreModal
+          kind="products"
+          items={actions.getSelectedProducts(products)}
+          sourceStore={currentStore}
+          onClose={() => setCopyOpen(false)}
+        />
       )}
 
       {/* Bulk Edit Modal */}

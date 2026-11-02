@@ -1,5 +1,5 @@
 import React, { ChangeEvent, ReactElement } from 'react';
-import { RefreshCw, Filter, X, Trash2, Edit } from 'lucide-react';
+import { RefreshCw, Filter, X, Trash2, Edit, Copy } from 'lucide-react';
 import FilterPresetManager from './FilterPresetManager';
 import ExportMenu from './ExportMenu';
 import type { FilterPreset } from '../types';
@@ -27,6 +27,7 @@ interface ProductsFilterBarProps {
   selectedProductIds: number[];
   onBulkEdit: () => void;
   onBulkDelete: () => void;
+  onCopyToStore?: () => void;
   onClearSelection: () => void;
   showToast: (message: string, type: 'success' | 'error' | 'info') => void;
 }
@@ -56,6 +57,7 @@ export function ProductsFilterBar({
   selectedProductIds,
   onBulkEdit,
   onBulkDelete,
+  onCopyToStore,
   onClearSelection,
   showToast,
 }: ProductsFilterBarProps): ReactElement {
@@ -269,6 +271,15 @@ export function ProductsFilterBar({
               <Edit className="w-4 h-4" />
               Bulk Edit
             </button>
+            {onCopyToStore && (
+              <button
+                onClick={onCopyToStore}
+                className="flex items-center gap-2 px-3 py-1.5 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700"
+              >
+                <Copy className="w-4 h-4" />
+                Copy to store
+              </button>
+            )}
             <button
               onClick={onBulkDelete}
               className="flex items-center gap-2 px-3 py-1.5 bg-red-600 text-white text-sm rounded-md hover:bg-red-700"

@@ -5,6 +5,8 @@ import WooCommerceService from '../services/woocommerce';
 import { useToast } from '../hooks/useToast';
 import { useOfflineMutation } from '../hooks/useOfflineMutation';
 import ToastContainer from '../components/ToastContainer';
+import { compareStores } from '../utils/storeComparison';
+import { formatPrice } from '../utils/currency';
 import type { Store, Order, Product, OrderStatus } from '../types';
 
 interface StoreMetrics {
@@ -43,6 +45,7 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
   const [allOrders, setAllOrders] = useState<CombinedOrder[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [periodDays, setPeriodDays] = useState<number>(30);
   const { toasts, showToast, removeToast } = useToast();
   const { mutate } = useOfflineMutation();
 
@@ -303,6 +306,17 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
   }
 
   const metrics = aggregateMetrics();
+  const comparison = compareStores(
+    storeData.map((d) => ({
+      storeId: d.store.id,
+      name: d.store.name,
+      orders: d.orders,
+      products: d.products,
+      error: d.error,
+    })),
+    periodDays,
+    lowStockThreshold
+  );
   const statuses: string[] = [
     'pending',
     'processing',
@@ -368,6 +382,66 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Low Stock Items</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Across all stores</p>
         </div>
+      </div>
+
+      {/* Store Comparison */}
+      <div className="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Store Comparison</h3>
+          <select
+            value={periodDays}
+            onChange={(e) => setPeriodDays(Number(e.target.value))}
+            aria-label="Comparison period"
+            className="border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          >
+            {[7, 30, 90, 365].map((d) => (
+              <option key={d} value={d}>
+                Last {d} days
+              </option>
+            ))}
+          </select>
+        </div>
+        <table className="w-full text-sm text-left text-gray-900 dark:text-gray-100">
+          <thead className="text-gray-500 dark:text-gray-400">
+            <tr>
+              <th className="py-1">Store</th>
+              <th className="py-1 text-right">Revenue</th>
+              <th className="py-1 text-right">Orders</th>
+              <th className="py-1 text-right">AOV</th>
+              <th className="py-1 text-right">Low stock</th>
+            </tr>
+          </thead>
+          <tbody>
+            {comparison.rows.map((r) => (
+              <tr key={r.storeId} className="border-t border-gray-200 dark:border-gray-700">
+                <td className="py-1">{r.name}</td>
+                {r.error ? (
+                  <td colSpan={4} className="py-1 text-right text-red-600 dark:text-red-400">
+                    Failed to load: {r.error}
+                  </td>
+                ) : (
+                  <>
+                    <td className="py-1 text-right">{formatPrice(r.revenue)}</td>
+                    <td className="py-1 text-right">{r.orders}</td>
+                    <td className="py-1 text-right">{formatPrice(r.aov)}</td>
+                    <td className="py-1 text-right">{r.lowStock}</td>
+                  </>
+                )}
+              </tr>
+            ))}
+            <tr className="border-t-2 border-gray-300 dark:border-gray-600 font-semibold">
+              <td className="py-1">Combined</td>
+              <td className="py-1 text-right">{formatPrice(comparison.total.revenue)}</td>
+              <td className="py-1 text-right">{comparison.total.orders}</td>
+              <td className="py-1 text-right">{formatPrice(comparison.total.aov)}</td>
+              <td className="py-1 text-right">{comparison.total.lowStock}</td>
+            </tr>
+          </tbody>
+        </table>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+          Sums mix store currencies as-is. Refunded, failed and cancelled orders are excluded from
+          revenue and AOV.
+        </p>
       </div>
 
       {/* Store Cards */}
