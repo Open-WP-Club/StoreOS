@@ -157,7 +157,7 @@ describe('TaxPage', () => {
         city: 'Sofia',
         rate: '9',
         name: 'Reduced VAT',
-        priority: 12, // clearing falls back to 1, then '2' is appended (UX quirk)
+        priority: 2,
         compound: true,
         shipping: false,
         class: 'reduced',

@@ -325,7 +325,7 @@ describe('useCouponForm', () => {
 // Documents current behaviour (possible bug): handleSaveCoupon uppercases the code, but validation
 // runs first and rejects lowercase letters, so the uppercase step is unreachable for typed input.
 describe('lowercase code', () => {
-  it('is rejected by validation', () => {
-    expect(validateCouponForm(valid({ code: 'summer' })).code).toBeDefined();
+  it('is accepted by validation (uppercased on save)', () => {
+    expect(validateCouponForm(valid({ code: 'summer' })).code).toBeUndefined();
   });
 });

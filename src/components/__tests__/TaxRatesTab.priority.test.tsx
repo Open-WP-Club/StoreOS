@@ -13,7 +13,7 @@ function setup(priority: number | '') {
   render(
     <TaxRatesTab
       taxRates={[]} filteredRates={[]} taxClasses={[]} filterClass="all"
-      onFilterClassChange={vi.fn()} loadData={vi.fn()} loading={false}
+      onFilterClassChange={vi.fn()} loadData={vi.fn()} loading={false} saving={false}
       showRateForm editingRateId={null} rateForm={{ ...form, priority }}
       onRateFormChange={onRateFormChange} onCreateRate={vi.fn()} onSaveRate={vi.fn()}
       onCancelRateForm={vi.fn()} onEditRate={vi.fn()} onDeleteRate={vi.fn()}
