@@ -4,6 +4,7 @@ import { useStoreConfig, useTheme, useCache, useAppSettings } from './stores';
 import Layout from './components/Layout';
 import ErrorBoundary from './components/ErrorBoundary';
 import DataManager from './components/DataManager';
+import ScheduledReportRunner from './components/ScheduledReportRunner';
 import LoadingScreen from './components/LoadingScreen';
 import PinLockScreen from './components/PinLockScreen';
 import OfflineIndicator from './components/OfflineIndicator';
@@ -235,6 +236,7 @@ function AppContent(): React.ReactElement {
 
       {/* DataManager: Centralized data fetching that never unmounts */}
       {hasStores && <DataManager />}
+      {hasStores && <ScheduledReportRunner />}
 
       {/* Order celebration overlay with confetti */}
       <OrderCelebrationOverlay />

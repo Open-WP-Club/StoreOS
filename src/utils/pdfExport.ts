@@ -402,6 +402,8 @@ export interface ReportPDFOptions {
   timeRange?: string;
   filename?: string;
   orientation?: 'portrait' | 'landscape';
+  /** Return the PDF bytes instead of triggering a download. */
+  returnBytes?: boolean;
 }
 
 /**
@@ -412,13 +414,14 @@ export async function exportReportToPDF<T extends object>(
   columns: PDFColumn<T>[],
   summaryMetrics: ReportSummaryMetric[],
   options: ReportPDFOptions = {}
-): Promise<void> {
+): Promise<ArrayBuffer | void> {
   const {
     title = 'Report',
     storeName,
     timeRange,
     filename,
     orientation = 'portrait',
+    returnBytes,
   } = options;
 
   const { jsPDF, autoTable } = await loadPdf();
@@ -518,6 +521,7 @@ export async function exportReportToPDF<T extends object>(
 
   const timestamp = new Date().toISOString().split('T')[0];
   const finalFilename = filename || `${title.toLowerCase().replace(/\s+/g, '-')}-${timestamp}.pdf`;
+  if (returnBytes) return doc.output('arraybuffer');
   doc.save(finalFilename);
 }
 

@@ -10,6 +10,15 @@ declare global {
       onNotificationClicked: (callback: (data: { route?: string }) => void) => () => void;
       /** Opens WP Admin in an isolated main-process window. Resolves false if rejected. */
       openWpAdmin: (url: string) => Promise<boolean>;
+      /** Scheduled-report output; the folder is chosen natively and held by the main process. */
+      reports: {
+        getDir: () => Promise<string | null>;
+        chooseDir: () => Promise<string | null>;
+        save: (
+          filename: string,
+          data: string | Uint8Array
+        ) => Promise<{ success: boolean; path?: string; error?: string }>;
+      };
       /** OS-keychain encryption via Electron safeStorage; both return null when unavailable. */
       secureStorage: {
         encrypt: (text: string) => string | null;
