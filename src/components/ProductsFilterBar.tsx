@@ -20,6 +20,7 @@ interface ProductsFilterBarProps {
   onApplyPreset: (presetFilters: Record<string, unknown>) => void;
   onExportCSV: () => void;
   onExportPDF: () => void;
+  onImport?: () => void;
   onRefresh: () => void;
   isLoading: boolean;
   selectedProductIds: number[];
@@ -47,6 +48,7 @@ export function ProductsFilterBar({
   onApplyPreset,
   onExportCSV,
   onExportPDF,
+  onImport,
   onRefresh,
   isLoading,
   selectedProductIds,
@@ -98,7 +100,7 @@ export function ProductsFilterBar({
               showToast(`Preset "${preset.name}" saved`, 'success')
             }
           />
-          <ExportMenu onExportCSV={onExportCSV} onExportPDF={onExportPDF} />
+          <ExportMenu onExportCSV={onExportCSV} onExportPDF={onExportPDF} onImport={onImport} />
           <button
             onClick={onRefresh}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
