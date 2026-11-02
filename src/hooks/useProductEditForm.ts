@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, ChangeEvent, RefObject } from 'react';
 import { useStoreConfig } from '../stores';
 import WooCommerceService from '../services/woocommerce';
+import { useOfflineMutation } from './useOfflineMutation';
 import type { Product, ProductUpdateData, CatalogVisibility, TaxStatus, StockStatus } from '../types';
 
 export type EditorMode = 'visual' | 'code';
@@ -80,6 +81,7 @@ interface UseProductEditFormResult {
 export function useProductEditForm(): UseProductEditFormResult {
   const getCurrentStore = useStoreConfig((state) => state.getCurrentStore);
   const currentStore = getCurrentStore();
+  const { mutate } = useOfflineMutation();
 
   const [formData, setFormData] = useState<ProductFormData>(INITIAL_FORM_DATA);
   const [saving, setSaving] = useState<boolean>(false);
@@ -191,15 +193,24 @@ export function useProductEditForm(): UseProductEditFormResult {
         slug: formData.slug || undefined,
       };
 
-      const response = await service.updateProduct(productId, updateData);
-
-      if (response.success) {
-        setSuccessMessage('Product updated successfully!');
-        setTimeout(() => setSuccessMessage(''), 3000);
-        return response.data;
-      } else {
-        throw new Error(response.error || 'Failed to update product');
-      }
+      let updated: Product | null = null;
+      const outcome = await mutate({
+        operationType: 'update_product',
+        queueData: { id: productId, ...updateData },
+        storeId: currentStore.id,
+        execute: async () => {
+          const response = await service.updateProduct(productId, updateData);
+          if (!response.success) throw new Error(response.error || 'Failed to update product');
+          return response.data;
+        },
+        onSuccess: (data) => {
+          updated = data;
+          setSuccessMessage('Product updated successfully!');
+          setTimeout(() => setSuccessMessage(''), 3000);
+        },
+      });
+      if (outcome.error) throw new Error(outcome.error);
+      return updated;
     } finally {
       setSaving(false);
     }

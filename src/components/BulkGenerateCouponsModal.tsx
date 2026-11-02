@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { X, Zap } from 'lucide-react';
 import type { CouponDiscountType, CouponUpdateData, Coupon } from '../types';
 import WooCommerceService from '../services/woocommerce';
+import { batchErrorIds } from '../utils/batchResult';
 
 interface BulkGenerateCouponsModalProps {
   service: WooCommerceService;
@@ -253,8 +254,13 @@ function BulkGenerateCouponsModal({
       const batchResult = await service.batchCreateCoupons(batch);
 
       if (batchResult.success && batchResult.data?.create) {
-        successCount += batchResult.data.create.length;
-        createdCoupons.push(...(batchResult.data.create as Coupon[]));
+        // WC returns HTTP 200 with per-item `error` entries on partial failure
+        const created = (batchResult.data.create as Coupon[]).filter(
+          (c) => c && !(c as { error?: unknown }).error
+        );
+        successCount += created.length;
+        failedCount += batchErrorIds(batchResult.data, 'create').length;
+        createdCoupons.push(...created);
       } else {
         failedCount += batch.length;
       }

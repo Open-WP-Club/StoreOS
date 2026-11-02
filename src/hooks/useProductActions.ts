@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useStoreConfig, useCache, useSettings, useActivityLog } from '../stores';
 import WooCommerceService from '../services/woocommerce';
 import { batchErrorIds } from '../utils/batchResult';
+import { useOfflineMutation } from './useOfflineMutation';
 import type { Product, StockStatus, ProductUpdateData, BatchProductUpdate } from '../types';
 
 interface EditData {
@@ -57,6 +58,7 @@ export function useProductActions(
   const setCachedData = useCache((state) => state.setCachedData);
   const logActivity = useActivityLog((state) => state.logActivity);
   const currentStore = getCurrentStore();
+  const { mutate } = useOfflineMutation();
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [editMode, setEditMode] = useState<boolean>(false);
@@ -94,27 +96,33 @@ export function useProductActions(
   const handleSave = async (products: Product[], setProducts: (p: Product[]) => void): Promise<void> => {
     if (!selectedProduct || !currentStore) return;
 
-    try {
-      const service = new WooCommerceService(currentStore);
-      const updateData: ProductUpdateData = {
-        name: editData.name,
-        regular_price: editData.regular_price,
-        sale_price: editData.sale_price,
-        stock_quantity: typeof editData.stock_quantity === 'string' ? parseInt(editData.stock_quantity) || null : editData.stock_quantity,
-        stock_status: editData.stock_status,
-        description: editData.description,
-        short_description: editData.short_description,
-      };
-      const result = await service.updateProduct(selectedProduct.id, updateData);
-
-      if (result.success) {
+    const service = new WooCommerceService(currentStore);
+    const updateData: ProductUpdateData = {
+      name: editData.name,
+      regular_price: editData.regular_price,
+      sale_price: editData.sale_price,
+      stock_quantity: typeof editData.stock_quantity === 'string' ? parseInt(editData.stock_quantity) || null : editData.stock_quantity,
+      stock_status: editData.stock_status,
+      description: editData.description,
+      short_description: editData.short_description,
+    };
+    await mutate({
+      operationType: 'update_product',
+      queueData: { id: selectedProduct.id, ...updateData },
+      storeId: currentStore.id,
+      execute: async () => {
+        const result = await service.updateProduct(selectedProduct.id, updateData);
+        if (!result.success) throw new Error(result.error);
+        return result.data;
+      },
+      onSuccess: async (data) => {
         const updatedProducts = products.map((product) =>
-          product.id === selectedProduct.id ? result.data : product
+          product.id === selectedProduct.id ? data : product
         ) as Product[];
         setProducts(updatedProducts);
         await setCachedData('products', updatedProducts);
 
-        const latestModified = result.data.date_modified_gmt || result.data.date_modified;
+        const latestModified = data.date_modified_gmt || data.date_modified;
         useCache.setState((state) => ({
           cache: {
             ...state.cache,
@@ -138,12 +146,9 @@ export function useProductActions(
           details: 'Product details updated',
         });
         showToast('Product updated successfully', 'success');
-      } else {
-        showToast(`Failed to update product: ${result.error}`, 'error');
-      }
-    } catch (err) {
-      showToast(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error');
-    }
+      },
+      onError: (msg) => showToast(`Failed to update product: ${msg}`, 'error'),
+    });
   };
 
   const handleDelete = async (productId: number, products: Product[], setProducts: (p: Product[]) => void): Promise<void> => {
@@ -180,96 +185,102 @@ export function useProductActions(
   const handleDuplicate = async (product: Product, products: Product[], setProducts: (p: Product[]) => void): Promise<void> => {
     if (!window.confirm(`Duplicate "${product.name}"?`) || !currentStore) return;
 
-    try {
-      const service = new WooCommerceService(currentStore);
-
-      const duplicateData = {
-        name: `${product.name} (Copy)`,
-        type: product.type,
-        status: 'draft' as const,
-        description: product.description,
-        short_description: product.short_description,
-        sku: '',
-        regular_price: product.regular_price,
-        sale_price: product.sale_price,
-        categories: product.categories,
-        images: product.images,
-        attributes: product.attributes,
-        stock_quantity: product.stock_quantity,
-        stock_status: product.stock_status,
-        manage_stock: product.manage_stock,
-      };
-
-      const result = await service.createProduct(duplicateData);
-
-      if (result.success) {
-        const updatedProducts = [result.data as Product, ...products];
+    const service = new WooCommerceService(currentStore);
+    const duplicateData = {
+      name: `${product.name} (Copy)`,
+      type: product.type,
+      status: 'draft' as const,
+      description: product.description,
+      short_description: product.short_description,
+      sku: '',
+      regular_price: product.regular_price,
+      sale_price: product.sale_price,
+      categories: product.categories,
+      images: product.images,
+      attributes: product.attributes,
+      stock_quantity: product.stock_quantity,
+      stock_status: product.stock_status,
+      manage_stock: product.manage_stock,
+    };
+    await mutate({
+      operationType: 'create_product',
+      queueData: duplicateData,
+      storeId: currentStore.id,
+      execute: async () => {
+        const result = await service.createProduct(duplicateData);
+        if (!result.success) throw new Error(result.error);
+        return result.data as Product;
+      },
+      onSuccess: async (created) => {
+        const updatedProducts = [created, ...products];
         setProducts(updatedProducts);
         await setCachedData('products', updatedProducts);
         logActivity({
           action: 'product_created',
           entityType: 'product',
-          entityId: (result.data as Product).id,
-          entityName: (result.data as Product).name,
+          entityId: created.id,
+          entityName: created.name,
           storeId: currentStore?.id ?? null,
           storeName: currentStore?.name,
           details: `Duplicated from "${product.name}"`,
         });
         showToast('Product duplicated successfully! Edit the duplicate to publish.', 'success');
         refreshProducts?.();
-      } else {
-        showToast(`Failed to duplicate product: ${result.error}`, 'error');
-      }
-    } catch (err) {
-      showToast(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error');
-    }
+      },
+      onError: (msg) => showToast(`Failed to duplicate product: ${msg}`, 'error'),
+    });
   };
 
   const handleQuickEditPrice = async (productId: number, products: Product[], setProducts: (p: Product[]) => void): Promise<void> => {
     if (!quickEditPrice || !currentStore) return;
 
     setUpdating(true);
+    const service = new WooCommerceService(currentStore);
     try {
-      const service = new WooCommerceService(currentStore);
-      const result = await service.updateProduct(productId, { regular_price: quickEditPrice });
+      await mutate({
+        operationType: 'update_product',
+        queueData: { id: productId, regular_price: quickEditPrice },
+        storeId: currentStore.id,
+        execute: async () => {
+          const result = await service.updateProduct(productId, { regular_price: quickEditPrice });
+          if (!result.success) throw new Error(result.error);
+          return result.data;
+        },
+        onSuccess: async (data) => {
+          const updatedProducts = products.map((product) =>
+            product.id === productId ? data : product
+          ) as Product[];
+          setProducts(updatedProducts);
+          await setCachedData('products', updatedProducts);
 
-      if (result.success) {
-        const updatedProducts = products.map((product) =>
-          product.id === productId ? result.data : product
-        ) as Product[];
-        setProducts(updatedProducts);
-        await setCachedData('products', updatedProducts);
-
-        const latestModified = result.data.date_modified_gmt || result.data.date_modified;
-        useCache.setState((state) => ({
-          cache: {
-            ...state.cache,
-            products: {
-              ...state.cache.products,
-              data: updatedProducts,
-              lastSync: latestModified,
+          const latestModified = data.date_modified_gmt || data.date_modified;
+          useCache.setState((state) => ({
+            cache: {
+              ...state.cache,
+              products: {
+                ...state.cache.products,
+                data: updatedProducts,
+                lastSync: latestModified,
+              },
             },
-          },
-        }));
+          }));
 
-        setQuickEditId(null);
-        setQuickEditPrice('');
-        logActivity({
-          action: 'product_updated',
-          entityType: 'product',
-          entityId: productId,
-          entityName: result.data.name,
-          storeId: currentStore?.id ?? null,
-          storeName: currentStore?.name,
-          details: 'Price updated',
-          changes: { regular_price: { from: products.find((p) => p.id === productId)?.regular_price, to: quickEditPrice } },
-        });
-        showToast('Price updated successfully', 'success');
-      } else {
-        showToast(`Failed to update price: ${result.error}`, 'error');
-      }
-    } catch (err) {
-      showToast(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error');
+          setQuickEditId(null);
+          setQuickEditPrice('');
+          logActivity({
+            action: 'product_updated',
+            entityType: 'product',
+            entityId: productId,
+            entityName: data.name,
+            storeId: currentStore?.id ?? null,
+            storeName: currentStore?.name,
+            details: 'Price updated',
+            changes: { regular_price: { from: products.find((p) => p.id === productId)?.regular_price, to: quickEditPrice } },
+          });
+          showToast('Price updated successfully', 'success');
+        },
+        onError: (msg) => showToast(`Failed to update price: ${msg}`, 'error'),
+      });
     } finally {
       setUpdating(false);
     }

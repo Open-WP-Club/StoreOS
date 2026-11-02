@@ -44,7 +44,7 @@ export function validateCouponForm(data: CouponFormData): CouponFormErrors {
     errors.code = 'Coupon code is required';
   } else if (data.code.trim().length < 3) {
     errors.code = 'Coupon code must be at least 3 characters';
-  } else if (!/^[A-Z0-9-]+$/.test(data.code.trim())) {
+  } else if (!/^[A-Z0-9-]+$/i.test(data.code.trim())) {
     errors.code = 'Coupon code can only contain letters, numbers, and hyphens';
   }
 

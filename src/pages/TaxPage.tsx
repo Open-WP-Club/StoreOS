@@ -23,7 +23,7 @@ export interface TaxRateFormData {
   city: string;
   rate: string;
   name: string;
-  priority: number;
+  priority: number | '';
   compound: boolean;
   shipping: boolean;
   class: string;
@@ -147,7 +147,7 @@ function TaxPage(): React.ReactElement {
       city: rateForm.city,
       rate: rateForm.rate,
       name: rateForm.name,
-      priority: rateForm.priority,
+      priority: rateForm.priority || 1,
       compound: rateForm.compound,
       shipping: rateForm.shipping,
       class: rateForm.class,

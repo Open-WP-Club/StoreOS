@@ -14,7 +14,7 @@ interface MutationOptions<T> {
   /** The actual API call to execute when online */
   execute: () => Promise<T>;
   /** Called on successful execution */
-  onSuccess?: (result: T) => void;
+  onSuccess?: (result: T) => void | Promise<void>;
   /** Called on failed execution (still online) */
   onError?: (error: string) => void;
 }
@@ -48,7 +48,7 @@ export function useOfflineMutation() {
 
       try {
         const result = await execute();
-        onSuccess?.(result);
+        await onSuccess?.(result);
         return { queued: false, success: true };
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Operation failed';
