@@ -1,5 +1,6 @@
 import { memo, useState } from 'react';
 import { Lock, Shield, Check, X, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import Modal from '../Modal';
 import { t } from '../../utils/i18n';
 import type { Language } from '../../utils/i18n';
 import useAppSettings from '../../stores/appSettingsStore';
@@ -167,124 +168,110 @@ const SettingsSecurity = memo(function SettingsSecurity({
 
       {/* PIN Setup Modal */}
       {showPinModal && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-          role="presentation"
-          onClick={() => setShowPinModal(false)}
-          onKeyDown={(e) => e.key === 'Escape' && setShowPinModal(false)}
+        <Modal
+          onClose={() => setShowPinModal(false)}
+          className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md shadow-2xl"
         >
-          {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events */}
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <Lock className="w-5 h-5" />
-                {pinMode === 'setup' && t('pinSetup', language)}
-                {pinMode === 'change' && t('pinChange', language)}
-                {pinMode === 'remove' && t('pinRemove', language)}
-              </h3>
-              <button
-                onClick={() => setShowPinModal(false)}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-              >
-                <X className="w-5 h-5 text-gray-400" />
-              </button>
-            </div>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <Lock className="w-5 h-5" />
+              {pinMode === 'setup' && t('pinSetup', language)}
+              {pinMode === 'change' && t('pinChange', language)}
+              {pinMode === 'remove' && t('pinRemove', language)}
+            </h3>
+            <button
+              onClick={() => setShowPinModal(false)}
+              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+            >
+              <X className="w-5 h-5 text-gray-400" />
+            </button>
+          </div>
 
-            <div className="space-y-4">
-              {(pinMode === 'change' || pinMode === 'remove') && (
+          <div className="space-y-4">
+            {(pinMode === 'change' || pinMode === 'remove') && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {t('pinCurrent', language)}
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPin ? 'text' : 'password'}
+                    value={currentPin}
+                    onChange={(e) => setCurrentPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="••••"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-center text-2xl tracking-widest"
+                    maxLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPin(!showPin)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {pinMode !== 'remove' && (
+              <>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    {t('pinCurrent', language)}
+                    {t('pinNew', language)}
                   </label>
-                  <div className="relative">
-                    <input
-                      type={showPin ? 'text' : 'password'}
-                      value={currentPin}
-                      onChange={(e) =>
-                        setCurrentPin(e.target.value.replace(/\D/g, '').slice(0, 6))
-                      }
-                      placeholder="••••"
-                      className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-center text-2xl tracking-widest"
-                      maxLength={6}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPin(!showPin)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      {showPin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
+                  <input
+                    type={showPin ? 'text' : 'password'}
+                    value={newPin}
+                    onChange={(e) => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="••••"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-center text-2xl tracking-widest"
+                    maxLength={6}
+                  />
                 </div>
-              )}
 
-              {pinMode !== 'remove' && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      {t('pinNew', language)}
-                    </label>
-                    <input
-                      type={showPin ? 'text' : 'password'}
-                      value={newPin}
-                      onChange={(e) => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                      placeholder="••••"
-                      className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-center text-2xl tracking-widest"
-                      maxLength={6}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      {t('pinConfirm', language)}
-                    </label>
-                    <input
-                      type={showPin ? 'text' : 'password'}
-                      value={confirmPin}
-                      onChange={(e) =>
-                        setConfirmPin(e.target.value.replace(/\D/g, '').slice(0, 6))
-                      }
-                      placeholder="••••"
-                      className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-center text-2xl tracking-widest"
-                      maxLength={6}
-                    />
-                  </div>
-                </>
-              )}
-
-              {pinError && (
-                <div className="flex items-center gap-2 text-red-500 text-sm">
-                  <AlertCircle className="w-4 h-4" />
-                  <span>{pinError}</span>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    {t('pinConfirm', language)}
+                  </label>
+                  <input
+                    type={showPin ? 'text' : 'password'}
+                    value={confirmPin}
+                    onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="••••"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-center text-2xl tracking-widest"
+                    maxLength={6}
+                  />
                 </div>
-              )}
+              </>
+            )}
 
-              <div className="flex gap-3 pt-2">
-                <button
-                  onClick={() => setShowPinModal(false)}
-                  className="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                >
-                  {t('cancel', language)}
-                </button>
-                <button
-                  onClick={handlePinSubmit}
-                  className={`flex-1 px-4 py-3 rounded-lg font-medium transition-colors ${
-                    pinMode === 'remove'
-                      ? 'bg-red-600 hover:bg-red-700 text-white'
-                      : 'bg-blue-600 hover:bg-blue-700 text-white'
-                  }`}
-                >
-                  {pinMode === 'remove' ? t('delete', language) : t('save', language)}
-                </button>
+            {pinError && (
+              <div className="flex items-center gap-2 text-red-500 text-sm">
+                <AlertCircle className="w-4 h-4" />
+                <span>{pinError}</span>
               </div>
+            )}
+
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setShowPinModal(false)}
+                className="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                {t('cancel', language)}
+              </button>
+              <button
+                onClick={handlePinSubmit}
+                className={`flex-1 px-4 py-3 rounded-lg font-medium transition-colors ${
+                  pinMode === 'remove'
+                    ? 'bg-red-600 hover:bg-red-700 text-white'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
+              >
+                {pinMode === 'remove' ? t('delete', language) : t('save', language)}
+              </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
     </>
   );
