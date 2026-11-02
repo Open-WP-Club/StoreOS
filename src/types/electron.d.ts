@@ -19,6 +19,16 @@ declare global {
           data: string | Uint8Array
         ) => Promise<{ success: boolean; path?: string; error?: string }>;
       };
+      /** System printer names (empty when unavailable). */
+      getPrinters: () => Promise<string[]>;
+      /** 80mm receipt print; openDrawer sends ESC/POS kick (needs a named printer; untested on hardware). */
+      receipt: {
+        print: (payload: {
+          html: string;
+          printer: string | null;
+          openDrawer: boolean;
+        }) => Promise<{ success: boolean; error?: string }>;
+      };
       /** OS-keychain encryption via Electron safeStorage; both return null when unavailable. */
       secureStorage: {
         encrypt: (text: string) => string | null;

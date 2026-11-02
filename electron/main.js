@@ -270,6 +270,66 @@ ipcMain.handle('reports:save', async (event, filename, data) => {
   }
 });
 
+// IPC: receipt printing. Renderer sends escaped HTML; it is rendered in a sandboxed, script-less
+// hidden window (CSP in the document too) and printed. The drawer kick is raw ESC/POS via `lp`.
+const MAX_RECEIPT_HTML = 200 * 1024;
+const DRAWER_KICK = Buffer.from([0x1b, 0x70, 0x00, 0x19, 0xfa]); // ESC p 0 25 250
+ipcMain.handle('receipt:get-printers', async (event) => {
+  if (!isTrustedSender(event)) return [];
+  const list = await event.sender.getPrintersAsync();
+  return list.map((p) => p.name);
+});
+ipcMain.handle('receipt:print', async (event, payload) => {
+  if (!isTrustedSender(event)) return { success: false, error: 'untrusted' };
+  const { html, printer, openDrawer } = payload || {};
+  if (typeof html !== 'string' || !html || html.length > MAX_RECEIPT_HTML) {
+    return { success: false, error: 'invalid receipt' };
+  }
+  let deviceName;
+  if (typeof printer === 'string' && printer) {
+    const known = (await event.sender.getPrintersAsync()).map((p) => p.name);
+    if (!known.includes(printer)) return { success: false, error: 'unknown printer' };
+    deviceName = printer;
+  }
+  const win = new BrowserWindow({
+    show: false,
+    webPreferences: { javascript: false, sandbox: true, contextIsolation: true, webviewTag: false },
+  });
+  try {
+    win.webContents.on('will-navigate', (e) => e.preventDefault());
+    win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+    await win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html));
+    await new Promise((resolve, reject) =>
+      win.webContents.print(
+        {
+          silent: !!deviceName,
+          deviceName,
+          printBackground: false,
+          margins: { marginType: 'none' },
+        },
+        (ok, reason) => (ok ? resolve() : reject(new Error(reason || 'print failed')))
+      )
+    );
+    if (openDrawer === true && deviceName) {
+      // ponytail: raw send via CUPS `lp` only (macOS/Linux); Windows needs a raw-spooler addon.
+      if (process.platform === 'win32') return { success: true, error: 'drawer unsupported' };
+      await new Promise((resolve, reject) => {
+        const child = require('child_process').execFile(
+          'lp',
+          ['-d', deviceName, '-o', 'raw'],
+          (err) => (err ? reject(err) : resolve())
+        );
+        child.stdin.end(DRAWER_KICK);
+      });
+    }
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: String(e && e.message) };
+  } finally {
+    if (!win.isDestroyed()) win.destroy();
+  }
+});
+
 // IPC: open WP Admin in an isolated window (own session partition, locked to the store origin).
 let wpAdminWindow = null;
 ipcMain.handle('open-wp-admin', (event, rawUrl) => {
