@@ -6,7 +6,14 @@ import { createMockProduct } from '../../__test_utils__/mockFactories';
 const batchProducts = vi.fn();
 vi.mock('../../stores', () => ({
   useStoreConfig: (sel: (s: unknown) => unknown) =>
-    sel({ getCurrentStore: () => ({ id: 's1', url: 'https://shop.test', consumerKey: 'ck_test', consumerSecret: 'cs_test' }) }),
+    sel({
+      getCurrentStore: () => ({
+        id: 's1',
+        url: 'https://shop.test',
+        consumerKey: 'ck_test',
+        consumerSecret: 'cs_test',
+      }),
+    }),
 }));
 vi.mock('../../services/woocommerce', () => ({
   default: class {
@@ -21,11 +28,21 @@ const csvFile = (text: string): File => {
   return f;
 };
 
-const setup = async (csv: string, products = [createMockProduct({ id: 1, sku: 'A', name: 'Old', regular_price: '5' })]) => {
+const setup = async (
+  csv: string,
+  products = [createMockProduct({ id: 1, sku: 'A', name: 'Old', regular_price: '5' })]
+) => {
   const onClose = vi.fn();
   const onImported = vi.fn();
   const showToast = vi.fn();
-  render(<ImportModal products={products} onClose={onClose} onImported={onImported} showToast={showToast} />);
+  render(
+    <ImportModal
+      products={products}
+      onClose={onClose}
+      onImported={onImported}
+      showToast={showToast}
+    />
+  );
   fireEvent.change(screen.getByLabelText('CSV file'), { target: { files: [csvFile(csv)] } });
   return { onClose, onImported, showToast };
 };
@@ -37,8 +54,13 @@ describe('ImportModal', () => {
   });
 
   it('auto-maps columns, previews create/update and imports', async () => {
-    batchProducts.mockResolvedValue({ success: true, data: { create: [{ id: 9 }], update: [{ id: 1 }] } });
-    const { onImported, onClose, showToast } = await setup('SKU,Name,Regular price\nA,New,7\nB,Brand,3');
+    batchProducts.mockResolvedValue({
+      success: true,
+      data: { create: [{ id: 9 }], update: [{ id: 1 }] },
+    });
+    const { onImported, onClose, showToast } = await setup(
+      'SKU,Name,Regular price\nA,New,7\nB,Brand,3'
+    );
     fireEvent.click(await screen.findByRole('button', { name: 'Preview' }));
     expect(screen.getByText(/1 to create, 1 to update/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Import 2 products' }));

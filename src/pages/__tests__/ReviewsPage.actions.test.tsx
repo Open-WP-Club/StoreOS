@@ -35,7 +35,15 @@ vi.mock('../../components/ExportMenu', () => ({
   ),
 }));
 vi.mock('../../components/ConfirmDialog', () => ({
-  default: ({ isOpen, onConfirm, onCancel }: { isOpen: boolean; onConfirm: () => void; onCancel: () => void }) =>
+  default: ({
+    isOpen,
+    onConfirm,
+    onCancel,
+  }: {
+    isOpen: boolean;
+    onConfirm: () => void;
+    onCancel: () => void;
+  }) =>
     isOpen ? (
       <div>
         <button onClick={onConfirm}>Confirm</button>
@@ -165,7 +173,9 @@ describe('ReviewsPage actions', () => {
     fireEvent.click(screen.getByText('Unapprove'));
     await waitFor(() => expect(m.showToast).toHaveBeenCalledWith('Error: timeout', 'error'));
     fireEvent.click(screen.getByText('Unapprove'));
-    await waitFor(() => expect(m.showToast).toHaveBeenCalledWith('Review set to pending', 'success'));
+    await waitFor(() =>
+      expect(m.showToast).toHaveBeenCalledWith('Review set to pending', 'success')
+    );
   });
 
   it('delete requires confirmation, cancel keeps the review', async () => {
@@ -223,7 +233,9 @@ describe('ReviewsPage actions', () => {
     await waitFor(() => expect(m.showToast).toHaveBeenCalledWith('Reviews refreshed', 'success'));
     m.getAllReviews.mockResolvedValue({ success: false, error: '' });
     fireEvent.click(screen.getByText('Refresh'));
-    await waitFor(() => expect(m.showToast).toHaveBeenCalledWith('Failed to refresh reviews', 'error'));
+    await waitFor(() =>
+      expect(m.showToast).toHaveBeenCalledWith('Failed to refresh reviews', 'error')
+    );
   });
 
   it('exports CSV with HTML stripped and PDF with the filtered rows', async () => {

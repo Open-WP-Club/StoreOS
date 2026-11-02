@@ -46,8 +46,20 @@ describe('ScheduledReportRunner', () => {
         orders: {
           ...s.cache.orders,
           data: [
-            createMockOrder({ id: 1, status: 'completed', total: '10.50', date_created: '2026-11-01T20:00:00', date_created_gmt: '' }),
-            createMockOrder({ id: 2, status: 'cancelled', total: '99', date_created: '2026-11-01T20:00:00', date_created_gmt: '' }),
+            createMockOrder({
+              id: 1,
+              status: 'completed',
+              total: '10.50',
+              date_created: '2026-11-01T20:00:00',
+              date_created_gmt: '',
+            }),
+            createMockOrder({
+              id: 2,
+              status: 'cancelled',
+              total: '99',
+              date_created: '2026-11-01T20:00:00',
+              date_created_gmt: '',
+            }),
           ],
         },
       },
@@ -65,7 +77,9 @@ describe('ScheduledReportRunner', () => {
     expect(name).toMatch(/^sales-summary-.*-2026-11-02\.csv$/);
     expect(String(data)).toContain('#1');
     expect(String(data)).not.toContain('#2');
-    expect(showNotification).toHaveBeenCalledWith(expect.objectContaining({ body: expect.stringContaining('Saved') }));
+    expect(showNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ body: expect.stringContaining('Saved') })
+    );
     expect(useScheduledReports.getState().lastRun).toBe(NOW.getTime());
   });
 
@@ -86,7 +100,9 @@ describe('ScheduledReportRunner', () => {
   it('reports save failure in the notification', async () => {
     save.mockResolvedValue({ success: false, error: 'disk full' });
     await run();
-    expect(showNotification).toHaveBeenCalledWith(expect.objectContaining({ body: 'Report failed: disk full' }));
+    expect(showNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ body: 'Report failed: disk full' })
+    );
   });
 
   it('skips notification when notify is off', async () => {
@@ -101,8 +117,20 @@ describe('ScheduledReportRunner', () => {
     localStorage.setItem(
       'pos_recent_transactions',
       JSON.stringify([
-        { id: 5, timestamp: new Date(2026, 10, 1, 20).toISOString(), paymentMethod: 'cash', total: 4, refunded: false },
-        { id: 6, timestamp: new Date(2026, 10, 1, 21).toISOString(), paymentMethod: 'card', total: 8, refunded: true },
+        {
+          id: 5,
+          timestamp: new Date(2026, 10, 1, 20).toISOString(),
+          paymentMethod: 'cash',
+          total: 4,
+          refunded: false,
+        },
+        {
+          id: 6,
+          timestamp: new Date(2026, 10, 1, 21).toISOString(),
+          paymentMethod: 'card',
+          total: 8,
+          refunded: true,
+        },
       ])
     );
     await run();

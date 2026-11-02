@@ -314,7 +314,10 @@ describe('OrdersPage bulk operations', () => {
     beforeEach(() => addOrderNote.mockResolvedValue({ success: true }));
 
     it('completes orders and sends a customer note to each', async () => {
-      batchOrders.mockResolvedValue({ success: true, data: { update: [{ id: 1001 }, { id: 1002 }] } });
+      batchOrders.mockResolvedValue({
+        success: true,
+        data: { update: [{ id: 1001 }, { id: 1002 }] },
+      });
       await selectTwoAnd(userEvent.setup(), 'Ship with note');
       await waitFor(() => expect(showToast).toHaveBeenCalled());
       expect(batchOrders).toHaveBeenCalledWith({
@@ -330,7 +333,10 @@ describe('OrdersPage bulk operations', () => {
     });
 
     it('skips notes when none is chosen', async () => {
-      batchOrders.mockResolvedValue({ success: true, data: { update: [{ id: 1001 }, { id: 1002 }] } });
+      batchOrders.mockResolvedValue({
+        success: true,
+        data: { update: [{ id: 1001 }, { id: 1002 }] },
+      });
       await selectTwoAnd(userEvent.setup(), 'Ship no note');
       await waitFor(() => expect(showToast).toHaveBeenCalled());
       expect(addOrderNote).not.toHaveBeenCalled();
@@ -352,8 +358,13 @@ describe('OrdersPage bulk operations', () => {
     });
 
     it('warns when some notes fail but orders were completed', async () => {
-      batchOrders.mockResolvedValue({ success: true, data: { update: [{ id: 1001 }, { id: 1002 }] } });
-      addOrderNote.mockResolvedValueOnce({ success: false }).mockResolvedValueOnce({ success: true });
+      batchOrders.mockResolvedValue({
+        success: true,
+        data: { update: [{ id: 1001 }, { id: 1002 }] },
+      });
+      addOrderNote
+        .mockResolvedValueOnce({ success: false })
+        .mockResolvedValueOnce({ success: true });
       await selectTwoAnd(userEvent.setup(), 'Ship with note');
       await waitFor(() => expect(showToast).toHaveBeenCalled());
       expect(showToast.mock.calls[0][0]).toContain('1 от 2 бележки');
@@ -373,7 +384,12 @@ describe('OrdersPage bulk operations', () => {
     it('does not touch the cache when every status update fails', async () => {
       batchOrders.mockResolvedValue({
         success: true,
-        data: { update: [{ id: 1001, error: {} }, { id: 1002, error: {} }] },
+        data: {
+          update: [
+            { id: 1001, error: {} },
+            { id: 1002, error: {} },
+          ],
+        },
       });
       await selectTwoAnd(userEvent.setup(), 'Ship with note');
       await waitFor(() => expect(showToast).toHaveBeenCalled());

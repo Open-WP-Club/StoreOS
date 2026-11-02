@@ -150,7 +150,9 @@ describe('OrderDetailPage refund flow', () => {
     setup();
     await openModal();
     refundTwo();
-    await waitFor(() => expect(m.showToast).toHaveBeenCalledWith('Refund failed: network', 'error'));
+    await waitFor(() =>
+      expect(m.showToast).toHaveBeenCalledWith('Refund failed: network', 'error')
+    );
   });
 
   it('closes the modal and toasts when prior refunds cannot be loaded', async () => {

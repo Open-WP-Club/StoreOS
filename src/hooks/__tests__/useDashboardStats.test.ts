@@ -2,7 +2,11 @@ import { vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useDashboardStats } from '../useDashboardStats';
 import useSettings from '../../stores/settingsStore';
-import { createMockOrder, createMockProduct, createMockLineItem } from '../../__test_utils__/mockFactories';
+import {
+  createMockOrder,
+  createMockProduct,
+  createMockLineItem,
+} from '../../__test_utils__/mockFactories';
 
 const NOW = new Date(2026, 10, 18, 12, 0, 0); // Wed
 const at = (daysAgo: number, hour = 10): string =>
@@ -31,7 +35,13 @@ describe('useDashboardStats', () => {
 
   it('computes daily, weekly, pending and counts', () => {
     const orders = [
-      createMockOrder({ id: 1, status: 'processing', total: '10.00', date_created: at(0), currency: 'EUR' }),
+      createMockOrder({
+        id: 1,
+        status: 'processing',
+        total: '10.00',
+        date_created: at(0),
+        currency: 'EUR',
+      }),
       createMockOrder({ id: 2, status: 'pending', total: '5.50', date_created: at(0, 8) }),
       createMockOrder({ id: 3, status: 'completed', total: '20.00', date_created: at(1) }),
       createMockOrder({ id: 4, status: 'completed', total: '100.00', date_created: at(5) }),
@@ -80,9 +90,19 @@ describe('useDashboardStats', () => {
         id: 2,
         status: 'completed',
         date_created: at(2),
-        line_items: [li(1, 'A', 4, '40'), li(4, 'D', 1, '1'), li(5, 'E', 1, '1'), li(6, 'F', 1, '1')],
+        line_items: [
+          li(1, 'A', 4, '40'),
+          li(4, 'D', 1, '1'),
+          li(5, 'E', 1, '1'),
+          li(6, 'F', 1, '1'),
+        ],
       }),
-      createMockOrder({ id: 3, status: 'processing', date_created: at(0), line_items: [li(9, 'Z', 99, '999')] }),
+      createMockOrder({
+        id: 3,
+        status: 'processing',
+        date_created: at(0),
+        line_items: [li(9, 'Z', 99, '999')],
+      }),
     ];
     const { result } = renderHook(() => useDashboardStats());
     act(() => result.current.calculateStats(orders, []));

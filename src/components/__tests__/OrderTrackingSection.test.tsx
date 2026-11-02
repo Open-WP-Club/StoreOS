@@ -6,7 +6,12 @@ import { TRACKING_META_KEY } from '../../utils/tracking';
 
 const updateOrder = vi.fn();
 const addOrderNote = vi.fn();
-let store: unknown = { id: 's1', url: 'https://shop.test', consumerKey: 'ck_test', consumerSecret: 'cs_test' };
+let store: unknown = {
+  id: 's1',
+  url: 'https://shop.test',
+  consumerKey: 'ck_test',
+  consumerSecret: 'cs_test',
+};
 
 vi.mock('../../stores', () => ({
   useStoreConfig: (sel: (s: unknown) => unknown) => sel({ getCurrentStore: () => store }),
@@ -30,13 +35,20 @@ describe('OrderTrackingSection', () => {
   const showToast = vi.fn();
   const onSaved = vi.fn();
   beforeEach(() => {
-    store = { id: 's1', url: 'https://shop.test', consumerKey: 'ck_test', consumerSecret: 'cs_test' };
+    store = {
+      id: 's1',
+      url: 'https://shop.test',
+      consumerKey: 'ck_test',
+      consumerSecret: 'cs_test',
+    };
     updateOrder.mockResolvedValue({ success: true, data: {} });
     addOrderNote.mockResolvedValue({ success: true, data: {} });
   });
 
   it('disables submit until a number is entered', () => {
-    render(<OrderTrackingSection order={createMockOrder()} showToast={showToast} onSaved={onSaved} />);
+    render(
+      <OrderTrackingSection order={createMockOrder()} showToast={showToast} onSaved={onSaved} />
+    );
     expect(screen.getByRole('button', { name: /Запази и уведоми/ })).toBeDisabled();
     fill('  ');
     expect(screen.getByRole('button', { name: /Запази и уведоми/ })).toBeDisabled();
@@ -52,7 +64,13 @@ describe('OrderTrackingSection', () => {
   });
 
   it('saves meta then a customer note and calls onSaved', async () => {
-    render(<OrderTrackingSection order={createMockOrder({ id: 42 })} showToast={showToast} onSaved={onSaved} />);
+    render(
+      <OrderTrackingSection
+        order={createMockOrder({ id: 42 })}
+        showToast={showToast}
+        onSaved={onSaved}
+      />
+    );
     fill(' 123 ', ' Speedy ');
     submit();
     await waitFor(() => expect(onSaved).toHaveBeenCalled());
@@ -65,17 +83,23 @@ describe('OrderTrackingSection', () => {
 
   it('reports update failure and skips the note', async () => {
     updateOrder.mockResolvedValue({ success: false, error: 'nope' });
-    render(<OrderTrackingSection order={createMockOrder()} showToast={showToast} onSaved={onSaved} />);
+    render(
+      <OrderTrackingSection order={createMockOrder()} showToast={showToast} onSaved={onSaved} />
+    );
     fill('1');
     submit();
-    await waitFor(() => expect(showToast).toHaveBeenCalledWith(expect.stringContaining('nope'), 'error'));
+    await waitFor(() =>
+      expect(showToast).toHaveBeenCalledWith(expect.stringContaining('nope'), 'error')
+    );
     expect(addOrderNote).not.toHaveBeenCalled();
     expect(onSaved).not.toHaveBeenCalled();
   });
 
   it('warns when the note fails but still refreshes', async () => {
     addOrderNote.mockResolvedValue({ success: false, error: 'x' });
-    render(<OrderTrackingSection order={createMockOrder()} showToast={showToast} onSaved={onSaved} />);
+    render(
+      <OrderTrackingSection order={createMockOrder()} showToast={showToast} onSaved={onSaved} />
+    );
     fill('1');
     submit();
     await waitFor(() => expect(onSaved).toHaveBeenCalled());
@@ -84,7 +108,9 @@ describe('OrderTrackingSection', () => {
 
   it('toasts on a thrown error', async () => {
     updateOrder.mockRejectedValue(new Error('boom'));
-    render(<OrderTrackingSection order={createMockOrder()} showToast={showToast} onSaved={onSaved} />);
+    render(
+      <OrderTrackingSection order={createMockOrder()} showToast={showToast} onSaved={onSaved} />
+    );
     fill('1');
     submit();
     await waitFor(() => expect(showToast).toHaveBeenCalledWith('Грешка: boom', 'error'));
@@ -92,7 +118,9 @@ describe('OrderTrackingSection', () => {
 
   it('does nothing without a store', () => {
     store = null;
-    render(<OrderTrackingSection order={createMockOrder()} showToast={showToast} onSaved={onSaved} />);
+    render(
+      <OrderTrackingSection order={createMockOrder()} showToast={showToast} onSaved={onSaved} />
+    );
     fill('1');
     submit();
     expect(updateOrder).not.toHaveBeenCalled();

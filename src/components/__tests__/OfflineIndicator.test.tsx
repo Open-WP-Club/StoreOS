@@ -18,7 +18,16 @@ vi.mock('../../hooks/useOnlineStatus', () => ({
 }));
 vi.mock('../../stores', () => ({
   useStoreConfig: (sel: (s: unknown) => unknown) =>
-    sel({ getCurrentStore: () => ({ id: 's1', url: 'https://shop.test', consumerKey: 'ck_test', consumerSecret: 'cs_test' }) }),
+    sel({
+      stores: [
+        {
+          id: 's1',
+          url: 'https://shop.test',
+          consumerKey: 'ck_test',
+          consumerSecret: 'cs_test',
+        },
+      ],
+    }),
 }));
 vi.mock('../../services/woocommerce', () => ({
   default: class {
@@ -97,7 +106,9 @@ describe('OfflineIndicator', () => {
 
   it('replays POS sales through replayPosSale', async () => {
     replayPosSale.mockResolvedValue({ success: true });
-    useOffline.getState().addPendingOperation('create_order', { clientId: 'c1', line_items: [] }, 's1');
+    useOffline
+      .getState()
+      .addPendingOperation('create_order', { clientId: 'c1', line_items: [] }, 's1');
     render(<OfflineIndicator />);
     await flush(2100);
     await flush(600);
