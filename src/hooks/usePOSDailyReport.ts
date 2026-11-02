@@ -1,10 +1,11 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useStoreConfig } from '../stores';
 import { useToast } from '../contexts/ToastContext';
 import { usePOSStore } from '../stores/posStore';
 import WooCommerceService from '../services/woocommerce';
 import { downloadCSV } from '../utils/csvExport';
 import { storeCurrencySymbol } from '../utils/currency';
+import { RECENT_TRANSACTIONS_KEY, POS_TX_EVENT } from '../utils/posOfflineSale';
 
 export interface TransactionItem {
   productId: number;
@@ -22,6 +23,9 @@ export interface RecentTransaction {
   customerName?: string;
   timestamp: string;
   refunded?: boolean;
+  /** Sale recorded offline, order not yet created on the server (id is 0 until synced). */
+  pending?: boolean;
+  clientId?: string;
 }
 
 export interface DailyReportStats {
@@ -32,8 +36,6 @@ export interface DailyReportStats {
   topProducts: Array<{ productId: number; name: string; quantity: number; revenue: number }>;
 }
 
-const RECENT_TRANSACTIONS_KEY = 'pos_recent_transactions';
-
 interface UsePOSDailyReportResult {
   showRecentTransactions: boolean;
   setShowRecentTransactions: (show: boolean) => void;
@@ -43,7 +45,7 @@ interface UsePOSDailyReportResult {
   refundingTransaction: RecentTransaction | null;
   setRefundingTransaction: (tx: RecentTransaction | null) => void;
   processingRefund: boolean;
-  saveRecentTransaction: (orderId: number) => void;
+  saveRecentTransaction: (orderId: number, pendingClientId?: string) => void;
   getTodayTransactions: () => RecentTransaction[];
   getDailyReportStats: () => DailyReportStats;
   exportDailyReportCSV: () => void;
@@ -59,16 +61,11 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
   const toast = useToast();
   const currencySymbol = storeCurrencySymbol(currentStore);
 
-  const {
-    cart,
-    paymentMethod,
-    getTotal,
-    getItemCount,
-  } = usePOSStore();
+  const { cart, paymentMethod, getTotal, getItemCount } = usePOSStore();
 
   const [showRecentTransactions, setShowRecentTransactions] = useState(false);
   // Lazy-initialized from localStorage on mount (avoids a redundant effect).
-  const [recentTransactions, setRecentTransactions] = useState<RecentTransaction[]>(() => {
+  const readStored = (): RecentTransaction[] => {
     try {
       const stored = localStorage.getItem(RECENT_TRANSACTIONS_KEY);
       return stored ? JSON.parse(stored) : [];
@@ -76,41 +73,54 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
       // Intentional: corrupt or unavailable localStorage just means an empty history.
       return [];
     }
-  });
+  };
+  const [recentTransactions, setRecentTransactions] = useState<RecentTransaction[]>(readStored);
+
+  // Offline-queue replay reconciles pending sales in localStorage and fires this event.
+  useEffect(() => {
+    const reload = (): void => setRecentTransactions(readStored());
+    window.addEventListener(POS_TX_EVENT, reload);
+    return () => window.removeEventListener(POS_TX_EVENT, reload);
+  }, []);
   const [showDailyReport, setShowDailyReport] = useState(false);
   const [refundingTransaction, setRefundingTransaction] = useState<RecentTransaction | null>(null);
   const [processingRefund, setProcessingRefund] = useState(false);
 
   // Save transaction to recent list
-  const saveRecentTransaction = useCallback((orderId: number): void => {
-    const items: TransactionItem[] = cart.map((item) => ({
-      productId: item.product.id,
-      name: item.product.name,
-      quantity: item.quantity,
-      price: item.price,
-    }));
+  const saveRecentTransaction = useCallback(
+    (orderId: number, pendingClientId?: string): void => {
+      const items: TransactionItem[] = cart.map((item) => ({
+        productId: item.product.id,
+        name: item.product.name,
+        quantity: item.quantity,
+        price: item.price,
+      }));
 
-    const transaction: RecentTransaction = {
-      id: orderId,
-      total: getTotal(),
-      itemCount: getItemCount(),
-      items,
-      paymentMethod: paymentMethod === 'cash' ? 'Каса' : paymentMethod === 'card' ? 'Карта' : 'Друго',
-      timestamp: new Date().toISOString(),
-      refunded: false,
-    };
+      const transaction: RecentTransaction = {
+        id: orderId,
+        total: getTotal(),
+        itemCount: getItemCount(),
+        items,
+        paymentMethod:
+          paymentMethod === 'cash' ? 'Каса' : paymentMethod === 'card' ? 'Карта' : 'Друго',
+        timestamp: new Date().toISOString(),
+        refunded: false,
+        ...(pendingClientId && { pending: true, clientId: pendingClientId }),
+      };
 
-    setRecentTransactions((prev) => {
-      const updated = [transaction, ...prev].slice(0, 50);
-      try {
-        localStorage.setItem(RECENT_TRANSACTIONS_KEY, JSON.stringify(updated));
-      } catch {
-        // eslint-disable-next-line no-console
-        console.warn('POS: could not persist recent transactions to localStorage');
-      }
-      return updated;
-    });
-  }, [cart, paymentMethod, getTotal, getItemCount]);
+      setRecentTransactions((prev) => {
+        const updated = [transaction, ...prev].slice(0, 50);
+        try {
+          localStorage.setItem(RECENT_TRANSACTIONS_KEY, JSON.stringify(updated));
+        } catch {
+          // eslint-disable-next-line no-console
+          console.warn('POS: could not persist recent transactions to localStorage');
+        }
+        return updated;
+      });
+    },
+    [cart, paymentMethod, getTotal, getItemCount]
+  );
 
   const getTodayTransactions = useCallback((): RecentTransaction[] => {
     const today = new Date().toDateString();
@@ -184,8 +194,11 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
     csv += `\nДетайли на транзакциите\n`;
     csv += `Поръчка #,Час,Артикули,Метод,Сума\n`;
     todayTx.forEach((tx) => {
-      const time = new Date(tx.timestamp).toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' });
-      csv += `${tx.id},${time},${tx.itemCount},${tx.paymentMethod},${tx.total.toFixed(2)} ${currencySymbol}\n`;
+      const time = new Date(tx.timestamp).toLocaleTimeString('bg-BG', {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      csv += `${tx.pending ? 'pending' : tx.id},${time},${tx.itemCount},${tx.paymentMethod},${tx.total.toFixed(2)} ${currencySymbol}\n`;
     });
 
     downloadCSV(csv, `daily-report-${new Date().toISOString().split('T')[0]}.csv`);

@@ -6,6 +6,8 @@ import type { WooCommerceStore, WooCommerceCustomer } from '../../types';
 import WooCommerceService from '../../services/woocommerce';
 import { useStoreConfig } from '../../stores';
 import { usePOSStore } from '../../stores/posStore';
+import useOffline from '../../stores/offlineStore';
+import { CLIENT_ID_META } from '../../utils/posOfflineSale';
 
 // ============================================
 // Mocks
@@ -426,6 +428,65 @@ describe('usePOSCheckout', () => {
       });
 
       expect(result.current.processingOrder).toBe(false);
+    });
+  });
+
+  describe('offline sales', () => {
+    beforeEach(() => {
+      useOffline.setState({ isOnline: true, pendingOperations: [] });
+      mockCart = [{ product: { id: 7 }, quantity: 1 }];
+    });
+
+    it('always tags the order with a client id', async () => {
+      mockCreateOrder.mockResolvedValue({ success: true, data: { id: 5 } });
+      const { result } = renderHook(() => usePOSCheckout(mockSaveRecentTransaction));
+      await act(async () => {
+        await result.current.handleCheckout();
+      });
+      const sent = mockCreateOrder.mock.calls[0]![0];
+      expect(sent.meta_data[0].key).toBe(CLIENT_ID_META);
+      expect(sent.meta_data[0].value).toMatch(/[0-9a-f-]{36}/);
+    });
+
+    it('queues the sale without calling the API when offline', async () => {
+      useOffline.setState({ isOnline: false });
+      const { result } = renderHook(() => usePOSCheckout(mockSaveRecentTransaction));
+      await act(async () => {
+        await result.current.handleCheckout();
+      });
+      expect(mockCreateOrder).not.toHaveBeenCalled();
+      const ops = useOffline.getState().pendingOperations;
+      expect(ops).toHaveLength(1);
+      expect(ops[0]!.type).toBe('create_order');
+      expect(ops[0]!.storeId).toBe(mockActiveStore!.id);
+      expect(mockSaveRecentTransaction).toHaveBeenCalledWith(0, ops[0]!.data.clientId);
+      expect(mockClearCart).toHaveBeenCalled();
+      expect(mockToast.warning).toHaveBeenCalled();
+    });
+
+    it('queues with the SAME client id when the request fails with a network error', async () => {
+      mockCreateOrder.mockResolvedValue({ success: false, error: 'x', code: 'offline' });
+      const { result } = renderHook(() => usePOSCheckout(mockSaveRecentTransaction));
+      await act(async () => {
+        await result.current.handleCheckout();
+      });
+      const queued = useOffline.getState().pendingOperations[0]!.data as {
+        clientId: string;
+        order: { meta_data: Array<{ value: string }> };
+      };
+      expect(queued.order.meta_data[0]!.value).toBe(queued.clientId);
+      expect(mockCreateOrder.mock.calls[0]![0].meta_data[0].value).toBe(queued.clientId);
+    });
+
+    it('does not queue on a server-side rejection', async () => {
+      mockCreateOrder.mockResolvedValue({ success: false, error: 'bad product' });
+      const { result } = renderHook(() => usePOSCheckout(mockSaveRecentTransaction));
+      await act(async () => {
+        await result.current.handleCheckout();
+      });
+      expect(useOffline.getState().pendingOperations).toHaveLength(0);
+      expect(mockClearCart).not.toHaveBeenCalled();
+      expect(mockToast.error).toHaveBeenCalled();
     });
   });
 });

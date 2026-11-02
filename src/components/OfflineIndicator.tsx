@@ -4,6 +4,7 @@ import useOffline from '../stores/offlineStore';
 import useOnlineStatus from '../hooks/useOnlineStatus';
 import { useStoreConfig } from '../stores';
 import WooCommerceService from '../services/woocommerce';
+import { replayPosSale, resolvePendingSale, type PosSaleOpData } from '../utils/posOfflineSale';
 import type { PendingOperation } from '../types';
 
 /**
@@ -20,6 +21,11 @@ function OfflineIndicator(): React.ReactElement | null {
   const updatePendingOperation = useOffline((state) => state.updatePendingOperation);
   const setLastSyncAttempt = useOffline((state) => state.setLastSyncAttempt);
   const getCurrentStore = useStoreConfig((state) => state.getCurrentStore);
+
+  const discardOperation = (op: PendingOperation): void => {
+    if (typeof op.data.clientId === 'string') resolvePendingSale(op.data.clientId, null);
+    removePendingOperation(op.id);
+  };
 
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [syncProgress, setSyncProgress] = useState<number>(0);
@@ -41,7 +47,10 @@ function OfflineIndicator(): React.ReactElement | null {
       try {
         switch (operation.type) {
           case 'create_order':
-            result = await service.createOrder(operation.data);
+            result =
+              typeof operation.data.clientId === 'string'
+                ? await replayPosSale(service, operation.data as PosSaleOpData, operation.timestamp)
+                : await service.createOrder(operation.data);
             break;
           case 'update_order':
             result = await service.updateOrder(
@@ -78,6 +87,9 @@ function OfflineIndicator(): React.ReactElement | null {
             result = { success: false, error: 'Unknown operation type' };
         }
 
+        if (!result.success) {
+          updatePendingOperation(operation.id, { lastError: result.error ?? 'Sync failed' });
+        }
         return result.success;
       } catch (error) {
         updatePendingOperation(operation.id, {
@@ -164,7 +176,9 @@ function OfflineIndicator(): React.ReactElement | null {
         {!isOnline ? (
           <>
             <WifiOff className="w-5 h-5" />
-            <span className="font-medium">Offline</span>
+            <span className="font-medium">
+              Offline{hasPendingOps && ` · ${pendingOperations.length} pending`}
+            </span>
           </>
         ) : isSyncing ? (
           <>
@@ -236,6 +250,14 @@ function OfflineIndicator(): React.ReactElement | null {
                         <p className="text-xs text-red-500 mt-1 truncate">{op.lastError}</p>
                       )}
                     </div>
+                    {op.retryCount > 0 && (
+                      <button
+                        onClick={() => discardOperation(op)}
+                        className="text-xs text-red-600 dark:text-red-400 hover:underline"
+                      >
+                        Discard
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>

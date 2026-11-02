@@ -2,7 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { useStoreConfig } from '../stores';
 import { useToast } from '../contexts/ToastContext';
 import { usePOSStore } from '../stores/posStore';
+import useOffline from '../stores/offlineStore';
 import WooCommerceService from '../services/woocommerce';
+import {
+  CLIENT_ID_META,
+  decrementCachedStock,
+  isOfflineFailure,
+  type PosSaleOpData,
+} from '../utils/posOfflineSale';
 import type { WooCommerceCustomer } from '../types';
 
 interface UsePOSCheckoutResult {
@@ -27,7 +34,7 @@ interface UsePOSCheckoutResult {
  * Hook for POS checkout logic, customer search, and order creation.
  */
 export function usePOSCheckout(
-  saveRecentTransaction: (orderId: number) => void
+  saveRecentTransaction: (orderId: number, pendingClientId?: string) => void
 ): UsePOSCheckoutResult {
   const getCurrentStore = useStoreConfig((state) => state.getCurrentStore);
   const currentStore = getCurrentStore();
@@ -106,7 +113,10 @@ export function usePOSCheckout(
         quantity: item.quantity,
       }));
 
+      // Idempotency key: one per sale, travels with the order whether it is sent now or replayed
+      const clientId = crypto.randomUUID();
       const orderData = {
+        meta_data: [{ key: CLIENT_ID_META, value: clientId }],
         status: 'completed' as const,
         payment_method: paymentMethod,
         payment_method_title:
@@ -129,9 +139,23 @@ export function usePOSCheckout(
         }),
       };
 
-      const result = await service.createOrder(orderData);
+      const soldItems = cart.map((i) => ({ productId: i.product.id, quantity: i.quantity }));
+      const result = useOffline.getState().isOnline
+        ? await service.createOrder(orderData)
+        : ({ success: false, error: 'offline', code: 'offline' } as const);
 
-      if (result.success) {
+      if (isOfflineFailure(result)) {
+        // May or may not have reached the server (timeout); replay checks for the client id first.
+        const op: PosSaleOpData = { clientId, order: orderData };
+        useOffline.getState().addPendingOperation('create_order', op, currentStore.id);
+        saveRecentTransaction(0, clientId);
+        void decrementCachedStock(soldItems);
+        clearCart();
+        setSelectedCustomer(null);
+        setOrderNote('');
+        setShowCheckout(false);
+        toast.warning('Офлайн: продажбата е запазена и ще се синхронизира при свързване.');
+      } else if (result.success) {
         if (result.data?.id) {
           saveRecentTransaction(result.data.id);
         }
