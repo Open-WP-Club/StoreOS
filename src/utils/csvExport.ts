@@ -37,7 +37,12 @@ function escapeCSVValue(value: unknown): string {
   }
 
   // If value contains comma, quote, or newline, wrap in quotes and escape quotes
-  if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+  if (
+    stringValue.includes(',') ||
+    stringValue.includes('"') ||
+    stringValue.includes('\n') ||
+    stringValue.includes('\r')
+  ) {
     return `"${stringValue.replace(/"/g, '""')}"`;
   }
 
@@ -47,33 +52,35 @@ function escapeCSVValue(value: unknown): string {
 /**
  * Convert array of objects to CSV string
  */
-export function convertToCSV<T extends object>(
-  data: T[],
-  columns: CSVColumn<T>[]
-): string {
+export function convertToCSV<T extends object>(data: T[], columns: CSVColumn<T>[]): string {
   if (!data || data.length === 0) {
     return '';
   }
 
   // Create header row
-  const headers = columns.map(col => col.label || col.key);
+  const headers = columns.map((col) => col.label || col.key);
   const headerRow = headers.map(escapeCSVValue).join(',');
 
   // Create data rows
-  const dataRows = data.map(item => {
-    return columns.map(col => {
-      let value: unknown = col.key.split('.').reduce(
-        (obj: Record<string, unknown> | undefined, key: string) => obj?.[key] as Record<string, unknown> | undefined,
-        item as unknown as Record<string, unknown>
-      );
+  const dataRows = data.map((item) => {
+    return columns
+      .map((col) => {
+        let value: unknown = col.key
+          .split('.')
+          .reduce(
+            (obj: Record<string, unknown> | undefined, key: string) =>
+              obj?.[key] as Record<string, unknown> | undefined,
+            item as unknown as Record<string, unknown>
+          );
 
-      // Handle special formatting
-      if (col.format && typeof col.format === 'function') {
-        value = col.format(value, item);
-      }
+        // Handle special formatting
+        if (col.format && typeof col.format === 'function') {
+          value = col.format(value, item);
+        }
 
-      return escapeCSVValue(value);
-    }).join(',');
+        return escapeCSVValue(value);
+      })
+      .join(',');
   });
 
   return [headerRow, ...dataRows].join('\n');
