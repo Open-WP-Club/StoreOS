@@ -76,7 +76,7 @@ describe('StoreHealthPage', () => {
     expect(await screen.findByText('Integrations')).toBeInTheDocument();
     // shown in the summary row and in the gateway toggle list
     expect(screen.getAllByText('Cash on delivery').length).toBeGreaterThan(0);
-    expect(screen.queryByText(/Bank transfer/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Disabled' })).toBeInTheDocument(); // Bank transfer toggle
     expect(screen.getByText('1 active / 2 total')).toBeInTheDocument();
   });
 
