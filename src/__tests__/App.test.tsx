@@ -29,14 +29,13 @@ vi.mock('../components/Layout', () => ({
 }));
 vi.mock('../components/DataManager', async () => {
   const React = await import('react');
-  return {
-    default: () => {
-      React.useEffect(() => {
-        dataManagerMounts();
-      }, []);
-      return null;
-    },
-  };
+  function MockDataManager() {
+    React.useEffect(() => {
+      dataManagerMounts();
+    }, []);
+    return null;
+  }
+  return { default: MockDataManager };
 });
 vi.mock('../components/LoadingScreen', () => ({
   default: ({ onComplete }: { onComplete: () => void }) => (
