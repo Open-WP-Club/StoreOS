@@ -42,7 +42,7 @@ function OrdersPage(): React.ReactElement {
   const logActivity = useActivityLog((state) => state.logActivity);
   const currentStore = getCurrentStore();
   const { toasts, showToast, removeToast } = useToast();
-  const { mutate: offlineMutate } = useOfflineMutation();
+  const { mutate: offlineMutate, isOnline } = useOfflineMutation();
 
   const [orders, setOrders] = useState<Order[]>(ordersFromCache);
   const [loading, setLoading] = useState<boolean>(ordersFromCache.length === 0);
@@ -217,8 +217,26 @@ function OrdersPage(): React.ReactElement {
     return orders.filter((order) => selectedOrderIds.includes(order.id));
   }, [orders, selectedOrderIds]);
 
+  // Offline: queue one batch_orders status update (replayed in order on reconnect) and apply it locally.
+  // Online callers never reach this; they run the live batch below.
+  const queueBulkStatus = async (ids: number[], status: OrderStatus): Promise<void> => {
+    if (!currentStore) return;
+    const res = await offlineMutate({
+      operationType: 'batch_orders',
+      queueData: { update: ids.map((id) => ({ id, status })) },
+      storeId: currentStore.id,
+      execute: async () => undefined, // never runs: only reached when offline
+    });
+    if (!res.queued) return;
+    const updatedOrders = orders.map((o) => (ids.includes(o.id) ? { ...o, status } : o));
+    setOrders(updatedOrders);
+    await setCachedData('orders', updatedOrders);
+    setSelectedOrderIds([]);
+  };
+
   const handleBulkStatusUpdate = async (newStatus: OrderStatus): Promise<void> => {
     if (selectedOrderIds.length === 0 || !currentStore) return;
+    if (!isOnline) return queueBulkStatus(selectedOrderIds, newStatus);
 
     // Capture previous statuses for undo
     const previousStatuses = selectedOrderIds.map((id) => ({
@@ -309,6 +327,8 @@ function OrdersPage(): React.ReactElement {
 
   const handleBulkMarkShipped = async (noteText: string | null): Promise<void> => {
     if (selectedOrderIds.length === 0 || !currentStore) return;
+    // Customer notes are not idempotent (a replay could duplicate them), so only the status is queued.
+    if (!isOnline) return queueBulkStatus(selectedOrderIds, 'completed');
     try {
       setBulkProcessing(true);
       const service = new WooCommerceService(currentStore);

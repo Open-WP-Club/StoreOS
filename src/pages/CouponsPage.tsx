@@ -61,7 +61,7 @@ function CouponsPage(): React.ReactElement {
   const logActivity = useActivityLog((state) => state.logActivity);
   const currentStore = getCurrentStore();
   const toast = useToast();
-  const { mutate: offlineMutate, isOnline } = useOfflineMutation();
+  const { mutate: offlineMutate } = useOfflineMutation();
 
   const [coupons, setCoupons] = useState<Coupon[]>(couponsFromCache);
   const [loading, setLoading] = useState<boolean>(couponsFromCache.length === 0);
@@ -354,16 +354,11 @@ function CouponsPage(): React.ReactElement {
   const handleBulkDelete = useCallback(async (): Promise<void> => {
     if (selectedIds.length === 0 || !currentStore) return;
     if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} coupons?`)) return;
-    // OfflineIndicator replay only understands single-id delete_coupon entries, so don't queue bulk.
-    if (!isOnline) {
-      toast.showToast('Bulk delete requires an internet connection', 'warning');
-      return;
-    }
     const ids = selectedIds;
 
-    await offlineMutate({
-      operationType: 'delete_coupon',
-      queueData: { ids },
+    const res = await offlineMutate({
+      operationType: 'batch_coupons',
+      queueData: { delete: ids },
       storeId: currentStore.id,
       execute: async () => {
         const service = new WooCommerceService(currentStore);
@@ -396,16 +391,14 @@ function CouponsPage(): React.ReactElement {
       },
       onError: (error) => toast.showToast(`Failed to delete coupons: ${error}`, 'error'),
     });
-  }, [
-    selectedIds,
-    currentStore,
-    coupons,
-    setCachedData,
-    logActivity,
-    toast,
-    offlineMutate,
-    isOnline,
-  ]);
+    if (res.queued) {
+      // Optimistic: drop from the list now, the queued batch deletes them on reconnect.
+      const updated = coupons.filter((c) => !ids.includes(c.id));
+      setCoupons(updated);
+      await setCachedData('coupons', updated);
+      setSelectedIds([]);
+    }
+  }, [selectedIds, currentStore, coupons, setCachedData, logActivity, toast, offlineMutate]);
 
   const toggleSelected = useCallback((id: number): void => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));

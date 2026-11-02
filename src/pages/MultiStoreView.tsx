@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useStoreConfig, useCache, useSettings } from '../stores';
 import WooCommerceService from '../services/woocommerce';
 import { useToast } from '../hooks/useToast';
+import { useOfflineMutation } from '../hooks/useOfflineMutation';
 import ToastContainer from '../components/ToastContainer';
 import type { Store, Order, Product, OrderStatus } from '../types';
 
@@ -43,6 +44,7 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const { toasts, showToast, removeToast } = useToast();
+  const { mutate } = useOfflineMutation();
 
   const loadAllStoresData = useCallback(async (): Promise<void> => {
     if (stores.length === 0) {
@@ -205,10 +207,7 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
       if (!store) return;
 
       const service = new WooCommerceService(store);
-      const result = await service.updateOrder(order.id, { status: newStatus as OrderStatus });
-
-      if (result.success) {
-        // Update local state
+      const applyLocal = (): void => {
         setAllOrders((prev) =>
           prev.map((o) =>
             o.id === order.id && o.storeId === order.storeId
@@ -216,22 +215,33 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
               : o
           )
         );
-
-        // Update storeData
         setStoreData((prev) =>
-          prev.map((data) => {
-            if (data.store.id === order.storeId) {
-              return {
-                ...data,
-                orders: data.orders.map((o) =>
-                  o.id === order.id ? { ...o, status: newStatus as OrderStatus } : o
-                ),
-              };
-            }
-            return data;
-          })
+          prev.map((data) =>
+            data.store.id === order.storeId
+              ? {
+                  ...data,
+                  orders: data.orders.map((o) =>
+                    o.id === order.id ? { ...o, status: newStatus as OrderStatus } : o
+                  ),
+                }
+              : data
+          )
         );
-      }
+      };
+      // storeId is stored on the queued op so replay builds the service for THIS store.
+      const res = await mutate({
+        operationType: 'update_order',
+        queueData: { id: order.id, status: newStatus },
+        storeId: order.storeId,
+        execute: async () => {
+          const result = await service.updateOrder(order.id, { status: newStatus as OrderStatus });
+          if (!result.success) throw new Error(result.error);
+          return result.data;
+        },
+        onSuccess: applyLocal,
+        onError: (msg) => showToast(`Failed to update order status: ${msg}`, 'error'),
+      });
+      if (res.queued) applyLocal();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       showToast(`Failed to update order status: ${errorMessage}`, 'error');

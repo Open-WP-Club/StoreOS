@@ -179,32 +179,39 @@ export function useProductActions(
   ): Promise<void> => {
     if (!window.confirm('Are you sure you want to delete this product?') || !currentStore) return;
 
-    try {
-      const service = new WooCommerceService(currentStore);
-      const result = await service.deleteProduct(productId);
-
-      if (result.success) {
-        const deletedProduct = products.find((p) => p.id === productId);
-        const updatedProducts = products.filter((product) => product.id !== productId);
-        setProducts(updatedProducts);
-        await setCachedData('products', updatedProducts);
-        setSelectedProduct(null);
-        setEditMode(false);
-        logActivity({
-          action: 'product_deleted',
-          entityType: 'product',
-          entityId: productId,
-          entityName: deletedProduct?.name,
-          storeId: currentStore?.id ?? null,
-          storeName: currentStore?.name,
-        });
+    const service = new WooCommerceService(currentStore);
+    const deletedProduct = products.find((p) => p.id === productId);
+    const applyLocal = async (): Promise<void> => {
+      const updatedProducts = products.filter((product) => product.id !== productId);
+      setProducts(updatedProducts);
+      await setCachedData('products', updatedProducts);
+      setSelectedProduct(null);
+      setEditMode(false);
+      logActivity({
+        action: 'product_deleted',
+        entityType: 'product',
+        entityId: productId,
+        entityName: deletedProduct?.name,
+        storeId: currentStore?.id ?? null,
+        storeName: currentStore?.name,
+      });
+    };
+    const res = await mutate({
+      operationType: 'delete_product',
+      queueData: { id: productId },
+      storeId: currentStore.id,
+      execute: async () => {
+        const result = await service.deleteProduct(productId);
+        if (!result.success) throw new Error(result.error);
+        return result.data;
+      },
+      onSuccess: async () => {
+        await applyLocal();
         showToast('Product deleted successfully', 'success');
-      } else if (!result.success) {
-        showToast(`Failed to delete product: ${result.error}`, 'error');
-      }
-    } catch (err) {
-      showToast(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error');
-    }
+      },
+      onError: (msg) => showToast(`Failed to delete product: ${msg}`, 'error'),
+    });
+    if (res.queued) await applyLocal();
   };
 
   const handleDuplicate = async (
@@ -335,21 +342,9 @@ export function useProductActions(
       return;
     }
 
-    try {
-      const service = new WooCommerceService(currentStore);
-      const deleteResult = await service.batchProducts({ delete: selectedProductIds });
-      if (!deleteResult.success) throw new Error(deleteResult.error);
-      const failedIds = batchErrorIds(deleteResult.data, 'delete');
-      const deletedIds = selectedProductIds.filter((id) => !failedIds.includes(id));
-      const failedCount = failedIds.length;
-      if (deletedIds.length === 0) {
-        showToast(
-          `Error deleting products: ${failedCount} of ${selectedProductIds.length} failed`,
-          'error'
-        );
-        return;
-      }
-
+    const service = new WooCommerceService(currentStore);
+    const ids = selectedProductIds;
+    const applyDeleted = async (deletedIds: number[]): Promise<void> => {
       const updatedProducts = products.filter((p) => !deletedIds.includes(p.id));
       setProducts(updatedProducts);
       await setCachedData('products', updatedProducts);
@@ -360,20 +355,39 @@ export function useProductActions(
         storeName: currentStore?.name,
         details: `Bulk deleted ${deletedIds.length} products`,
       });
-      setSelectedProductIds(selectedProductIds.filter((id) => !deletedIds.includes(id)));
-      if (failedCount > 0) {
-        showToast(
-          `${failedCount} of ${selectedProductIds.length} products failed to delete`,
-          'warning'
-        );
-      } else {
-        showToast(`Successfully deleted ${deletedIds.length} products`, 'success');
-      }
-    } catch (err) {
-      showToast(
-        `Error deleting products: ${err instanceof Error ? err.message : 'Unknown error'}`,
-        'error'
-      );
+    };
+    const res = await mutate({
+      operationType: 'batch_products',
+      queueData: { delete: ids },
+      storeId: currentStore.id,
+      execute: async () => {
+        const deleteResult = await service.batchProducts({ delete: ids });
+        if (!deleteResult.success) throw new Error(deleteResult.error);
+        return deleteResult.data;
+      },
+      onSuccess: async (data) => {
+        const failedIds = batchErrorIds(data, 'delete');
+        const deletedIds = ids.filter((id) => !failedIds.includes(id));
+        if (deletedIds.length === 0) {
+          showToast(
+            `Error deleting products: ${failedIds.length} of ${ids.length} failed`,
+            'error'
+          );
+          return;
+        }
+        await applyDeleted(deletedIds);
+        setSelectedProductIds(ids.filter((id) => !deletedIds.includes(id)));
+        if (failedIds.length > 0) {
+          showToast(`${failedIds.length} of ${ids.length} products failed to delete`, 'warning');
+        } else {
+          showToast(`Successfully deleted ${deletedIds.length} products`, 'success');
+        }
+      },
+      onError: (msg) => showToast(`Error deleting products: ${msg}`, 'error'),
+    });
+    if (res.queued) {
+      await applyDeleted(ids);
+      setSelectedProductIds([]);
     }
   };
 
@@ -384,15 +398,21 @@ export function useProductActions(
   ): Promise<void> => {
     if (!currentStore) return;
 
-    try {
-      const service = new WooCommerceService(currentStore);
-      const result = await service.batchUpdateProducts(updates);
-
-      if (result.success) {
-        const failedIds = batchErrorIds(result.data, 'update');
-        if (result.data?.update) {
+    const service = new WooCommerceService(currentStore);
+    const res = await mutate({
+      operationType: 'batch_products',
+      queueData: { update: updates },
+      storeId: currentStore.id,
+      execute: async () => {
+        const result = await service.batchUpdateProducts(updates);
+        if (!result.success) throw new Error(result.error);
+        return result.data;
+      },
+      onSuccess: async (data) => {
+        const failedIds = batchErrorIds(data, 'update');
+        if (data?.update) {
           const updatedProducts = [...products];
-          result.data.update.forEach((updatedProduct: Product) => {
+          data.update.forEach((updatedProduct: Product) => {
             if (failedIds.includes(updatedProduct.id)) return;
             const index = updatedProducts.findIndex((p) => p.id === updatedProduct.id);
             if (index !== -1) {
@@ -419,15 +439,10 @@ export function useProductActions(
         } else {
           showToast(`Successfully updated ${updates.length} products`, 'success');
         }
-      } else {
-        showToast(`Failed to update products: ${result.error}`, 'error');
-      }
-    } catch (err) {
-      showToast(
-        `Error updating products: ${err instanceof Error ? err.message : 'Unknown error'}`,
-        'error'
-      );
-    }
+      },
+      onError: (msg) => showToast(`Error updating products: ${msg}`, 'error'),
+    });
+    if (res.queued) setSelectedProductIds([]);
   };
 
   const handleSelectProduct = useCallback((productId: number): void => {

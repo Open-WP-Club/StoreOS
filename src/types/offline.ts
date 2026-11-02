@@ -6,7 +6,11 @@ export type PendingOperationType =
   | 'update_stock'
   | 'create_coupon'
   | 'update_coupon'
-  | 'delete_coupon';
+  | 'delete_coupon'
+  | 'batch_coupons'
+  | 'delete_product'
+  | 'batch_products'
+  | 'batch_orders';
 
 export interface PendingOperation {
   id: string;

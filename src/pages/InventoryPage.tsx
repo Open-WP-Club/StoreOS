@@ -271,22 +271,8 @@ const InventoryPage: React.FC = (): React.ReactElement => {
       return;
     }
 
-    try {
-      const service = new WooCommerceService(currentStore);
-
-      const deleteResult = await service.batchProducts({ delete: selectedProductIds });
-      if (!deleteResult.success) throw new Error(deleteResult.error);
-      const failedIds = batchErrorIds(deleteResult.data, 'delete');
-      const deletedIds = selectedProductIds.filter((id) => !failedIds.includes(id));
-      const failedCount = failedIds.length;
-      if (deletedIds.length === 0) {
-        showToast(
-          `Error deleting products: ${failedCount} of ${selectedProductIds.length} failed`,
-          'error'
-        );
-        return;
-      }
-
+    const ids = selectedProductIds;
+    const applyDeleted = async (deletedIds: number[]): Promise<void> => {
       const updatedProducts = products.filter((p) => !deletedIds.includes(p.id));
       setProducts(updatedProducts);
       await setCachedData('products', updatedProducts);
@@ -297,18 +283,40 @@ const InventoryPage: React.FC = (): React.ReactElement => {
         storeName: currentStore?.name,
         details: `Bulk deleted ${deletedIds.length} products`,
       });
-      setSelectedProductIds(failedIds);
-      if (failedCount > 0) {
-        showToast(
-          `${failedCount} of ${selectedProductIds.length} products failed to delete`,
-          'warning'
-        );
-      } else {
-        showToast(`Successfully deleted ${deletedIds.length} products`, 'success');
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      showToast(`Error deleting products: ${errorMessage}`, 'error');
+    };
+    const res = await offlineMutate({
+      operationType: 'batch_products',
+      queueData: { delete: ids },
+      storeId: currentStore.id,
+      execute: async () => {
+        const service = new WooCommerceService(currentStore);
+        const deleteResult = await service.batchProducts({ delete: ids });
+        if (!deleteResult.success) throw new Error(deleteResult.error);
+        return deleteResult.data;
+      },
+      onSuccess: async (data) => {
+        const failedIds = batchErrorIds(data, 'delete');
+        const deletedIds = ids.filter((id) => !failedIds.includes(id));
+        if (deletedIds.length === 0) {
+          showToast(
+            `Error deleting products: ${failedIds.length} of ${ids.length} failed`,
+            'error'
+          );
+          return;
+        }
+        await applyDeleted(deletedIds);
+        setSelectedProductIds(failedIds);
+        if (failedIds.length > 0) {
+          showToast(`${failedIds.length} of ${ids.length} products failed to delete`, 'warning');
+        } else {
+          showToast(`Successfully deleted ${deletedIds.length} products`, 'success');
+        }
+      },
+      onError: (msg) => showToast(`Error deleting products: ${msg}`, 'error'),
+    });
+    if (res.queued) {
+      await applyDeleted(ids);
+      setSelectedProductIds([]);
     }
   };
 
@@ -322,8 +330,8 @@ const InventoryPage: React.FC = (): React.ReactElement => {
     const previousProducts = products.filter((p) => updatedIds.includes(p.id));
 
     await offlineMutate({
-      operationType: 'update_product',
-      queueData: { updates },
+      operationType: 'batch_products',
+      queueData: { update: updates },
       storeId: currentStore.id,
       execute: async () => {
         const service = new WooCommerceService(currentStore);

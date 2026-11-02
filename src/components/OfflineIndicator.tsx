@@ -4,7 +4,8 @@ import useOffline from '../stores/offlineStore';
 import useOnlineStatus from '../hooks/useOnlineStatus';
 import { useStoreConfig } from '../stores';
 import WooCommerceService from '../services/woocommerce';
-import { replayPosSale, resolvePendingSale, type PosSaleOpData } from '../utils/posOfflineSale';
+import { resolvePendingSale } from '../utils/posOfflineSale';
+import { replayOperation } from '../utils/offlineReplay';
 import type { PendingOperation } from '../types';
 
 /**
@@ -20,7 +21,7 @@ function OfflineIndicator(): React.ReactElement | null {
   const incrementRetryCount = useOffline((state) => state.incrementRetryCount);
   const updatePendingOperation = useOffline((state) => state.updatePendingOperation);
   const setLastSyncAttempt = useOffline((state) => state.setLastSyncAttempt);
-  const getCurrentStore = useStoreConfig((state) => state.getCurrentStore);
+  const stores = useStoreConfig((state) => state.stores);
 
   const discardOperation = (op: PendingOperation): void => {
     if (typeof op.data.clientId === 'string') resolvePendingSale(op.data.clientId, null);
@@ -31,64 +32,17 @@ function OfflineIndicator(): React.ReactElement | null {
   const [syncProgress, setSyncProgress] = useState<number>(0);
   const [showDetails, setShowDetails] = useState<boolean>(false);
 
-  const currentStore = getCurrentStore();
   const hasPendingOps = pendingOperations.length > 0;
 
   // Process a single pending operation
   const processOperation = useCallback(
     async (operation: PendingOperation): Promise<boolean> => {
-      if (!currentStore || currentStore.id !== operation.storeId) {
-        return false;
-      }
-
-      const service = new WooCommerceService(currentStore);
-      let result: { success: boolean; error?: string };
+      // Replay against the operation's own store (may differ from the current one).
+      const store = stores.find((s) => s.id === operation.storeId);
+      if (!store) return false;
 
       try {
-        switch (operation.type) {
-          case 'create_order':
-            result =
-              typeof operation.data.clientId === 'string'
-                ? await replayPosSale(service, operation.data as PosSaleOpData, operation.timestamp)
-                : await service.createOrder(operation.data);
-            break;
-          case 'update_order':
-            result = await service.updateOrder(
-              operation.data.id as number,
-              operation.data as Record<string, unknown>
-            );
-            break;
-          case 'create_product':
-            result = await service.createProduct(operation.data);
-            break;
-          case 'update_product':
-            result = await service.updateProduct(
-              operation.data.id as number,
-              operation.data as Record<string, unknown>
-            );
-            break;
-          case 'update_stock':
-            result = await service.updateStock(
-              operation.data.productId as number,
-              operation.data.quantity as number,
-              operation.data.stockStatus as 'instock' | 'outofstock' | 'onbackorder'
-            );
-            break;
-          case 'create_coupon':
-            result = await service.createCoupon(operation.data);
-            break;
-          case 'update_coupon':
-            result = await service.updateCoupon(
-              operation.data.id as number,
-              operation.data as Record<string, unknown>
-            );
-            break;
-          case 'delete_coupon':
-            result = await service.deleteCoupon(operation.data.id as number);
-            break;
-          default:
-            result = { success: false, error: 'Unknown operation type' };
-        }
+        const result = await replayOperation(new WooCommerceService(store), operation);
 
         if (!result.success) {
           updatePendingOperation(operation.id, { lastError: result.error ?? 'Sync failed' });
@@ -101,7 +55,7 @@ function OfflineIndicator(): React.ReactElement | null {
         return false;
       }
     },
-    [currentStore, updatePendingOperation]
+    [stores, updatePendingOperation]
   );
 
   // Sync all pending operations

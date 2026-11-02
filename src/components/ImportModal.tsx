@@ -1,6 +1,8 @@
 import { useState, ReactElement } from 'react';
 import { X, Upload } from 'lucide-react';
 import { useStoreConfig } from '../stores';
+import useOffline from '../stores/offlineStore';
+import useOnlineStatus from '../hooks/useOnlineStatus';
 import WooCommerceService from '../services/woocommerce';
 import { batchErrorIds } from '../utils/batchResult';
 import {
@@ -37,6 +39,8 @@ export default function ImportModal({
   showToast,
 }: ImportModalProps): ReactElement {
   const getCurrentStore = useStoreConfig((s) => s.getCurrentStore);
+  const { isOnline } = useOnlineStatus();
+  const addPendingOperation = useOffline((s) => s.addPendingOperation);
   const [rows, setRows] = useState<string[][] | null>(null);
   const [mapping, setMapping] = useState<ColumnMapping | null>(null);
   const [step, setStep] = useState<'map' | 'preview'>('map');
@@ -64,8 +68,30 @@ export default function ImportModal({
   const run = async (): Promise<void> => {
     const store = getCurrentStore();
     if (!store || progress) return;
-    const service = new WooCommerceService(store);
     const total = toRun.length;
+    if (!isOnline) {
+      // Creates are only replay-safe with a SKU (WC rejects duplicate SKUs); otherwise a replay could duplicate.
+      if (toRun.some((r) => r.action === 'create' && !r.payload.sku)) {
+        showToast('Rows without a SKU can only be imported while online', 'warning');
+        return;
+      }
+      for (const part of chunk(toRun, 100)) {
+        addPendingOperation(
+          'batch_products',
+          {
+            create: part.filter((r) => r.action === 'create').map((r) => r.payload),
+            update: part
+              .filter((r) => r.action === 'update')
+              .map((r) => ({ id: r.id as number, ...r.payload })),
+          },
+          store.id
+        );
+      }
+      showToast(`Offline: ${total} products queued, they will import on reconnect`, 'warning');
+      onClose();
+      return;
+    }
+    const service = new WooCommerceService(store);
     let failed = 0;
     setProgress({ done: 0, total });
     for (const part of chunk(toRun, 100)) {
