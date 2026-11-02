@@ -3,6 +3,8 @@ import { useStoreConfig } from '../stores';
 import { useToast } from '../contexts/ToastContext';
 import { usePOSStore } from '../stores/posStore';
 import WooCommerceService from '../services/woocommerce';
+import { downloadCSV } from '../utils/csvExport';
+import { storeCurrencySymbol } from '../utils/currency';
 
 export interface TransactionItem {
   productId: number;
@@ -55,7 +57,7 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
   const getCurrentStore = useStoreConfig((state) => state.getCurrentStore);
   const currentStore = getCurrentStore();
   const toast = useToast();
-  const currencySymbol = currentStore?.currencySymbol || '';
+  const currencySymbol = storeCurrencySymbol(currentStore);
 
   const {
     cart,
@@ -186,13 +188,7 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
       csv += `${tx.id},${time},${tx.itemCount},${tx.paymentMethod},${tx.total.toFixed(2)} ${currencySymbol}\n`;
     });
 
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `daily-report-${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadCSV(csv, `daily-report-${new Date().toISOString().split('T')[0]}.csv`);
   }, [getDailyReportStats, getTodayTransactions, currencySymbol]);
 
   const handleRefund = async (transaction: RecentTransaction): Promise<void> => {

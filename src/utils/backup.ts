@@ -13,6 +13,7 @@
  */
 
 import { normalizeStoreUrl } from './urlPatterns';
+import { downloadBlob } from './csvExport';
 import useStoreConfig from '../stores/storeConfigStore';
 import useAppSettings from '../stores/appSettingsStore';
 import useSettings from '../stores/settingsStore';
@@ -227,20 +228,11 @@ export function createBackup(options: { includeProducts: boolean }): BackupData 
  */
 export function downloadBackup(backup: BackupData, storeName?: string): void {
   const json = JSON.stringify(backup, null, 2);
-  const blob = new Blob([json], { type: 'application/json;charset=utf-8;' });
-  const link = document.createElement('a');
-
   const date = new Date().toISOString().split('T')[0];
   const safeName = storeName ? storeName.replace(/[^a-zA-Z0-9а-яА-Я-_]/g, '_') : 'all-stores';
   const filename = `woocommerce-backup-${safeName}-${date}.json`;
 
-  link.href = URL.createObjectURL(blob);
-  link.download = filename;
-  link.style.display = 'none';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(link.href);
+  downloadBlob(json, 'application/json;charset=utf-8;', filename);
 }
 
 // ============================================

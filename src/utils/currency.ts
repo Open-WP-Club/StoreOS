@@ -121,3 +121,7 @@ export const getCurrencyCode = (data: CurrencyData | CurrencyData[] | null | und
 
   return 'USD';
 };
+
+/** Currency symbol configured for a store, or '' when none. */
+export const storeCurrencySymbol = (store: { currencySymbol?: string | null } | null | undefined): string =>
+  store?.currencySymbol || '';

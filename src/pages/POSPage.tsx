@@ -15,6 +15,7 @@ import { usePOSProducts } from '../hooks/usePOSProducts';
 import { usePOSCheckout } from '../hooks/usePOSCheckout';
 import { usePOSDailyReport } from '../hooks/usePOSDailyReport';
 import { usePOSVariants } from '../hooks/usePOSVariants';
+import { storeCurrencySymbol } from '../utils/currency';
 import Numpad from '../components/Numpad';
 import POSProductGrid from '../components/POSProductGrid';
 import POSCart from '../components/POSCart';
@@ -32,7 +33,7 @@ export default function POSPage(): ReactElement {
   const navigate = useNavigate();
   const getCurrentStore = useStoreConfig((state) => state.getCurrentStore);
   const currentStore = getCurrentStore();
-  const currencySymbol = currentStore?.currencySymbol || '';
+  const currencySymbol = storeCurrencySymbol(currentStore);
 
   // POS Store
   const posStore = usePOSStore();
