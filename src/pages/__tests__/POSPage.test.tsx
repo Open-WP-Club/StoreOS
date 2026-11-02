@@ -142,10 +142,12 @@ describe('POSPage', () => {
   const mockStore = createMockStore();
 
   beforeEach(() => {
-    (useStoreConfig as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
-      const state = { getCurrentStore: () => mockStore };
-      return selector ? selector(state) : state;
-    });
+    (useStoreConfig as unknown as Mock).mockImplementation(
+      (selector?: (state: unknown) => unknown) => {
+        const state = { getCurrentStore: () => mockStore };
+        return selector ? selector(state) : state;
+      }
+    );
 
     (usePOSStore as unknown as Mock).mockReturnValue({
       cart: [],
@@ -181,10 +183,12 @@ describe('POSPage', () => {
   });
 
   it('should show setup message when no store configured', () => {
-    (useStoreConfig as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
-      const state = { getCurrentStore: () => undefined };
-      return selector ? selector(state) : state;
-    });
+    (useStoreConfig as unknown as Mock).mockImplementation(
+      (selector?: (state: unknown) => unknown) => {
+        const state = { getCurrentStore: () => undefined };
+        return selector ? selector(state) : state;
+      }
+    );
 
     render(
       <MemoryRouter>

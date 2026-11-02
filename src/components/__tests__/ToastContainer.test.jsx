@@ -120,15 +120,11 @@ describe('ToastContainer', () => {
   });
 
   it('should update when toasts prop changes', () => {
-    const { rerender } = render(
-      <ToastContainer toasts={[]} removeToast={mockRemoveToast} />
-    );
+    const { rerender } = render(<ToastContainer toasts={[]} removeToast={mockRemoveToast} />);
 
     expect(screen.queryByTestId(/toast-/)).not.toBeInTheDocument();
 
-    rerender(
-      <ToastContainer toasts={defaultToasts} removeToast={mockRemoveToast} />
-    );
+    rerender(<ToastContainer toasts={defaultToasts} removeToast={mockRemoveToast} />);
 
     expect(screen.getByTestId('toast-1')).toBeInTheDocument();
     expect(screen.getByTestId('toast-2')).toBeInTheDocument();
@@ -145,9 +141,7 @@ describe('ToastContainer', () => {
     // Remove the second toast
     const updatedToasts = defaultToasts.filter((t) => t.id !== 2);
 
-    rerender(
-      <ToastContainer toasts={updatedToasts} removeToast={mockRemoveToast} />
-    );
+    rerender(<ToastContainer toasts={updatedToasts} removeToast={mockRemoveToast} />);
 
     expect(screen.getAllByTestId(/toast-/)).toHaveLength(2);
     expect(screen.queryByTestId('toast-2')).not.toBeInTheDocument();

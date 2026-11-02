@@ -20,10 +20,7 @@ import {
   X,
   Package,
 } from 'lucide-react';
-import type {
-  WooCommerceProductCategory,
-  ProductCategoryUpdateData,
-} from '../types';
+import type { WooCommerceProductCategory, ProductCategoryUpdateData } from '../types';
 
 interface CategoryFormData {
   name: string;
@@ -85,7 +82,10 @@ function CategoriesPage(): React.ReactElement {
 
   // Build tree structure
   const categoryTree = useMemo(() => {
-    const map = new Map<number, WooCommerceProductCategory & { children: WooCommerceProductCategory[] }>();
+    const map = new Map<
+      number,
+      WooCommerceProductCategory & { children: WooCommerceProductCategory[] }
+    >();
     const roots: (WooCommerceProductCategory & { children: WooCommerceProductCategory[] })[] = [];
 
     // Initialize all categories with children array
@@ -123,14 +123,18 @@ function CategoriesPage(): React.ReactElement {
       return nodes
         .map((node) => {
           const filteredChildren = filterTree(
-            node.children as (WooCommerceProductCategory & { children: WooCommerceProductCategory[] })[]
+            node.children as (WooCommerceProductCategory & {
+              children: WooCommerceProductCategory[];
+            })[]
           );
           if (matchesSearch(node) || filteredChildren.length > 0) {
             return { ...node, children: filteredChildren };
           }
           return null;
         })
-        .filter(Boolean) as (WooCommerceProductCategory & { children: WooCommerceProductCategory[] })[];
+        .filter(Boolean) as (WooCommerceProductCategory & {
+        children: WooCommerceProductCategory[];
+      })[];
     };
     return filterTree(categoryTree);
   }, [categoryTree, searchQuery]);
@@ -263,9 +267,11 @@ function CategoriesPage(): React.ReactElement {
         </tr>
         {hasChildren &&
           isExpanded &&
-          (cat.children as (WooCommerceProductCategory & { children: WooCommerceProductCategory[] })[]).map(
-            (child) => renderCategoryRow(child, depth + 1)
-          )}
+          (
+            cat.children as (WooCommerceProductCategory & {
+              children: WooCommerceProductCategory[];
+            })[]
+          ).map((child) => renderCategoryRow(child, depth + 1))}
       </React.Fragment>
     );
   };
@@ -321,7 +327,10 @@ function CategoriesPage(): React.ReactElement {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="cat-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="cat-name"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 Name *
               </label>
               <input
@@ -334,7 +343,10 @@ function CategoriesPage(): React.ReactElement {
               />
             </div>
             <div>
-              <label htmlFor="cat-slug" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="cat-slug"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 Slug
               </label>
               <input
@@ -347,7 +359,10 @@ function CategoriesPage(): React.ReactElement {
               />
             </div>
             <div>
-              <label htmlFor="cat-parent" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="cat-parent"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 Parent Category
               </label>
               <select
@@ -367,7 +382,10 @@ function CategoriesPage(): React.ReactElement {
               </select>
             </div>
             <div>
-              <label htmlFor="cat-display" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="cat-display"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 Display Type
               </label>
               <select
@@ -388,7 +406,10 @@ function CategoriesPage(): React.ReactElement {
               </select>
             </div>
             <div className="md:col-span-2">
-              <label htmlFor="cat-description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="cat-description"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 Description
               </label>
               <textarea

@@ -56,11 +56,12 @@ function TaxClassesTab({
       {/* Class Form */}
       {showClassForm && (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            New Tax Class
-          </h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">New Tax Class</h3>
           <div>
-            <label htmlFor="tax-class-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label
+              htmlFor="tax-class-name"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
               Name *
             </label>
             <input
@@ -151,9 +152,7 @@ function TaxClassesTab({
                           <Trash2 className="w-4 h-4" />
                         </button>
                       )}
-                      {isStandard && (
-                        <span className="text-xs text-gray-400">Built-in</span>
-                      )}
+                      {isStandard && <span className="text-xs text-gray-400">Built-in</span>}
                     </td>
                   </tr>
                 );

@@ -37,7 +37,11 @@ interface UseProductFiltersResult {
   handlePageChange: (page: number) => void;
   handlePageSizeChange: (size: number) => void;
   clearAllFilters: () => void;
-  handleApplyPreset: (presetFilters: Record<string, unknown>, showToast: (msg: string, type: 'success' | 'error' | 'info') => void, preset?: FilterPreset) => void;
+  handleApplyPreset: (
+    presetFilters: Record<string, unknown>,
+    showToast: (msg: string, type: 'success' | 'error' | 'info') => void,
+    preset?: FilterPreset
+  ) => void;
   searchParams: URLSearchParams;
   setSearchParams: ReturnType<typeof useSearchParams>[1];
 }
@@ -63,16 +67,20 @@ export function useProductFilters(products: Product[]): UseProductFiltersResult 
     stockMax: '',
   });
 
-  const setSearchTerm = useCallback((term: string) => {
-    setSearchParams(term ? { search: term } : {});
-    setCurrentPage(1);
-  }, [setSearchParams]);
+  const setSearchTerm = useCallback(
+    (term: string) => {
+      setSearchParams(term ? { search: term } : {});
+      setCurrentPage(1);
+    },
+    [setSearchParams]
+  );
 
   const stats = useMemo<ProductStats>(() => {
     const total = products.length;
     const inStock = products.filter((p) => p.stock_status === 'instock').length;
     const lowStock = products.filter(
-      (p) => p.stock_quantity !== null && p.stock_quantity <= lowStockThreshold && p.stock_quantity > 0
+      (p) =>
+        p.stock_quantity !== null && p.stock_quantity <= lowStockThreshold && p.stock_quantity > 0
     ).length;
     const outOfStock = products.filter((p) => p.stock_status === 'outofstock').length;
     return { total, inStock, lowStock, outOfStock };
@@ -124,7 +132,11 @@ export function useProductFilters(products: Product[]): UseProductFiltersResult 
     if (preset.pageSize) handlePageSizeChange(preset.pageSize);
   });
 
-  const handleApplyPreset = (presetFilters: Record<string, unknown>, showToast: (msg: string, type: 'success' | 'error' | 'info') => void, preset?: FilterPreset): void => {
+  const handleApplyPreset = (
+    presetFilters: Record<string, unknown>,
+    showToast: (msg: string, type: 'success' | 'error' | 'info') => void,
+    preset?: FilterPreset
+  ): void => {
     setFilters(presetFilters as unknown as ProductFilters);
     if (preset?.pageSize) handlePageSizeChange(preset.pageSize);
     if (preset?.search !== undefined) setSearchTerm(preset.search);

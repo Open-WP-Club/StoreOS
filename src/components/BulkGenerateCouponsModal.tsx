@@ -156,22 +156,25 @@ function BulkGenerateCouponsModal({
   const [formErrors, setFormErrors] = useState<BulkFormErrors>({});
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
 
-  const updateFormData = useCallback((updates: Partial<BulkFormData>): void => {
-    setFormData((prev) => {
-      const next = { ...prev, ...updates };
-      setFormErrors(() => {
-        const newErrors = validateBulkForm(next);
-        const filtered: BulkFormErrors = {};
-        (Object.keys(newErrors) as (keyof BulkFormErrors)[]).forEach((key) => {
-          if (touchedFields.has(key)) {
-            filtered[key] = newErrors[key];
-          }
+  const updateFormData = useCallback(
+    (updates: Partial<BulkFormData>): void => {
+      setFormData((prev) => {
+        const next = { ...prev, ...updates };
+        setFormErrors(() => {
+          const newErrors = validateBulkForm(next);
+          const filtered: BulkFormErrors = {};
+          (Object.keys(newErrors) as (keyof BulkFormErrors)[]).forEach((key) => {
+            if (touchedFields.has(key)) {
+              filtered[key] = newErrors[key];
+            }
+          });
+          return filtered;
         });
-        return filtered;
+        return next;
       });
-      return next;
-    });
-  }, [touchedFields]);
+    },
+    [touchedFields]
+  );
 
   const handleFieldBlur = useCallback((field: keyof BulkFormErrors): void => {
     setTouchedFields((prev) => {
@@ -199,8 +202,13 @@ function BulkGenerateCouponsModal({
 
     // Run full validation on submit
     const allFields: (keyof BulkFormErrors)[] = [
-      'amount', 'date_expires', 'usage_limit', 'usage_limit_per_user',
-      'minimum_amount', 'maximum_amount', 'prefix',
+      'amount',
+      'date_expires',
+      'usage_limit',
+      'usage_limit_per_user',
+      'minimum_amount',
+      'maximum_amount',
+      'prefix',
     ];
     setTouchedFields(new Set(allFields));
     const errors = validateBulkForm(formData);
@@ -355,19 +363,20 @@ function BulkGenerateCouponsModal({
                     id="bulk-prefix"
                     type="text"
                     value={formData.prefix}
-                    onChange={(e) =>
-                      updateFormData({ prefix: e.target.value.toUpperCase() })
-                    }
+                    onChange={(e) => updateFormData({ prefix: e.target.value.toUpperCase() })}
                     onBlur={() => handleFieldBlur('prefix')}
                     placeholder="e.g., SUMMER"
                     className={`w-full px-3 py-2 border ${formErrors.prefix ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500 font-mono uppercase`}
                   />
-                  {formErrors.prefix
-                    ? <p className="text-red-500 dark:text-red-400 text-sm mt-1">{formErrors.prefix}</p>
-                    : <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Codes will be: {formData.prefix ? `${formData.prefix}-` : ''}XXXXXX
-                      </p>
-                  }
+                  {formErrors.prefix ? (
+                    <p className="text-red-500 dark:text-red-400 text-sm mt-1">
+                      {formErrors.prefix}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Codes will be: {formData.prefix ? `${formData.prefix}-` : ''}XXXXXX
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -412,7 +421,11 @@ function BulkGenerateCouponsModal({
                     placeholder={formData.discount_type === 'percent' ? 'e.g., 20' : 'e.g., 10.00'}
                     className={`w-full px-3 py-2 border ${formErrors.amount ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500`}
                   />
-                  {formErrors.amount && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{formErrors.amount}</p>}
+                  {formErrors.amount && (
+                    <p className="text-red-500 dark:text-red-400 text-sm mt-1">
+                      {formErrors.amount}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -450,7 +463,11 @@ function BulkGenerateCouponsModal({
                   onBlur={() => handleFieldBlur('date_expires')}
                   className={`w-full px-3 py-2 border ${formErrors.date_expires ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500`}
                 />
-                {formErrors.date_expires && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{formErrors.date_expires}</p>}
+                {formErrors.date_expires && (
+                  <p className="text-red-500 dark:text-red-400 text-sm mt-1">
+                    {formErrors.date_expires}
+                  </p>
+                )}
               </div>
 
               {/* Usage Limits */}
@@ -471,7 +488,11 @@ function BulkGenerateCouponsModal({
                     placeholder="Unlimited"
                     className={`w-full px-3 py-2 border ${formErrors.usage_limit ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500`}
                   />
-                  {formErrors.usage_limit && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{formErrors.usage_limit}</p>}
+                  {formErrors.usage_limit && (
+                    <p className="text-red-500 dark:text-red-400 text-sm mt-1">
+                      {formErrors.usage_limit}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label
@@ -484,14 +505,16 @@ function BulkGenerateCouponsModal({
                     id="bulk-usage-limit-per-user"
                     type="number"
                     value={formData.usage_limit_per_user}
-                    onChange={(e) =>
-                      updateFormData({ usage_limit_per_user: e.target.value })
-                    }
+                    onChange={(e) => updateFormData({ usage_limit_per_user: e.target.value })}
                     onBlur={() => handleFieldBlur('usage_limit_per_user')}
                     placeholder="Unlimited"
                     className={`w-full px-3 py-2 border ${formErrors.usage_limit_per_user ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500`}
                   />
-                  {formErrors.usage_limit_per_user && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{formErrors.usage_limit_per_user}</p>}
+                  {formErrors.usage_limit_per_user && (
+                    <p className="text-red-500 dark:text-red-400 text-sm mt-1">
+                      {formErrors.usage_limit_per_user}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -514,7 +537,11 @@ function BulkGenerateCouponsModal({
                     placeholder="No minimum"
                     className={`w-full px-3 py-2 border ${formErrors.minimum_amount ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500`}
                   />
-                  {formErrors.minimum_amount && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{formErrors.minimum_amount}</p>}
+                  {formErrors.minimum_amount && (
+                    <p className="text-red-500 dark:text-red-400 text-sm mt-1">
+                      {formErrors.minimum_amount}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label
@@ -533,7 +560,11 @@ function BulkGenerateCouponsModal({
                     placeholder="No maximum"
                     className={`w-full px-3 py-2 border ${formErrors.maximum_amount ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500`}
                   />
-                  {formErrors.maximum_amount && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{formErrors.maximum_amount}</p>}
+                  {formErrors.maximum_amount && (
+                    <p className="text-red-500 dark:text-red-400 text-sm mt-1">
+                      {formErrors.maximum_amount}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -543,9 +574,7 @@ function BulkGenerateCouponsModal({
                   <input
                     type="checkbox"
                     checked={formData.individual_use}
-                    onChange={(e) =>
-                      updateFormData({ individual_use: e.target.checked })
-                    }
+                    onChange={(e) => updateFormData({ individual_use: e.target.checked })}
                     className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
                   <span className="text-sm text-gray-700 dark:text-gray-300">
@@ -556,9 +585,7 @@ function BulkGenerateCouponsModal({
                   <input
                     type="checkbox"
                     checked={formData.free_shipping}
-                    onChange={(e) =>
-                      updateFormData({ free_shipping: e.target.checked })
-                    }
+                    onChange={(e) => updateFormData({ free_shipping: e.target.checked })}
                     className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
                   <span className="text-sm text-gray-700 dark:text-gray-300">
@@ -569,9 +596,7 @@ function BulkGenerateCouponsModal({
                   <input
                     type="checkbox"
                     checked={formData.exclude_sale_items}
-                    onChange={(e) =>
-                      updateFormData({ exclude_sale_items: e.target.checked })
-                    }
+                    onChange={(e) => updateFormData({ exclude_sale_items: e.target.checked })}
                     className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
                   <span className="text-sm text-gray-700 dark:text-gray-300">

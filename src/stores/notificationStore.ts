@@ -6,7 +6,8 @@ import { prependAndTrim, nowMs } from './storeUtils';
 // Types
 // ============================================
 
-export type NotificationType = 'new_order' | 'low_stock' | 'failed_payment' | 'order_status' | 'info';
+export type NotificationType =
+  'new_order' | 'low_stock' | 'failed_payment' | 'order_status' | 'info';
 
 export interface AppNotification {
   id: string;
@@ -36,7 +37,9 @@ interface NotificationState {
 }
 
 interface NotificationActions {
-  addNotification: (notification: Omit<AppNotification, 'id' | 'read' | 'timestamp'>) => AppNotification;
+  addNotification: (
+    notification: Omit<AppNotification, 'id' | 'read' | 'timestamp'>
+  ) => AppNotification;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   removeNotification: (id: string) => void;
@@ -72,7 +75,11 @@ const useNotifications = create<NotificationStore>()(
         };
 
         set((state) => ({
-          notifications: prependAndTrim(state.notifications, newNotification, state.maxNotifications),
+          notifications: prependAndTrim(
+            state.notifications,
+            newNotification,
+            state.maxNotifications
+          ),
         }));
 
         return newNotification;
@@ -80,9 +87,7 @@ const useNotifications = create<NotificationStore>()(
 
       markAsRead: (id) => {
         set((state) => ({
-          notifications: state.notifications.map((n) =>
-            n.id === id ? { ...n, read: true } : n
-          ),
+          notifications: state.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)),
         }));
       },
 
@@ -124,7 +129,9 @@ const useNotifications = create<NotificationStore>()(
     }),
     {
       name: 'woocommerce-notifications',
-      partialize: (state): Pick<NotificationState, 'notifications' | 'soundEnabled' | 'confettiEnabled'> => ({
+      partialize: (
+        state
+      ): Pick<NotificationState, 'notifications' | 'soundEnabled' | 'confettiEnabled'> => ({
         notifications: state.notifications,
         soundEnabled: state.soundEnabled,
         confettiEnabled: state.confettiEnabled,

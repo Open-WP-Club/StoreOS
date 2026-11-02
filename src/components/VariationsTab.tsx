@@ -1,4 +1,12 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef, ReactElement, ChangeEvent } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+  ReactElement,
+  ChangeEvent,
+} from 'react';
 import { Plus, Trash2, Save, Loader2, ChevronDown, ChevronUp, Layers } from 'lucide-react';
 import WooCommerceService from '../services/woocommerce';
 import { formatPrice } from '../utils/currency';
@@ -35,9 +43,7 @@ const emptyForm = (attrs: ProductAttribute[]): VariationFormData => ({
   stock_quantity: '',
   stock_status: 'instock',
   status: 'publish',
-  attributes: attrs
-    .filter((a) => a.variation)
-    .map((a) => ({ id: a.id, name: a.name, option: '' })),
+  attributes: attrs.filter((a) => a.variation).map((a) => ({ id: a.id, name: a.name, option: '' })),
 });
 
 function VariationsTab({ product, storeConfig }: VariationsTabProps): ReactElement {
@@ -97,61 +103,66 @@ function VariationsTab({ product, storeConfig }: VariationsTabProps): ReactEleme
   }, [product.id, fetchVariations]);
 
   // Handle inline field change for an existing variation
-  const handleEditField = useCallback((
-    variationId: number,
-    field: keyof VariationFormData,
-    value: string | boolean
-  ): void => {
-    setEditData((prev) => ({
-      ...prev,
-      [variationId]: {
-        ...prev[variationId],
-        [field]: value,
-      },
-    }));
-  }, []);
+  const handleEditField = useCallback(
+    (variationId: number, field: keyof VariationFormData, value: string | boolean): void => {
+      setEditData((prev) => ({
+        ...prev,
+        [variationId]: {
+          ...prev[variationId],
+          [field]: value,
+        },
+      }));
+    },
+    []
+  );
 
   // Save inline edits for a variation
-  const handleSaveVariation = useCallback(async (variation: ProductVariation): Promise<void> => {
-    const changes = editData[variation.id];
-    if (!changes) return;
+  const handleSaveVariation = useCallback(
+    async (variation: ProductVariation): Promise<void> => {
+      const changes = editData[variation.id];
+      if (!changes) return;
 
-    setSaving(true);
-    const updatePayload: Record<string, unknown> = { ...changes };
-    if ('stock_quantity' in changes) {
-      updatePayload.stock_quantity =
-        changes.stock_quantity === '' ? null : parseInt(changes.stock_quantity as string);
-    }
+      setSaving(true);
+      const updatePayload: Record<string, unknown> = { ...changes };
+      if ('stock_quantity' in changes) {
+        updatePayload.stock_quantity =
+          changes.stock_quantity === '' ? null : parseInt(changes.stock_quantity as string);
+      }
 
-    const result = await service.updateProductVariation(product.id, variation.id, updatePayload);
-    if (result.success) {
-      setVariations((prev) => prev.map((v) => (v.id === variation.id ? result.data : v)));
-      setEditData((prev) => {
-        const next = { ...prev };
-        delete next[variation.id];
-        return next;
-      });
-      showMessage('Variation updated', 'success');
-    } else {
-      showMessage(result.error || 'Update failed', 'error');
-    }
-    setSaving(false);
-  }, [editData, service, product.id, showMessage]);
+      const result = await service.updateProductVariation(product.id, variation.id, updatePayload);
+      if (result.success) {
+        setVariations((prev) => prev.map((v) => (v.id === variation.id ? result.data : v)));
+        setEditData((prev) => {
+          const next = { ...prev };
+          delete next[variation.id];
+          return next;
+        });
+        showMessage('Variation updated', 'success');
+      } else {
+        showMessage(result.error || 'Update failed', 'error');
+      }
+      setSaving(false);
+    },
+    [editData, service, product.id, showMessage]
+  );
 
   // Delete a variation
-  const handleDelete = useCallback(async (variationId: number): Promise<void> => {
-    if (!confirm('Delete this variation? This cannot be undone.')) return;
+  const handleDelete = useCallback(
+    async (variationId: number): Promise<void> => {
+      if (!confirm('Delete this variation? This cannot be undone.')) return;
 
-    setDeletingId(variationId);
-    const result = await service.deleteProductVariation(product.id, variationId);
-    if (result.success) {
-      setVariations((prev) => prev.filter((v) => v.id !== variationId));
-      showMessage('Variation deleted', 'success');
-    } else {
-      showMessage(result.error || 'Delete failed', 'error');
-    }
-    setDeletingId(null);
-  }, [service, product.id, showMessage]);
+      setDeletingId(variationId);
+      const result = await service.deleteProductVariation(product.id, variationId);
+      if (result.success) {
+        setVariations((prev) => prev.filter((v) => v.id !== variationId));
+        showMessage('Variation deleted', 'success');
+      } else {
+        showMessage(result.error || 'Delete failed', 'error');
+      }
+      setDeletingId(null);
+    },
+    [service, product.id, showMessage]
+  );
 
   // Create a new variation
   const handleCreate = useCallback(async (): Promise<void> => {
@@ -243,21 +254,24 @@ function VariationsTab({ product, storeConfig }: VariationsTabProps): ReactEleme
   }, [variationAttrs, variations, service, product.id, showMessage]);
 
   // Get display value for a field (edited or original)
-  const getFieldValue = useCallback((
-    variation: ProductVariation,
-    field: keyof ProductVariation
-  ): string => {
-    const edited = editData[variation.id];
-    if (edited && field in edited) {
-      return String(edited[field as keyof VariationFormData] ?? '');
-    }
-    const val = variation[field];
-    return val === null || val === undefined ? '' : String(val);
-  }, [editData]);
+  const getFieldValue = useCallback(
+    (variation: ProductVariation, field: keyof ProductVariation): string => {
+      const edited = editData[variation.id];
+      if (edited && field in edited) {
+        return String(edited[field as keyof VariationFormData] ?? '');
+      }
+      const val = variation[field];
+      return val === null || val === undefined ? '' : String(val);
+    },
+    [editData]
+  );
 
-  const hasEdits = useCallback((variationId: number): boolean => {
-    return !!editData[variationId] && Object.keys(editData[variationId]).length > 0;
-  }, [editData]);
+  const hasEdits = useCallback(
+    (variationId: number): boolean => {
+      return !!editData[variationId] && Object.keys(editData[variationId]).length > 0;
+    },
+    [editData]
+  );
 
   const handleToggleAddForm = useCallback((): void => {
     setShowAddForm((prev) => !prev);
@@ -303,7 +317,11 @@ function VariationsTab({ product, storeConfig }: VariationsTabProps): ReactEleme
               disabled={generating}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
             >
-              {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Layers className="w-4 h-4" />}
+              {generating ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Layers className="w-4 h-4" />
+              )}
               Generate All
             </button>
           )}
@@ -354,7 +372,10 @@ function VariationsTab({ product, storeConfig }: VariationsTabProps): ReactEleme
           {/* Price & SKU */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div>
-              <label htmlFor="add-var-regular-price" className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+              <label
+                htmlFor="add-var-regular-price"
+                className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1"
+              >
                 Regular Price
               </label>
               <input
@@ -367,7 +388,10 @@ function VariationsTab({ product, storeConfig }: VariationsTabProps): ReactEleme
               />
             </div>
             <div>
-              <label htmlFor="add-var-sale-price" className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+              <label
+                htmlFor="add-var-sale-price"
+                className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1"
+              >
                 Sale Price
               </label>
               <input
@@ -380,7 +404,10 @@ function VariationsTab({ product, storeConfig }: VariationsTabProps): ReactEleme
               />
             </div>
             <div>
-              <label htmlFor="add-var-sku" className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+              <label
+                htmlFor="add-var-sku"
+                className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1"
+              >
                 SKU
               </label>
               <input
@@ -392,7 +419,10 @@ function VariationsTab({ product, storeConfig }: VariationsTabProps): ReactEleme
               />
             </div>
             <div>
-              <label htmlFor="add-var-stock" className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+              <label
+                htmlFor="add-var-stock"
+                className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1"
+              >
                 Stock
               </label>
               <input
@@ -432,7 +462,10 @@ function VariationsTab({ product, storeConfig }: VariationsTabProps): ReactEleme
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">
           <Layers className="w-10 h-10 mx-auto mb-3 opacity-40" />
           <p className="font-medium">No variations yet</p>
-          <p className="text-sm mt-1">Add variations or click &ldquo;Generate All&rdquo; to create combinations from attributes.</p>
+          <p className="text-sm mt-1">
+            Add variations or click &ldquo;Generate All&rdquo; to create combinations from
+            attributes.
+          </p>
         </div>
       ) : (
         <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
@@ -533,7 +566,10 @@ const VariationRow = React.memo(function VariationRow({
     <>
       <tr className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
         <td className="px-4 py-3">
-          <button onClick={onToggle} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+          <button
+            onClick={onToggle}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+          >
             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
         </td>
@@ -588,7 +624,11 @@ const VariationRow = React.memo(function VariationRow({
                 className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
                 title="Save changes"
               >
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {saving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
               </button>
             )}
             <button
@@ -597,7 +637,11 @@ const VariationRow = React.memo(function VariationRow({
               className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
               title="Delete variation"
             >
-              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              {deleting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4" />
+              )}
             </button>
           </div>
         </td>
@@ -609,7 +653,10 @@ const VariationRow = React.memo(function VariationRow({
           <td colSpan={7} className="px-8 py-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <label htmlFor={`var-${variation.id}-price`} className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                <label
+                  htmlFor={`var-${variation.id}-price`}
+                  className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1"
+                >
                   Regular Price
                 </label>
                 <input
@@ -621,7 +668,10 @@ const VariationRow = React.memo(function VariationRow({
                 />
               </div>
               <div>
-                <label htmlFor={`var-${variation.id}-sale`} className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                <label
+                  htmlFor={`var-${variation.id}-sale`}
+                  className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1"
+                >
                   Sale Price
                 </label>
                 <input
@@ -633,7 +683,10 @@ const VariationRow = React.memo(function VariationRow({
                 />
               </div>
               <div>
-                <label htmlFor={`var-${variation.id}-sku`} className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                <label
+                  htmlFor={`var-${variation.id}-sku`}
+                  className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1"
+                >
                   SKU
                 </label>
                 <input
@@ -645,7 +698,10 @@ const VariationRow = React.memo(function VariationRow({
                 />
               </div>
               <div>
-                <label htmlFor={`var-${variation.id}-qty`} className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                <label
+                  htmlFor={`var-${variation.id}-qty`}
+                  className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1"
+                >
                   Stock Quantity
                 </label>
                 <input
@@ -660,7 +716,10 @@ const VariationRow = React.memo(function VariationRow({
                 />
               </div>
               <div>
-                <label htmlFor={`var-${variation.id}-stock-status`} className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                <label
+                  htmlFor={`var-${variation.id}-stock-status`}
+                  className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1"
+                >
                   Stock Status
                 </label>
                 <select
@@ -675,7 +734,10 @@ const VariationRow = React.memo(function VariationRow({
                 </select>
               </div>
               <div>
-                <label htmlFor={`var-${variation.id}-status`} className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                <label
+                  htmlFor={`var-${variation.id}-status`}
+                  className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1"
+                >
                   Status
                 </label>
                 <select

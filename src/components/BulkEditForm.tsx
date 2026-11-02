@@ -1,6 +1,12 @@
 import React from 'react';
 import { X, ChevronRight } from 'lucide-react';
-import type { WooCommerceProduct, StockStatus, TaxStatus, CatalogVisibility, ProductCategory } from '../types';
+import type {
+  WooCommerceProduct,
+  StockStatus,
+  TaxStatus,
+  CatalogVisibility,
+  ProductCategory,
+} from '../types';
 
 type PriceAction = 'set' | 'increase' | 'decrease';
 type PriceType = 'fixed' | 'percent';
@@ -98,9 +104,7 @@ const BulkEditForm: React.FC<BulkEditFormProps> = ({
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Bulk Edit Products
-          </h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Bulk Edit Products</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
@@ -122,9 +126,7 @@ const BulkEditForm: React.FC<BulkEditFormProps> = ({
 
           {/* ── Category Filter Section ─────────────────────────────────────── */}
           <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-              Scope
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Scope</h3>
 
             <div className="flex items-center gap-3 mb-3">
               <label className="flex items-center gap-2 cursor-pointer">
@@ -192,7 +194,10 @@ const BulkEditForm: React.FC<BulkEditFormProps> = ({
                   onChange={() => onFieldToggle('changePrice')}
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
-                <label htmlFor="changePrice" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="changePrice"
+                  className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Regular Price
                 </label>
               </div>
@@ -238,7 +243,10 @@ const BulkEditForm: React.FC<BulkEditFormProps> = ({
                   onChange={() => onFieldToggle('changeSalePrice')}
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
-                <label htmlFor="changeSalePrice" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="changeSalePrice"
+                  className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Sale Price
                 </label>
               </div>
@@ -247,7 +255,9 @@ const BulkEditForm: React.FC<BulkEditFormProps> = ({
                   <div className="grid grid-cols-3 gap-2">
                     <select
                       value={editFields.salePriceAction}
-                      onChange={(e) => onFieldChange('salePriceAction', e.target.value as PriceAction)}
+                      onChange={(e) =>
+                        onFieldChange('salePriceAction', e.target.value as PriceAction)
+                      }
                       className={INPUT_CLS}
                     >
                       <option value="set">Set to</option>
@@ -276,7 +286,10 @@ const BulkEditForm: React.FC<BulkEditFormProps> = ({
                   {/* Sale date range */}
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label htmlFor="bulk-sale-date-from" className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                      <label
+                        htmlFor="bulk-sale-date-from"
+                        className="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                      >
                         Sale start date (optional)
                       </label>
                       <input
@@ -288,7 +301,10 @@ const BulkEditForm: React.FC<BulkEditFormProps> = ({
                       />
                     </div>
                     <div>
-                      <label htmlFor="bulk-sale-date-to" className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                      <label
+                        htmlFor="bulk-sale-date-to"
+                        className="block text-xs text-gray-500 dark:text-gray-400 mb-1"
+                      >
                         Sale end date (optional)
                       </label>
                       <input
@@ -320,7 +336,10 @@ const BulkEditForm: React.FC<BulkEditFormProps> = ({
                   onChange={() => onFieldToggle('changeStock')}
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
-                <label htmlFor="changeStock" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="changeStock"
+                  className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Stock Quantity
                 </label>
               </div>
@@ -356,7 +375,10 @@ const BulkEditForm: React.FC<BulkEditFormProps> = ({
                   onChange={() => onFieldToggle('changeStockStatus')}
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
-                <label htmlFor="changeStockStatus" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="changeStockStatus"
+                  className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Stock Status
                 </label>
               </div>
@@ -385,7 +407,10 @@ const BulkEditForm: React.FC<BulkEditFormProps> = ({
                   onChange={() => onFieldToggle('changeManageStock')}
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
-                <label htmlFor="changeManageStock" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="changeManageStock"
+                  className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Enable Stock Management
                 </label>
               </div>
@@ -406,7 +431,9 @@ const BulkEditForm: React.FC<BulkEditFormProps> = ({
 
           {/* ── Product Data Section ────────────────────────────────────────── */}
           <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Product Data</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Product Data
+            </h3>
 
             {/* Tax Status */}
             <div className="mb-4">
@@ -418,7 +445,10 @@ const BulkEditForm: React.FC<BulkEditFormProps> = ({
                   onChange={() => onFieldToggle('changeTaxStatus')}
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
-                <label htmlFor="changeTaxStatus" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="changeTaxStatus"
+                  className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Tax Status
                 </label>
               </div>
@@ -447,7 +477,10 @@ const BulkEditForm: React.FC<BulkEditFormProps> = ({
                   onChange={() => onFieldToggle('changeCatalogVisibility')}
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
-                <label htmlFor="changeCatalogVisibility" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="changeCatalogVisibility"
+                  className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Catalog Visibility
                 </label>
               </div>
@@ -455,7 +488,9 @@ const BulkEditForm: React.FC<BulkEditFormProps> = ({
                 <div className="ml-6">
                   <select
                     value={editFields.catalogVisibility}
-                    onChange={(e) => onFieldChange('catalogVisibility', e.target.value as CatalogVisibility)}
+                    onChange={(e) =>
+                      onFieldChange('catalogVisibility', e.target.value as CatalogVisibility)
+                    }
                     className={`w-full ${INPUT_CLS}`}
                   >
                     <option value="visible">Shop and search results</option>
@@ -477,7 +512,10 @@ const BulkEditForm: React.FC<BulkEditFormProps> = ({
                   onChange={() => onFieldToggle('changeFeatured')}
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
-                <label htmlFor="changeFeatured" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="changeFeatured"
+                  className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Featured Product
                 </label>
               </div>
@@ -500,7 +538,8 @@ const BulkEditForm: React.FC<BulkEditFormProps> = ({
         {/* Footer */}
         <div className="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
           <span className="text-sm text-gray-500 dark:text-gray-400">
-            {effectiveProducts.length} product{effectiveProducts.length !== 1 ? 's' : ''} will be updated
+            {effectiveProducts.length} product{effectiveProducts.length !== 1 ? 's' : ''} will be
+            updated
           </span>
           <div className="flex items-center gap-3">
             <button

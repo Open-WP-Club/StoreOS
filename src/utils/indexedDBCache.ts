@@ -98,7 +98,7 @@ const recoverFromCorruption = async (): Promise<boolean> => {
     });
 
     // Wait a bit before recreating
-    await new Promise<void>(resolve => setTimeout(resolve, 100));
+    await new Promise<void>((resolve) => setTimeout(resolve, 100));
 
     return true;
   } catch {
@@ -336,11 +336,7 @@ export const getFromCache = async <T>(
 
 const tick = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
 
-const runTx = (
-  db: IDBDatabase,
-  names: string[],
-  fn: (tx: IDBTransaction) => void
-): Promise<void> =>
+const runTx = (db: IDBDatabase, names: string[], fn: (tx: IDBTransaction) => void): Promise<void> =>
   new Promise((resolve, reject) => {
     const tx = db.transaction(names, 'readwrite', { durability: 'relaxed' });
     tx.oncomplete = () => resolve();
@@ -365,7 +361,10 @@ const enqueue = <R>(fn: () => Promise<R>): Promise<R> => {
 
 const putMeta = (db: IDBDatabase, store: CollectionStore, scope: string): Promise<void> =>
   runTx(db, [store], (tx) => {
-    tx.objectStore(store).put({ data: null, timestamp: Date.now(), storeId: scope }, metaKey(scope));
+    tx.objectStore(store).put(
+      { data: null, timestamp: Date.now(), storeId: scope },
+      metaKey(scope)
+    );
   });
 
 /**

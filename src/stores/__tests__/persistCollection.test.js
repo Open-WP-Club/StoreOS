@@ -33,7 +33,12 @@ describe('persistCollection', () => {
 
   it('deletes removed items and skips IO when nothing changed', async () => {
     const prev = mk(100);
-    await persistCollection('orders', 's', prev, prev.filter((p) => p.id !== 3));
+    await persistCollection(
+      'orders',
+      's',
+      prev,
+      prev.filter((p) => p.id !== 3)
+    );
     expect(idb.applyCollectionDelta.mock.calls[0][3]).toEqual([3]);
     idb.applyCollectionDelta.mockClear();
     await persistCollection('orders', 's', prev, [...prev]);
@@ -43,7 +48,12 @@ describe('persistCollection', () => {
 
   it('falls back to a full save when many items changed', async () => {
     const prev = mk(100);
-    await persistCollection('orders', 's', prev, prev.map((p) => ({ ...p })));
+    await persistCollection(
+      'orders',
+      's',
+      prev,
+      prev.map((p) => ({ ...p }))
+    );
     expect(idb.saveCollection).toHaveBeenCalledTimes(1);
   });
 });

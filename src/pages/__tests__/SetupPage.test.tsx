@@ -17,19 +17,23 @@ const mockTestConnection = vi.fn();
 beforeEach(() => {
   mockStores = [];
 
-  (useStoreConfig as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
-    const state = {
-      addStore: mockAddStore,
-      stores: mockStores,
-      removeStore: mockRemoveStore,
-      updateStore: mockUpdateStore,
-    };
-    return selector ? selector(state) : state;
-  });
+  (useStoreConfig as unknown as Mock).mockImplementation(
+    (selector?: (state: unknown) => unknown) => {
+      const state = {
+        addStore: mockAddStore,
+        stores: mockStores,
+        removeStore: mockRemoveStore,
+        updateStore: mockUpdateStore,
+      };
+      return selector ? selector(state) : state;
+    }
+  );
 
-  (WooCommerceService as Mock).mockImplementation(function () { return {
-    testConnection: mockTestConnection,
-  }; });
+  (WooCommerceService as Mock).mockImplementation(function () {
+    return {
+      testConnection: mockTestConnection,
+    };
+  });
 
   window.confirm = vi.fn(() => true);
 });
@@ -94,7 +98,7 @@ describe('SetupPage', () => {
 
       // Click the close button (X icon)
       const closeButtons = screen.getAllByRole('button');
-      const closeBtn = closeButtons.find(btn => btn.querySelector('.lucide-x'));
+      const closeBtn = closeButtons.find((btn) => btn.querySelector('.lucide-x'));
       if (closeBtn) fireEvent.click(closeBtn);
     });
 
@@ -107,10 +111,18 @@ describe('SetupPage', () => {
       render(<SetupPage />);
       fireEvent.click(screen.getByText('Add Store'));
 
-      fireEvent.change(screen.getByLabelText('Store Name'), { target: { value: 'Test Store', name: 'name' } });
-      fireEvent.change(screen.getByLabelText('Store URL'), { target: { value: 'https://test.com', name: 'url' } });
-      fireEvent.change(screen.getByLabelText('Consumer Key'), { target: { value: 'ck_test', name: 'consumerKey' } });
-      fireEvent.change(screen.getByLabelText('Consumer Secret'), { target: { value: 'cs_test', name: 'consumerSecret' } });
+      fireEvent.change(screen.getByLabelText('Store Name'), {
+        target: { value: 'Test Store', name: 'name' },
+      });
+      fireEvent.change(screen.getByLabelText('Store URL'), {
+        target: { value: 'https://test.com', name: 'url' },
+      });
+      fireEvent.change(screen.getByLabelText('Consumer Key'), {
+        target: { value: 'ck_test', name: 'consumerKey' },
+      });
+      fireEvent.change(screen.getByLabelText('Consumer Secret'), {
+        target: { value: 'cs_test', name: 'consumerSecret' },
+      });
 
       await act(async () => {
         fireEvent.submit(screen.getByText('Add Store', { selector: 'button[type="submit"]' }));
@@ -136,10 +148,18 @@ describe('SetupPage', () => {
       render(<SetupPage />);
       fireEvent.click(screen.getByText('Add Store'));
 
-      fireEvent.change(screen.getByLabelText('Store Name'), { target: { value: 'Test', name: 'name' } });
-      fireEvent.change(screen.getByLabelText('Store URL'), { target: { value: 'https://bad.com', name: 'url' } });
-      fireEvent.change(screen.getByLabelText('Consumer Key'), { target: { value: 'ck_bad', name: 'consumerKey' } });
-      fireEvent.change(screen.getByLabelText('Consumer Secret'), { target: { value: 'cs_bad', name: 'consumerSecret' } });
+      fireEvent.change(screen.getByLabelText('Store Name'), {
+        target: { value: 'Test', name: 'name' },
+      });
+      fireEvent.change(screen.getByLabelText('Store URL'), {
+        target: { value: 'https://bad.com', name: 'url' },
+      });
+      fireEvent.change(screen.getByLabelText('Consumer Key'), {
+        target: { value: 'ck_bad', name: 'consumerKey' },
+      });
+      fireEvent.change(screen.getByLabelText('Consumer Secret'), {
+        target: { value: 'cs_bad', name: 'consumerSecret' },
+      });
 
       await act(async () => {
         fireEvent.submit(screen.getByText('Add Store', { selector: 'button[type="submit"]' }));
@@ -155,10 +175,18 @@ describe('SetupPage', () => {
       render(<SetupPage />);
       fireEvent.click(screen.getByText('Add Store'));
 
-      fireEvent.change(screen.getByLabelText('Store Name'), { target: { value: 'Test', name: 'name' } });
-      fireEvent.change(screen.getByLabelText('Store URL'), { target: { value: 'https://err.com', name: 'url' } });
-      fireEvent.change(screen.getByLabelText('Consumer Key'), { target: { value: 'ck_e', name: 'consumerKey' } });
-      fireEvent.change(screen.getByLabelText('Consumer Secret'), { target: { value: 'cs_e', name: 'consumerSecret' } });
+      fireEvent.change(screen.getByLabelText('Store Name'), {
+        target: { value: 'Test', name: 'name' },
+      });
+      fireEvent.change(screen.getByLabelText('Store URL'), {
+        target: { value: 'https://err.com', name: 'url' },
+      });
+      fireEvent.change(screen.getByLabelText('Consumer Key'), {
+        target: { value: 'ck_e', name: 'consumerKey' },
+      });
+      fireEvent.change(screen.getByLabelText('Consumer Secret'), {
+        target: { value: 'cs_e', name: 'consumerSecret' },
+      });
 
       await act(async () => {
         fireEvent.submit(screen.getByText('Add Store', { selector: 'button[type="submit"]' }));
@@ -169,15 +197,27 @@ describe('SetupPage', () => {
 
     it('shows "Testing Connection..." during test', async () => {
       let resolveTest: (value: unknown) => void;
-      mockTestConnection.mockReturnValue(new Promise((resolve) => { resolveTest = resolve; }));
+      mockTestConnection.mockReturnValue(
+        new Promise((resolve) => {
+          resolveTest = resolve;
+        })
+      );
 
       render(<SetupPage />);
       fireEvent.click(screen.getByText('Add Store'));
 
-      fireEvent.change(screen.getByLabelText('Store Name'), { target: { value: 'T', name: 'name' } });
-      fireEvent.change(screen.getByLabelText('Store URL'), { target: { value: 'https://t.com', name: 'url' } });
-      fireEvent.change(screen.getByLabelText('Consumer Key'), { target: { value: 'ck', name: 'consumerKey' } });
-      fireEvent.change(screen.getByLabelText('Consumer Secret'), { target: { value: 'cs', name: 'consumerSecret' } });
+      fireEvent.change(screen.getByLabelText('Store Name'), {
+        target: { value: 'T', name: 'name' },
+      });
+      fireEvent.change(screen.getByLabelText('Store URL'), {
+        target: { value: 'https://t.com', name: 'url' },
+      });
+      fireEvent.change(screen.getByLabelText('Consumer Key'), {
+        target: { value: 'ck', name: 'consumerKey' },
+      });
+      fireEvent.change(screen.getByLabelText('Consumer Secret'), {
+        target: { value: 'cs', name: 'consumerSecret' },
+      });
 
       act(() => {
         fireEvent.submit(screen.getByText('Add Store', { selector: 'button[type="submit"]' }));
@@ -255,7 +295,9 @@ describe('SetupPage', () => {
       render(<SetupPage />);
       fireEvent.click(screen.getByTitle('Edit store'));
 
-      fireEvent.change(screen.getByDisplayValue('Old Name'), { target: { value: 'New Name', name: 'name' } });
+      fireEvent.change(screen.getByDisplayValue('Old Name'), {
+        target: { value: 'New Name', name: 'name' },
+      });
 
       await act(async () => {
         fireEvent.click(screen.getByText('Save Changes'));

@@ -59,7 +59,8 @@ const BulkEditPreview: React.FC<BulkEditPreviewProps> = ({
             <div className="flex items-start gap-2 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 mb-4">
               <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5 shrink-0" />
               <p className="text-sm text-yellow-800 dark:text-yellow-300">
-                No price changes selected. Other fields (stock, visibility, etc.) will still be updated.
+                No price changes selected. Other fields (stock, visibility, etc.) will still be
+                updated.
               </p>
             </div>
           )}
@@ -67,8 +68,7 @@ const BulkEditPreview: React.FC<BulkEditPreviewProps> = ({
           {/* Sale date range summary */}
           {changeSalePrice && (saleDateFrom || saleDateTo) && (
             <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4 text-sm text-blue-900 dark:text-blue-300">
-              Sale period:{' '}
-              <strong>{saleDateFrom || '—'}</strong>
+              Sale period: <strong>{saleDateFrom || '—'}</strong>
               {' → '}
               <strong>{saleDateTo || '—'}</strong>
             </div>
@@ -79,13 +79,13 @@ const BulkEditPreview: React.FC<BulkEditPreviewProps> = ({
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-700 text-left text-gray-500 dark:text-gray-400">
                   <th className="pb-2 font-medium">Product</th>
-                  {(changePrice) && (
+                  {changePrice && (
                     <>
                       <th className="pb-2 font-medium px-3">Regular Price</th>
                       <th className="pb-2 font-medium px-3">→ New</th>
                     </>
                   )}
-                  {(changeSalePrice) && (
+                  {changeSalePrice && (
                     <>
                       <th className="pb-2 font-medium px-3">Sale Price</th>
                       <th className="pb-2 font-medium px-3">→ New</th>

@@ -10,11 +10,7 @@ import StatCard from '../components/StatCard';
 import TaxRatesTab from '../components/TaxRatesTab';
 import TaxClassesTab from '../components/TaxClassesTab';
 import { Receipt, Globe, Percent, Tag } from 'lucide-react';
-import type {
-  WooCommerceTaxRate,
-  WooCommerceTaxClass,
-  TaxRateUpdateData,
-} from '../types';
+import type { WooCommerceTaxRate, WooCommerceTaxClass, TaxRateUpdateData } from '../types';
 
 export interface TaxRateFormData {
   country: string;
@@ -298,9 +294,7 @@ function TaxPage(): React.ReactElement {
           }}
           saving={saving}
           onEditRate={handleEditRate}
-          onDeleteRate={(id) =>
-            setDeleteConfirm({ isOpen: true, type: 'rate', id, slug: null })
-          }
+          onDeleteRate={(id) => setDeleteConfirm({ isOpen: true, type: 'rate', id, slug: null })}
         />
       ) : (
         <TaxClassesTab
@@ -337,9 +331,7 @@ function TaxPage(): React.ReactElement {
         variant="danger"
         isLoading={deleting}
         onConfirm={handleDelete}
-        onCancel={() =>
-          setDeleteConfirm({ isOpen: false, type: 'rate', id: null, slug: null })
-        }
+        onCancel={() => setDeleteConfirm({ isOpen: false, type: 'rate', id: null, slug: null })}
       />
     </div>
   );

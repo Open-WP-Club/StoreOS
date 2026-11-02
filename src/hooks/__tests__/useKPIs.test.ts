@@ -49,7 +49,10 @@ describe('useKPIs', () => {
   });
 
   it('returns kpis when orders exist', () => {
-    const mockOrders = [{ id: 1, total: '50.00' }, { id: 2, total: '75.00' }];
+    const mockOrders = [
+      { id: 1, total: '50.00' },
+      { id: 2, total: '75.00' },
+    ];
     (useCachedOrders as Mock).mockReturnValue(mockOrders);
 
     const { result } = renderHook(() => useKPIs());

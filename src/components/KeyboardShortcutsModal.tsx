@@ -106,7 +106,9 @@ function KeyboardShortcutsModal({
                 <ul className="space-y-2">
                   {shortcuts.map(({ keys, description }) => (
                     <li key={description} className="flex items-center justify-between gap-4">
-                      <span className="text-sm text-gray-700 dark:text-gray-300">{description}</span>
+                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                        {description}
+                      </span>
                       <span className="flex items-center gap-1 flex-shrink-0">
                         {/* Show Mac key on Mac, Windows key on Windows — fall back to both */}
                         {keys.length === 2 ? (

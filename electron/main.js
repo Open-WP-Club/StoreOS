@@ -1,4 +1,13 @@
-import { app, BrowserWindow, Menu, ipcMain, Notification, safeStorage, shell, dialog } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  Menu,
+  ipcMain,
+  Notification,
+  safeStorage,
+  shell,
+  dialog,
+} from 'electron';
 import fs from 'fs';
 import { resolveReportPath } from './reportFiles';
 import electronUpdater from 'electron-updater';
@@ -51,7 +60,7 @@ function createMenu() {
             if (mainWindow) {
               mainWindow.webContents.send('clear-cache');
             }
-          }
+          },
         },
         { type: 'separator' },
         {
@@ -59,9 +68,9 @@ function createMenu() {
           accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Ctrl+Q',
           click: () => {
             app.quit();
-          }
-        }
-      ]
+          },
+        },
+      ],
     },
     {
       label: 'Edit',
@@ -72,8 +81,8 @@ function createMenu() {
         { role: 'cut' },
         { role: 'copy' },
         { role: 'paste' },
-        { role: 'selectAll' }
-      ]
+        { role: 'selectAll' },
+      ],
     },
     {
       label: 'View',
@@ -86,9 +95,9 @@ function createMenu() {
         { role: 'zoomIn' },
         { role: 'zoomOut' },
         { type: 'separator' },
-        { role: 'togglefullscreen' }
-      ]
-    }
+        { role: 'togglefullscreen' },
+      ],
+    },
   ];
 
   // Add macOS-specific menu items
@@ -105,7 +114,7 @@ function createMenu() {
             if (mainWindow) {
               mainWindow.webContents.send('clear-cache');
             }
-          }
+          },
         },
         { type: 'separator' },
         { role: 'services' },
@@ -114,8 +123,8 @@ function createMenu() {
         { role: 'hideOthers' },
         { role: 'unhide' },
         { type: 'separator' },
-        { role: 'quit' }
-      ]
+        { role: 'quit' },
+      ],
     });
   }
 
@@ -202,8 +211,7 @@ function encryptionUsable() {
   if (!safeStorage.isEncryptionAvailable()) return false;
   // Linux without a keyring falls back to a hardcoded key - not real protection.
   return !(
-    process.platform === 'linux' &&
-    safeStorage.getSelectedStorageBackend?.() === 'basic_text'
+    process.platform === 'linux' && safeStorage.getSelectedStorageBackend?.() === 'basic_text'
   );
 }
 

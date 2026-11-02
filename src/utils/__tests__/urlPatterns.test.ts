@@ -113,28 +113,33 @@ describe('isWpAdminUrl', () => {
 
 describe('buildWooCommerceApiUrl', () => {
   it('builds URL with resource only', () => {
-    expect(buildWooCommerceApiUrl('https://store.com', 'orders'))
-      .toBe('https://store.com/wp-json/wc/v3/orders');
+    expect(buildWooCommerceApiUrl('https://store.com', 'orders')).toBe(
+      'https://store.com/wp-json/wc/v3/orders'
+    );
   });
 
   it('builds URL with resource and id', () => {
-    expect(buildWooCommerceApiUrl('https://store.com', 'products', 42))
-      .toBe('https://store.com/wp-json/wc/v3/products/42');
+    expect(buildWooCommerceApiUrl('https://store.com', 'products', 42)).toBe(
+      'https://store.com/wp-json/wc/v3/products/42'
+    );
   });
 
   it('builds URL with resource, id, and action', () => {
-    expect(buildWooCommerceApiUrl('https://store.com', 'products', 42, 'batch'))
-      .toBe('https://store.com/wp-json/wc/v3/products/42/batch');
+    expect(buildWooCommerceApiUrl('https://store.com', 'products', 42, 'batch')).toBe(
+      'https://store.com/wp-json/wc/v3/products/42/batch'
+    );
   });
 
   it('strips trailing slashes from base URL', () => {
-    expect(buildWooCommerceApiUrl('https://store.com/', 'orders'))
-      .toBe('https://store.com/wp-json/wc/v3/orders');
+    expect(buildWooCommerceApiUrl('https://store.com/', 'orders')).toBe(
+      'https://store.com/wp-json/wc/v3/orders'
+    );
   });
 
   it('handles string id', () => {
-    expect(buildWooCommerceApiUrl('https://store.com', 'customers', '5'))
-      .toBe('https://store.com/wp-json/wc/v3/customers/5');
+    expect(buildWooCommerceApiUrl('https://store.com', 'customers', '5')).toBe(
+      'https://store.com/wp-json/wc/v3/customers/5'
+    );
   });
 });
 

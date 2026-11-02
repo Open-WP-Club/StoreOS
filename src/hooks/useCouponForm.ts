@@ -246,8 +246,13 @@ export function useCouponForm({
     if (!currentStore) return;
 
     const allFields: (keyof CouponFormErrors)[] = [
-      'code', 'amount', 'date_expires', 'usage_limit',
-      'usage_limit_per_user', 'minimum_amount', 'maximum_amount',
+      'code',
+      'amount',
+      'date_expires',
+      'usage_limit',
+      'usage_limit_per_user',
+      'minimum_amount',
+      'maximum_amount',
     ];
     setTouchedFields(new Set(allFields));
     const errors = validateCouponForm(formData);
@@ -280,8 +285,8 @@ export function useCouponForm({
       await offlineMutate({
         operationType: isEdit ? 'update_coupon' : 'create_coupon',
         queueData: isEdit
-          ? { id: editingCoupon!.id, ...couponData as Record<string, unknown> }
-          : couponData as Record<string, unknown>,
+          ? { id: editingCoupon!.id, ...(couponData as Record<string, unknown>) }
+          : (couponData as Record<string, unknown>),
         storeId: currentStore.id,
         execute: async () => {
           const service = new WooCommerceService(currentStore);
@@ -317,7 +322,18 @@ export function useCouponForm({
     } finally {
       setSaving(false);
     }
-  }, [currentStore, formData, editingCoupon, coupons, onSuccess, onClose, toast, logActivity, reset, offlineMutate]);
+  }, [
+    currentStore,
+    formData,
+    editingCoupon,
+    coupons,
+    onSuccess,
+    onClose,
+    toast,
+    logActivity,
+    reset,
+    offlineMutate,
+  ]);
 
   return {
     formData,

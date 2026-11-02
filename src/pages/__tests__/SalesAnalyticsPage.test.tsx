@@ -7,7 +7,9 @@ import { createMockOrder, createMockProduct, createMockLineItem } from '../../__
 vi.mock('../../stores', () => ({
   useCache: vi.fn(),
   useStoreConfig: vi.fn(),
-  useTheme: vi.fn((selector?: (state: unknown) => unknown) => selector ? selector({ theme: 'light' }) : { theme: 'light' }),
+  useTheme: vi.fn((selector?: (state: unknown) => unknown) =>
+    selector ? selector({ theme: 'light' }) : { theme: 'light' }
+  ),
 }));
 
 vi.mock('../../hooks/useReportExport', () => ({
@@ -34,13 +36,17 @@ describe('SalesAnalyticsPage', () => {
       status: 'completed',
       total: '100.00',
       date_created: now.toISOString(),
-      line_items: [createMockLineItem({ product_id: 1, name: 'Widget A', quantity: 2, total: '50.00' })],
+      line_items: [
+        createMockLineItem({ product_id: 1, name: 'Widget A', quantity: 2, total: '50.00' }),
+      ],
     }),
     createMockOrder({
       status: 'completed',
       total: '200.00',
       date_created: now.toISOString(),
-      line_items: [createMockLineItem({ product_id: 2, name: 'Widget B', quantity: 1, total: '200.00' })],
+      line_items: [
+        createMockLineItem({ product_id: 2, name: 'Widget B', quantity: 1, total: '200.00' }),
+      ],
     }),
     createMockOrder({
       status: 'processing',

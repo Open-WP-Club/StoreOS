@@ -3,7 +3,13 @@
  * Used only by other search modules.
  */
 
-import type { WooCommerceProduct, WooCommerceOrder, WooCommerceCustomer, ProductFilters, OrderFilters } from '../../types';
+import type {
+  WooCommerceProduct,
+  WooCommerceOrder,
+  WooCommerceCustomer,
+  ProductFilters,
+  OrderFilters,
+} from '../../types';
 
 // ============================================
 // Types (shared across search modules)
@@ -25,7 +31,13 @@ export type OrderSearchResult = WooCommerceOrder & SearchResult;
 export type CustomerSearchResult = WooCommerceCustomer & SearchResult;
 
 // Re-export types needed by other modules
-export type { WooCommerceProduct, WooCommerceOrder, WooCommerceCustomer, ProductFilters, OrderFilters };
+export type {
+  WooCommerceProduct,
+  WooCommerceOrder,
+  WooCommerceCustomer,
+  ProductFilters,
+  OrderFilters,
+};
 
 // ============================================
 // Internal fuzzy helpers
@@ -36,7 +48,11 @@ export type { WooCommerceProduct, WooCommerceOrder, WooCommerceCustomer, Product
  * OPTIMIZED: Uses single-row DP and early termination
  * Returns Infinity if distance exceeds maxDistance (for performance)
  */
-export function boundedLevenshteinDistance(str1: string, str2: string, maxDistance: number): number {
+export function boundedLevenshteinDistance(
+  str1: string,
+  str2: string,
+  maxDistance: number
+): number {
   let s1 = str1;
   let s2 = str2;
 
@@ -70,11 +86,13 @@ export function boundedLevenshteinDistance(str1: string, str2: string, maxDistan
       if (s1.charAt(i - 1) === s2.charAt(j - 1)) {
         currRow[j] = prevRow[j - 1];
       } else {
-        currRow[j] = 1 + Math.min(
-          prevRow[j - 1], // substitution
-          currRow[j - 1], // insertion
-          prevRow[j]      // deletion
-        );
+        currRow[j] =
+          1 +
+          Math.min(
+            prevRow[j - 1], // substitution
+            currRow[j - 1], // insertion
+            prevRow[j] // deletion
+          );
       }
       minInRow = Math.min(minInRow, currRow[j]);
     }
@@ -96,7 +114,11 @@ export function boundedLevenshteinDistance(str1: string, str2: string, maxDistan
  * OPTIMIZED: Quick checks before expensive fuzzy matching
  * Higher score = better match
  */
-export function getSimilarityScore(query: string, text: string, fuzzyThreshold: number = 0.7): number {
+export function getSimilarityScore(
+  query: string,
+  text: string,
+  fuzzyThreshold: number = 0.7
+): number {
   if (!text || text.length === 0) return 0;
 
   const queryLower = query.toLowerCase();

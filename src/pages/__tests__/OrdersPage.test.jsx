@@ -85,7 +85,9 @@ vi.mock('../../components/OrderTableRow', () => ({
           />
         </td>
         <td>#{order.id}</td>
-        <td>{order.billing?.first_name} {order.billing?.last_name}</td>
+        <td>
+          {order.billing?.first_name} {order.billing?.last_name}
+        </td>
         <td>{order.status}</td>
         <td>{order.total}</td>
       </tr>
@@ -220,10 +222,12 @@ describe('OrdersPage', () => {
     });
 
     // Mock WooCommerceService
-    WooCommerceService.mockImplementation(function () { return {
-      updateOrder: vi.fn().mockResolvedValue({ success: true }),
-      deleteOrder: vi.fn().mockResolvedValue({ success: true }),
-    }; });
+    WooCommerceService.mockImplementation(function () {
+      return {
+        updateOrder: vi.fn().mockResolvedValue({ success: true }),
+        deleteOrder: vi.fn().mockResolvedValue({ success: true }),
+      };
+    });
   });
 
   describe('No Store Selected', () => {

@@ -1,7 +1,11 @@
 import { vi, Mock } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useOrderNotes } from '../useOrderNotes';
-import { createMockStore, createMockOrder, createMockOrderNote } from '../../__test_utils__/mockFactories';
+import {
+  createMockStore,
+  createMockOrder,
+  createMockOrderNote,
+} from '../../__test_utils__/mockFactories';
 import type { WooCommerceStore, Order } from '../../types';
 import WooCommerceService from '../../services/woocommerce';
 import { useStoreConfig } from '../../stores';
@@ -28,16 +32,20 @@ const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 beforeEach(() => {
   mockActiveStore = createMockStore();
 
-  (useStoreConfig as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
-    const state = { getCurrentStore: () => mockActiveStore };
-    return selector ? selector(state) : state;
-  });
+  (useStoreConfig as unknown as Mock).mockImplementation(
+    (selector?: (state: unknown) => unknown) => {
+      const state = { getCurrentStore: () => mockActiveStore };
+      return selector ? selector(state) : state;
+    }
+  );
 
-  (WooCommerceService as Mock).mockImplementation(function () { return {
-    getOrderNotes: mockGetOrderNotes,
-    addOrderNote: mockAddOrderNote,
-    deleteOrderNote: mockDeleteOrderNote,
-  }; });
+  (WooCommerceService as Mock).mockImplementation(function () {
+    return {
+      getOrderNotes: mockGetOrderNotes,
+      addOrderNote: mockAddOrderNote,
+      deleteOrderNote: mockDeleteOrderNote,
+    };
+  });
 
   mockGetOrderNotes.mockResolvedValue({ success: true, data: [] });
 });
@@ -84,17 +92,16 @@ describe('useOrderNotes', () => {
       renderHook(() => useOrderNotes(mockOrder, mockShowToast));
 
       await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith(
-          'Failed to fetch order notes:',
-          expect.any(Error)
-        );
+        expect(consoleSpy).toHaveBeenCalledWith('Failed to fetch order notes:', expect.any(Error));
       });
     });
 
     it('sets loadingNotes during fetch', async () => {
       let resolvePromise: (value: unknown) => void;
       mockGetOrderNotes.mockReturnValue(
-        new Promise((resolve) => { resolvePromise = resolve; })
+        new Promise((resolve) => {
+          resolvePromise = resolve;
+        })
       );
 
       const { result } = renderHook(() => useOrderNotes(mockOrder, mockShowToast));
@@ -264,10 +271,7 @@ describe('useOrderNotes', () => {
         await result.current.handleAddNote(fakeEvent);
       });
 
-      expect(mockShowToast).toHaveBeenCalledWith(
-        expect.stringContaining('Network error'),
-        'error'
-      );
+      expect(mockShowToast).toHaveBeenCalledWith(expect.stringContaining('Network error'), 'error');
     });
 
     it('resets savingNote flag after completion', async () => {
@@ -319,7 +323,9 @@ describe('useOrderNotes', () => {
 
       let resolveDelete: (value: unknown) => void;
       mockDeleteOrderNote.mockReturnValue(
-        new Promise((resolve) => { resolveDelete = resolve; })
+        new Promise((resolve) => {
+          resolveDelete = resolve;
+        })
       );
 
       const { result } = renderHook(() => useOrderNotes(mockOrder, mockShowToast));
@@ -344,7 +350,10 @@ describe('useOrderNotes', () => {
     });
 
     it('shows error toast on API failure', async () => {
-      mockGetOrderNotes.mockResolvedValue({ success: true, data: [createMockOrderNote({ id: 5 })] });
+      mockGetOrderNotes.mockResolvedValue({
+        success: true,
+        data: [createMockOrderNote({ id: 5 })],
+      });
       mockDeleteOrderNote.mockResolvedValue({ success: false, error: 'Not found' });
 
       const { result } = renderHook(() => useOrderNotes(mockOrder, mockShowToast));
@@ -357,14 +366,14 @@ describe('useOrderNotes', () => {
         await result.current.handleDeleteNote(5);
       });
 
-      expect(mockShowToast).toHaveBeenCalledWith(
-        expect.stringContaining('Not found'),
-        'error'
-      );
+      expect(mockShowToast).toHaveBeenCalledWith(expect.stringContaining('Not found'), 'error');
     });
 
     it('resets deletingNoteId after completion', async () => {
-      mockGetOrderNotes.mockResolvedValue({ success: true, data: [createMockOrderNote({ id: 5 })] });
+      mockGetOrderNotes.mockResolvedValue({
+        success: true,
+        data: [createMockOrderNote({ id: 5 })],
+      });
       mockDeleteOrderNote.mockResolvedValue({ success: true });
 
       const { result } = renderHook(() => useOrderNotes(mockOrder, mockShowToast));

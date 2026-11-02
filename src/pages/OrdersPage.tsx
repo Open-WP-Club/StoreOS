@@ -284,7 +284,10 @@ function OrdersPage(): React.ReactElement {
               setOrders(restoredOrders);
               await setCachedData('orders', restoredOrders);
               if (undoFailed.length > 0) {
-                showToast(`${undoFailed.length} от ${toUndo.length} статуса не бяха възстановени`, 'warning');
+                showToast(
+                  `${undoFailed.length} от ${toUndo.length} статуса не бяха възстановени`,
+                  'warning'
+                );
               } else {
                 showToast('Статусите са възстановени', 'info');
               }
@@ -358,7 +361,7 @@ function OrdersPage(): React.ReactElement {
     }
   };
 
-  const handleBulkExport =useCallback((): void => {
+  const handleBulkExport = useCallback((): void => {
     if (selectedOrders.length === 0) return;
 
     const exportData = selectedOrders.map((order) => ({
@@ -425,7 +428,10 @@ function OrdersPage(): React.ReactElement {
       });
 
       if (failedIds.length > 0) {
-        showToast(`${failedIds.length} от ${selectedOrderIds.length} поръчки не бяха изтрити`, 'warning');
+        showToast(
+          `${failedIds.length} от ${selectedOrderIds.length} поръчки не бяха изтрити`,
+          'warning'
+        );
       } else {
         showToast(`Изтрити ${deletedIds.length} поръчки`, 'success');
       }
@@ -495,7 +501,10 @@ function OrdersPage(): React.ReactElement {
   };
   useApplySavedView(applyView);
 
-  const handleApplyPreset = (_presetFilters: Record<string, unknown>, preset: FilterPreset): void => {
+  const handleApplyPreset = (
+    _presetFilters: Record<string, unknown>,
+    preset: FilterPreset
+  ): void => {
     applyView(preset);
     showToast('Filter preset applied', 'success');
   };

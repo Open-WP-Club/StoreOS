@@ -4,19 +4,39 @@ import TaxRatesTab from '../TaxRatesTab';
 import type { TaxRateFormData } from '../../pages/TaxPage';
 
 const form: TaxRateFormData = {
-  country: '', state: '', postcode: '', city: '', rate: '', name: '',
-  priority: 12, compound: false, shipping: true, class: '',
+  country: '',
+  state: '',
+  postcode: '',
+  city: '',
+  rate: '',
+  name: '',
+  priority: 12,
+  compound: false,
+  shipping: true,
+  class: '',
 };
 
 function setup(priority: number | '') {
   const onRateFormChange = vi.fn();
   render(
     <TaxRatesTab
-      taxRates={[]} filteredRates={[]} taxClasses={[]} filterClass="all"
-      onFilterClassChange={vi.fn()} loadData={vi.fn()} loading={false} saving={false}
-      showRateForm editingRateId={null} rateForm={{ ...form, priority }}
-      onRateFormChange={onRateFormChange} onCreateRate={vi.fn()} onSaveRate={vi.fn()}
-      onCancelRateForm={vi.fn()} onEditRate={vi.fn()} onDeleteRate={vi.fn()}
+      taxRates={[]}
+      filteredRates={[]}
+      taxClasses={[]}
+      filterClass="all"
+      onFilterClassChange={vi.fn()}
+      loadData={vi.fn()}
+      loading={false}
+      saving={false}
+      showRateForm
+      editingRateId={null}
+      rateForm={{ ...form, priority }}
+      onRateFormChange={onRateFormChange}
+      onCreateRate={vi.fn()}
+      onSaveRate={vi.fn()}
+      onCancelRateForm={vi.fn()}
+      onEditRate={vi.fn()}
+      onDeleteRate={vi.fn()}
     />
   );
   return onRateFormChange;

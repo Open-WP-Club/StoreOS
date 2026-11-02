@@ -35,7 +35,13 @@ const CustomerAnalyticsPage: React.FC = (): React.ReactElement => {
   const theme = useTheme((state) => state.theme);
 
   const [loading, setLoading] = useState<boolean>(true);
-  const { setCurrencyCode, selectedTimeRange, handleTimeRangeChange, timeRangeLabel, formatCurrency } = useAnalyticsBase();
+  const {
+    setCurrencyCode,
+    selectedTimeRange,
+    handleTimeRangeChange,
+    timeRangeLabel,
+    formatCurrency,
+  } = useAnalyticsBase();
   const [customerData, setCustomerData] = useState<CustomerData>({
     totalCustomers: 0,
     newCustomers: 0,
@@ -46,87 +52,90 @@ const CustomerAnalyticsPage: React.FC = (): React.ReactElement => {
     orderDistribution: {},
   });
 
-  const calculateCustomerMetrics = useCallback((orders: Order[], timeRangeDays: number): void => {
-    if (!orders) return;
+  const calculateCustomerMetrics = useCallback(
+    (orders: Order[], timeRangeDays: number): void => {
+      if (!orders) return;
 
-    const detectedCurrency = getCurrencyCode(orders);
-    setCurrencyCode(detectedCurrency);
+      const detectedCurrency = getCurrencyCode(orders);
+      setCurrencyCode(detectedCurrency);
 
-    const dateThreshold = new Date();
-    dateThreshold.setDate(dateThreshold.getDate() - timeRangeDays);
+      const dateThreshold = new Date();
+      dateThreshold.setDate(dateThreshold.getDate() - timeRangeDays);
 
-    const filteredOrders = orders.filter(o => new Date(o.date_created) >= dateThreshold);
+      const filteredOrders = orders.filter((o) => new Date(o.date_created) >= dateThreshold);
 
-    // Group orders by customer email
-    const customerMap: Record<string, CustomerInfo> = {};
-    filteredOrders.forEach(order => {
-      const email = order.billing?.email || 'guest@unknown.com';
-      if (!customerMap[email]) {
-        customerMap[email] = {
-          email,
-          name: `${order.billing?.first_name || ''} ${order.billing?.last_name || ''}`.trim() || 'Guest',
-          orders: [],
-          totalSpent: 0,
-          country: order.billing?.country || 'Unknown',
-          city: order.billing?.city || 'Unknown',
-        };
-      }
-      customerMap[email].orders.push(order);
-      if (order.status === 'completed') {
-        customerMap[email].totalSpent += parseFloat(order.total || '0');
-      }
-    });
+      // Group orders by customer email
+      const customerMap: Record<string, CustomerInfo> = {};
+      filteredOrders.forEach((order) => {
+        const email = order.billing?.email || 'guest@unknown.com';
+        if (!customerMap[email]) {
+          customerMap[email] = {
+            email,
+            name:
+              `${order.billing?.first_name || ''} ${order.billing?.last_name || ''}`.trim() ||
+              'Guest',
+            orders: [],
+            totalSpent: 0,
+            country: order.billing?.country || 'Unknown',
+            city: order.billing?.city || 'Unknown',
+          };
+        }
+        customerMap[email].orders.push(order);
+        if (order.status === 'completed') {
+          customerMap[email].totalSpent += parseFloat(order.total || '0');
+        }
+      });
 
-    const customers = Object.values(customerMap);
-    const totalCustomers = customers.length;
+      const customers = Object.values(customerMap);
+      const totalCustomers = customers.length;
 
-    // Identify new vs returning customers
-    const newCustomers = customers.filter(c => c.orders.length === 1).length;
-    const returningCustomers = customers.filter(c => c.orders.length > 1).length;
+      // Identify new vs returning customers
+      const newCustomers = customers.filter((c) => c.orders.length === 1).length;
+      const returningCustomers = customers.filter((c) => c.orders.length > 1).length;
 
-    // Calculate average customer value
-    const totalRevenue = customers.reduce((sum, c) => sum + c.totalSpent, 0);
-    const averageCustomerValue = totalCustomers > 0 ? totalRevenue / totalCustomers : 0;
+      // Calculate average customer value
+      const totalRevenue = customers.reduce((sum, c) => sum + c.totalSpent, 0);
+      const averageCustomerValue = totalCustomers > 0 ? totalRevenue / totalCustomers : 0;
 
-    // Top customers by spending
-    const topCustomers = [...customers]
-      .sort((a, b) => b.totalSpent - a.totalSpent)
-      .slice(0, 10);
+      // Top customers by spending
+      const topCustomers = [...customers].sort((a, b) => b.totalSpent - a.totalSpent).slice(0, 10);
 
-    // Customers by location
-    const locationMap: Record<string, number> = {};
-    customers.forEach(customer => {
-      const location = customer.country;
-      if (!locationMap[location]) {
-        locationMap[location] = 0;
-      }
-      locationMap[location]++;
-    });
+      // Customers by location
+      const locationMap: Record<string, number> = {};
+      customers.forEach((customer) => {
+        const location = customer.country;
+        if (!locationMap[location]) {
+          locationMap[location] = 0;
+        }
+        locationMap[location]++;
+      });
 
-    // Order distribution (1 order, 2-3 orders, 4-5 orders, 6+ orders)
-    const orderDistribution: Record<string, number> = {
-      '1 order': customers.filter(c => c.orders.length === 1).length,
-      '2-3 orders': customers.filter(c => c.orders.length >= 2 && c.orders.length <= 3).length,
-      '4-5 orders': customers.filter(c => c.orders.length >= 4 && c.orders.length <= 5).length,
-      '6+ orders': customers.filter(c => c.orders.length >= 6).length,
-    };
+      // Order distribution (1 order, 2-3 orders, 4-5 orders, 6+ orders)
+      const orderDistribution: Record<string, number> = {
+        '1 order': customers.filter((c) => c.orders.length === 1).length,
+        '2-3 orders': customers.filter((c) => c.orders.length >= 2 && c.orders.length <= 3).length,
+        '4-5 orders': customers.filter((c) => c.orders.length >= 4 && c.orders.length <= 5).length,
+        '6+ orders': customers.filter((c) => c.orders.length >= 6).length,
+      };
 
-    setCustomerData({
-      totalCustomers,
-      newCustomers,
-      returningCustomers,
-      averageCustomerValue,
-      topCustomers,
-      customersByLocation: locationMap,
-      orderDistribution,
-    });
-  }, [setCurrencyCode]);
+      setCustomerData({
+        totalCustomers,
+        newCustomers,
+        returningCustomers,
+        averageCustomerValue,
+        topCustomers,
+        customersByLocation: locationMap,
+        orderDistribution,
+      });
+    },
+    [setCurrencyCode]
+  );
 
   useEffect(() => {
     const loadCustomerAnalytics = async (): Promise<void> => {
       setLoading(true);
       try {
-        const orders = await getCachedData('orders') as Order[] | null;
+        const orders = (await getCachedData('orders')) as Order[] | null;
         if (orders) {
           calculateCustomerMetrics(orders, selectedTimeRange);
         }
@@ -176,34 +185,37 @@ const CustomerAnalyticsPage: React.FC = (): React.ReactElement => {
     ],
   };
 
-  const chartOptions = useMemo(() => ({
-    responsive: true,
-    maintainAspectRatio: true,
-    plugins: {
-      legend: {
-        position: 'top' as const,
-        labels: {
-          color: theme === 'dark' ? '#e5e7eb' : '#374151',
+  const chartOptions = useMemo(
+    () =>
+      ({
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: {
+            position: 'top' as const,
+            labels: {
+              color: theme === 'dark' ? '#e5e7eb' : '#374151',
+            },
+          },
+          tooltip: {
+            backgroundColor: theme === 'dark' ? '#1f2937' : 'rgba(0,0,0,0.8)',
+            titleColor: theme === 'dark' ? '#f9fafb' : '#ffffff',
+            bodyColor: theme === 'dark' ? '#d1d5db' : '#ffffff',
+          },
         },
-      },
-      tooltip: {
-        backgroundColor: theme === 'dark' ? '#1f2937' : 'rgba(0,0,0,0.8)',
-        titleColor: theme === 'dark' ? '#f9fafb' : '#ffffff',
-        bodyColor: theme === 'dark' ? '#d1d5db' : '#ffffff',
-      },
-    },
-    scales: {
-      x: {
-        ticks: { color: theme === 'dark' ? '#9ca3af' : '#6b7280' },
-        grid: { color: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' },
-      },
-      y: {
-        ticks: { color: theme === 'dark' ? '#9ca3af' : '#6b7280' },
-        grid: { color: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' },
-      },
-    },
-  }) satisfies ChartOptions<'bar'>, [theme]);
-
+        scales: {
+          x: {
+            ticks: { color: theme === 'dark' ? '#9ca3af' : '#6b7280' },
+            grid: { color: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' },
+          },
+          y: {
+            ticks: { color: theme === 'dark' ? '#9ca3af' : '#6b7280' },
+            grid: { color: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' },
+          },
+        },
+      }) satisfies ChartOptions<'bar'>,
+    [theme]
+  );
 
   const { handleExportCSV, handleExportPDF, handlePrint } = useReportExport({
     reportName: 'Customer Analytics',
@@ -219,10 +231,14 @@ const CustomerAnalyticsPage: React.FC = (): React.ReactElement => {
       { key: 'name', label: 'Customer' },
       { key: 'email', label: 'Email' },
       { key: 'country', label: 'Country' },
-      { key: 'orderCount', label: 'Orders', format: (_v, item) => String((item as Record<string, unknown>).orderCount ?? 0) },
+      {
+        key: 'orderCount',
+        label: 'Orders',
+        format: (_v, item) => String((item as Record<string, unknown>).orderCount ?? 0),
+      },
       { key: 'totalSpent', label: 'Total Spent', format: (v) => formatCurrency(Number(v) || 0) },
     ],
-    data: customerData.topCustomers.map(c => ({
+    data: customerData.topCustomers.map((c) => ({
       ...c,
       orderCount: c.orders.length,
     })) as Record<string, unknown>[],
@@ -263,7 +279,9 @@ const CustomerAnalyticsPage: React.FC = (): React.ReactElement => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Customers</div>
+            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Total Customers
+            </div>
             <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           </div>
           <div className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
@@ -276,33 +294,35 @@ const CustomerAnalyticsPage: React.FC = (): React.ReactElement => {
 
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">New Customers</div>
+            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              New Customers
+            </div>
             <Users className="w-5 h-5 text-green-600 dark:text-green-400" />
           </div>
           <div className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
             {customerData.newCustomers}
           </div>
-          <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            First-time buyers
-          </div>
+          <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">First-time buyers</div>
         </div>
 
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Returning Customers</div>
+            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Returning Customers
+            </div>
             <ShoppingCart className="w-5 h-5 text-purple-600 dark:text-purple-400" />
           </div>
           <div className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
             {customerData.returningCustomers}
           </div>
-          <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            Repeat buyers
-          </div>
+          <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">Repeat buyers</div>
         </div>
 
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Avg. Customer Value</div>
+            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Avg. Customer Value
+            </div>
             <DollarSign className="w-5 h-5 text-green-600 dark:text-green-400" />
           </div>
           <div className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
@@ -352,22 +372,40 @@ const CustomerAnalyticsPage: React.FC = (): React.ReactElement => {
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-700/50">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                >
                   Rank
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                >
                   Customer
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                >
                   Email
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                >
                   Location
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                >
                   Orders
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                >
                   Total Spent
                 </th>
               </tr>

@@ -46,7 +46,11 @@ function CopyButton({ text }: { text: string }): ReactElement {
   );
 }
 
-export function OrderSidebar({ order, updatingStatus, onStatusUpdate }: OrderSidebarProps): ReactElement {
+export function OrderSidebar({
+  order,
+  updatingStatus,
+  onStatusUpdate,
+}: OrderSidebarProps): ReactElement {
   return (
     <div className="space-y-6">
       {/* Order Actions */}
@@ -55,13 +59,18 @@ export function OrderSidebar({ order, updatingStatus, onStatusUpdate }: OrderSid
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Order Actions</h2>
         </div>
         <div className="px-6 py-4">
-          <label htmlFor="order-status-update" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label
+            htmlFor="order-status-update"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
             Update Status
           </label>
           <select
             id="order-status-update"
             value={order.status || 'pending'}
-            onChange={(e: ChangeEvent<HTMLSelectElement>) => onStatusUpdate(e.target.value as OrderStatus)}
+            onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+              onStatusUpdate(e.target.value as OrderStatus)
+            }
             disabled={updatingStatus}
             className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:opacity-50 transition-colors"
           >
@@ -88,7 +97,9 @@ export function OrderSidebar({ order, updatingStatus, onStatusUpdate }: OrderSid
           {order.billing && (
             <div>
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Billing Address</h3>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                  Billing Address
+                </h3>
                 <CopyButton text={buildAddress(order.billing)} />
               </div>
               <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
@@ -110,7 +121,10 @@ export function OrderSidebar({ order, updatingStatus, onStatusUpdate }: OrderSid
                 {order.billing.country && <p>{order.billing.country}</p>}
                 {order.billing.email && (
                   <p className="pt-2 flex items-center gap-1">
-                    <a href={`mailto:${order.billing.email}`} className="text-blue-600 hover:underline">
+                    <a
+                      href={`mailto:${order.billing.email}`}
+                      className="text-blue-600 hover:underline"
+                    >
                       {order.billing.email}
                     </a>
                     <CopyButton text={order.billing.email} />
@@ -118,7 +132,10 @@ export function OrderSidebar({ order, updatingStatus, onStatusUpdate }: OrderSid
                 )}
                 {order.billing.phone && (
                   <p className="flex items-center gap-1">
-                    <a href={`tel:${order.billing.phone}`} className="text-blue-600 hover:underline">
+                    <a
+                      href={`tel:${order.billing.phone}`}
+                      className="text-blue-600 hover:underline"
+                    >
                       {order.billing.phone}
                     </a>
                     <CopyButton text={order.billing.phone} />
@@ -128,36 +145,35 @@ export function OrderSidebar({ order, updatingStatus, onStatusUpdate }: OrderSid
             </div>
           )}
 
-          {order.shipping && (
-            order.shipping.address_1 ||
-            order.shipping.first_name ||
-            order.shipping.last_name
-          ) && (
-            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Shipping Address</h3>
-                <CopyButton text={buildAddress(order.shipping)} />
+          {order.shipping &&
+            (order.shipping.address_1 || order.shipping.first_name || order.shipping.last_name) && (
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                    Shipping Address
+                  </h3>
+                  <CopyButton text={buildAddress(order.shipping)} />
+                </div>
+                <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
+                  {(order.shipping.first_name || order.shipping.last_name) && (
+                    <p className="font-medium">
+                      {order.shipping.first_name || ''} {order.shipping.last_name || ''}
+                    </p>
+                  )}
+                  {order.shipping.company && <p>{order.shipping.company}</p>}
+                  {order.shipping.address_1 && <p>{order.shipping.address_1}</p>}
+                  {order.shipping.address_2 && <p>{order.shipping.address_2}</p>}
+                  {(order.shipping.city || order.shipping.state || order.shipping.postcode) && (
+                    <p>
+                      {[order.shipping.city, order.shipping.state, order.shipping.postcode]
+                        .filter(Boolean)
+                        .join(', ')}
+                    </p>
+                  )}
+                  {order.shipping.country && <p>{order.shipping.country}</p>}
+                </div>
               </div>
-              <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
-                {(order.shipping.first_name || order.shipping.last_name) && (
-                  <p className="font-medium">
-                    {order.shipping.first_name || ''} {order.shipping.last_name || ''}
-                  </p>
-                )}
-                {order.shipping.company && <p>{order.shipping.company}</p>}
-                {order.shipping.address_1 && <p>{order.shipping.address_1}</p>}
-                {order.shipping.address_2 && <p>{order.shipping.address_2}</p>}
-                {(order.shipping.city || order.shipping.state || order.shipping.postcode) && (
-                  <p>
-                    {[order.shipping.city, order.shipping.state, order.shipping.postcode]
-                      .filter(Boolean)
-                      .join(', ')}
-                  </p>
-                )}
-                {order.shipping.country && <p>{order.shipping.country}</p>}
-              </div>
-            </div>
-          )}
+            )}
         </div>
       </div>
 
@@ -169,28 +185,44 @@ export function OrderSidebar({ order, updatingStatus, onStatusUpdate }: OrderSid
         <div className="px-6 py-4 space-y-2">
           {order.payment_method_title && (
             <div>
-              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Payment Method: </span>
-              <span className="text-sm text-gray-900 dark:text-white">{order.payment_method_title}</span>
+              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Payment Method:{' '}
+              </span>
+              <span className="text-sm text-gray-900 dark:text-white">
+                {order.payment_method_title}
+              </span>
             </div>
           )}
           {order.transaction_id && (
             <div className="flex items-center gap-1">
-              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Transaction ID: </span>
-              <span className="text-sm text-gray-900 dark:text-white font-mono">{order.transaction_id}</span>
+              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Transaction ID:{' '}
+              </span>
+              <span className="text-sm text-gray-900 dark:text-white font-mono">
+                {order.transaction_id}
+              </span>
               <CopyButton text={order.transaction_id} />
             </div>
           )}
           <div>
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Payment Status: </span>
-            <span className={`text-sm font-semibold ${
-              order.date_paid ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'
-            }`}>
+            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Payment Status:{' '}
+            </span>
+            <span
+              className={`text-sm font-semibold ${
+                order.date_paid
+                  ? 'text-green-600 dark:text-green-400'
+                  : 'text-yellow-600 dark:text-yellow-400'
+              }`}
+            >
               {order.date_paid ? 'Paid' : 'Unpaid'}
             </span>
           </div>
           {order.date_paid && (
             <div>
-              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Date Paid: </span>
+              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Date Paid:{' '}
+              </span>
               <span className="text-sm text-gray-900 dark:text-white">
                 {new Date(order.date_paid).toLocaleString()}
               </span>
@@ -198,7 +230,9 @@ export function OrderSidebar({ order, updatingStatus, onStatusUpdate }: OrderSid
           )}
           {order.date_completed && (
             <div>
-              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Date Completed: </span>
+              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Date Completed:{' '}
+              </span>
               <span className="text-sm text-gray-900 dark:text-white">
                 {new Date(order.date_completed).toLocaleString()}
               </span>
@@ -214,8 +248,12 @@ export function OrderSidebar({ order, updatingStatus, onStatusUpdate }: OrderSid
         </div>
         <div className="px-6 py-4 space-y-2">
           <div>
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Order Number: </span>
-            <span className="text-sm text-gray-900 dark:text-white">#{order.number || order.id}</span>
+            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Order Number:{' '}
+            </span>
+            <span className="text-sm text-gray-900 dark:text-white">
+              #{order.number || order.id}
+            </span>
           </div>
           <div>
             <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Created: </span>
@@ -224,27 +262,39 @@ export function OrderSidebar({ order, updatingStatus, onStatusUpdate }: OrderSid
             </span>
           </div>
           <div>
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Last Modified: </span>
+            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Last Modified:{' '}
+            </span>
             <span className="text-sm text-gray-900 dark:text-white">
               {new Date(order.date_modified).toLocaleString()}
             </span>
           </div>
           {order.customer_id > 0 && (
             <div>
-              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Customer ID: </span>
+              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Customer ID:{' '}
+              </span>
               <span className="text-sm text-gray-900 dark:text-white">{order.customer_id}</span>
             </div>
           )}
           {order.customer_ip_address && (
             <div>
-              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Customer IP: </span>
-              <span className="text-sm text-gray-900 dark:text-white font-mono">{order.customer_ip_address}</span>
+              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Customer IP:{' '}
+              </span>
+              <span className="text-sm text-gray-900 dark:text-white font-mono">
+                {order.customer_ip_address}
+              </span>
             </div>
           )}
           {order.customer_user_agent && (
             <div>
-              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">User Agent: </span>
-              <span className="text-xs text-gray-900 dark:text-white break-all">{order.customer_user_agent}</span>
+              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                User Agent:{' '}
+              </span>
+              <span className="text-xs text-gray-900 dark:text-white break-all">
+                {order.customer_user_agent}
+              </span>
             </div>
           )}
         </div>

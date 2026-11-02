@@ -43,7 +43,13 @@ const FinancialAnalyticsPage: React.FC = (): React.ReactElement => {
   const theme = useTheme((state) => state.theme);
 
   const [loading, setLoading] = useState<boolean>(true);
-  const { setCurrencyCode, selectedTimeRange, handleTimeRangeChange, timeRangeLabel, formatCurrency } = useAnalyticsBase();
+  const {
+    setCurrencyCode,
+    selectedTimeRange,
+    handleTimeRangeChange,
+    timeRangeLabel,
+    formatCurrency,
+  } = useAnalyticsBase();
   const [financialData, setFinancialData] = useState<FinancialData>({
     totalRevenue: 0,
     netRevenue: 0,
@@ -60,140 +66,146 @@ const FinancialAnalyticsPage: React.FC = (): React.ReactElement => {
     revenueBreakdown: {},
   });
 
-  const calculateFinancialMetrics = useCallback((orders: Order[], timeRangeDays: number): void => {
-    if (!orders) return;
+  const calculateFinancialMetrics = useCallback(
+    (orders: Order[], timeRangeDays: number): void => {
+      if (!orders) return;
 
-    const detectedCurrency = getCurrencyCode(orders);
-    setCurrencyCode(detectedCurrency);
+      const detectedCurrency = getCurrencyCode(orders);
+      setCurrencyCode(detectedCurrency);
 
-    const dateThreshold = new Date();
-    dateThreshold.setDate(dateThreshold.getDate() - timeRangeDays);
+      const dateThreshold = new Date();
+      dateThreshold.setDate(dateThreshold.getDate() - timeRangeDays);
 
-    const filteredOrders = orders.filter(o => new Date(o.date_created) >= dateThreshold);
+      const filteredOrders = orders.filter((o) => new Date(o.date_created) >= dateThreshold);
 
-    // Calculate previous period for growth comparison
-    const previousPeriodThreshold = new Date();
-    previousPeriodThreshold.setDate(previousPeriodThreshold.getDate() - (timeRangeDays * 2));
-    const previousPeriodOrders = orders.filter(o => {
-      const orderDate = new Date(o.date_created);
-      return orderDate >= previousPeriodThreshold && orderDate < dateThreshold;
-    });
+      // Calculate previous period for growth comparison
+      const previousPeriodThreshold = new Date();
+      previousPeriodThreshold.setDate(previousPeriodThreshold.getDate() - timeRangeDays * 2);
+      const previousPeriodOrders = orders.filter((o) => {
+        const orderDate = new Date(o.date_created);
+        return orderDate >= previousPeriodThreshold && orderDate < dateThreshold;
+      });
 
-    // Calculate total revenue from completed orders
-    const completedOrders = filteredOrders.filter(o => o.status === 'completed');
-    const totalRevenue = completedOrders.reduce((sum, order) => sum + parseFloat(order.total || '0'), 0);
+      // Calculate total revenue from completed orders
+      const completedOrders = filteredOrders.filter((o) => o.status === 'completed');
+      const totalRevenue = completedOrders.reduce(
+        (sum, order) => sum + parseFloat(order.total || '0'),
+        0
+      );
 
-    // Calculate refunds
-    const refundedOrders = filteredOrders.filter(o => o.status === 'refunded');
-    const refunds = refundedOrders.reduce((sum, order) => sum + parseFloat(order.total || '0'), 0);
+      // Calculate refunds
+      const refundedOrders = filteredOrders.filter((o) => o.status === 'refunded');
+      const refunds = refundedOrders.reduce(
+        (sum, order) => sum + parseFloat(order.total || '0'),
+        0
+      );
 
-    // Calculate shipping, taxes, and discounts
-    let shipping = 0;
-    let taxes = 0;
-    let discounts = 0;
+      // Calculate shipping, taxes, and discounts
+      let shipping = 0;
+      let taxes = 0;
+      let discounts = 0;
 
-    completedOrders.forEach(order => {
-      shipping += parseFloat(order.shipping_total || '0');
-      taxes += parseFloat(order.total_tax || '0');
-      discounts += parseFloat(order.discount_total || '0');
-    });
+      completedOrders.forEach((order) => {
+        shipping += parseFloat(order.shipping_total || '0');
+        taxes += parseFloat(order.total_tax || '0');
+        discounts += parseFloat(order.discount_total || '0');
+      });
 
-    // Net revenue (total revenue - refunds)
-    const netRevenue = totalRevenue - refunds;
+      // Net revenue (total revenue - refunds)
+      const netRevenue = totalRevenue - refunds;
 
-    // Calculate growth rate
-    const previousRevenue = previousPeriodOrders
-      .filter(o => o.status === 'completed')
-      .reduce((sum, order) => sum + parseFloat(order.total || '0'), 0);
-    const growthRate = previousRevenue > 0
-      ? ((totalRevenue - previousRevenue) / previousRevenue) * 100
-      : 0;
+      // Calculate growth rate
+      const previousRevenue = previousPeriodOrders
+        .filter((o) => o.status === 'completed')
+        .reduce((sum, order) => sum + parseFloat(order.total || '0'), 0);
+      const growthRate =
+        previousRevenue > 0 ? ((totalRevenue - previousRevenue) / previousRevenue) * 100 : 0;
 
-    // Revenue by day
-    const dailyData: Record<string, number> = {};
-    completedOrders.forEach(order => {
-      const orderDate = new Date(order.date_created);
-      const dateKey = orderDate.toISOString().split('T')[0] ?? '';
-      if (dateKey && !dailyData[dateKey]) {
-        dailyData[dateKey] = 0;
-      }
-      if (dateKey && dailyData[dateKey] !== undefined) {
-        dailyData[dateKey] += parseFloat(order.total || '0');
-      }
-    });
+      // Revenue by day
+      const dailyData: Record<string, number> = {};
+      completedOrders.forEach((order) => {
+        const orderDate = new Date(order.date_created);
+        const dateKey = orderDate.toISOString().split('T')[0] ?? '';
+        if (dateKey && !dailyData[dateKey]) {
+          dailyData[dateKey] = 0;
+        }
+        if (dateKey && dailyData[dateKey] !== undefined) {
+          dailyData[dateKey] += parseFloat(order.total || '0');
+        }
+      });
 
-    const sortedDates = Object.keys(dailyData).sort();
-    const revenueByDay: DailyRevenueData[] = sortedDates.map(date => ({
-      date,
-      revenue: dailyData[date] ?? 0,
-    }));
-
-    // Revenue by month
-    const monthlyData: Record<string, number> = {};
-    completedOrders.forEach(order => {
-      const orderDate = new Date(order.date_created);
-      const monthKey = `${orderDate.getFullYear()}-${String(orderDate.getMonth() + 1).padStart(2, '0')}`;
-      if (!monthlyData[monthKey]) {
-        monthlyData[monthKey] = 0;
-      }
-      monthlyData[monthKey] += parseFloat(order.total || '0');
-    });
-
-    const revenueByMonth: MonthlyRevenueData[] = Object.keys(monthlyData)
-      .sort()
-      .map(month => ({
-        month,
-        revenue: monthlyData[month] ?? 0,
+      const sortedDates = Object.keys(dailyData).sort();
+      const revenueByDay: DailyRevenueData[] = sortedDates.map((date) => ({
+        date,
+        revenue: dailyData[date] ?? 0,
       }));
 
-    // Revenue by payment method
-    const paymentMethodMap: Record<string, number> = {};
-    completedOrders.forEach(order => {
-      const method = order.payment_method_title || 'Unknown';
-      if (!paymentMethodMap[method]) {
-        paymentMethodMap[method] = 0;
-      }
-      paymentMethodMap[method] += parseFloat(order.total || '0');
-    });
+      // Revenue by month
+      const monthlyData: Record<string, number> = {};
+      completedOrders.forEach((order) => {
+        const orderDate = new Date(order.date_created);
+        const monthKey = `${orderDate.getFullYear()}-${String(orderDate.getMonth() + 1).padStart(2, '0')}`;
+        if (!monthlyData[monthKey]) {
+          monthlyData[monthKey] = 0;
+        }
+        monthlyData[monthKey] += parseFloat(order.total || '0');
+      });
 
-    // Calculate average transaction value
-    const averageTransactionValue = completedOrders.length > 0
-      ? totalRevenue / completedOrders.length
-      : 0;
+      const revenueByMonth: MonthlyRevenueData[] = Object.keys(monthlyData)
+        .sort()
+        .map((month) => ({
+          month,
+          revenue: monthlyData[month] ?? 0,
+        }));
 
-    // Revenue breakdown
-    const productRevenue = totalRevenue - shipping - taxes;
-    const revenueBreakdown: Record<string, number> = {
-      'Product Sales': productRevenue,
-      'Shipping': shipping,
-      'Taxes': taxes,
-    };
+      // Revenue by payment method
+      const paymentMethodMap: Record<string, number> = {};
+      completedOrders.forEach((order) => {
+        const method = order.payment_method_title || 'Unknown';
+        if (!paymentMethodMap[method]) {
+          paymentMethodMap[method] = 0;
+        }
+        paymentMethodMap[method] += parseFloat(order.total || '0');
+      });
 
-    // Simple profit margin estimate (product revenue - discounts) / total revenue
-    const profitMargin = totalRevenue > 0
-      ? ((productRevenue - discounts) / totalRevenue) * 100
-      : 0;
+      // Calculate average transaction value
+      const averageTransactionValue =
+        completedOrders.length > 0 ? totalRevenue / completedOrders.length : 0;
 
-    setFinancialData({
-      totalRevenue,
-      netRevenue,
-      refunds,
-      shipping,
-      taxes,
-      discounts,
-      revenueByDay,
-      revenueByMonth,
-      revenueByPaymentMethod: paymentMethodMap,
-      profitMargin,
-      averageTransactionValue,
-      growthRate,
-      revenueBreakdown,
-    });
-  }, [setCurrencyCode]);
+      // Revenue breakdown
+      const productRevenue = totalRevenue - shipping - taxes;
+      const revenueBreakdown: Record<string, number> = {
+        'Product Sales': productRevenue,
+        Shipping: shipping,
+        Taxes: taxes,
+      };
+
+      // Simple profit margin estimate (product revenue - discounts) / total revenue
+      const profitMargin =
+        totalRevenue > 0 ? ((productRevenue - discounts) / totalRevenue) * 100 : 0;
+
+      setFinancialData({
+        totalRevenue,
+        netRevenue,
+        refunds,
+        shipping,
+        taxes,
+        discounts,
+        revenueByDay,
+        revenueByMonth,
+        revenueByPaymentMethod: paymentMethodMap,
+        profitMargin,
+        averageTransactionValue,
+        growthRate,
+        revenueBreakdown,
+      });
+    },
+    [setCurrencyCode]
+  );
 
   const loadFinancialAnalytics = useCallback(async (): Promise<void> => {
     try {
-      const orders = await getCachedData('orders') as Order[] | null;
+      const orders = (await getCachedData('orders')) as Order[] | null;
       if (orders) {
         calculateFinancialMetrics(orders, selectedTimeRange);
       }
@@ -218,15 +230,17 @@ const FinancialAnalyticsPage: React.FC = (): React.ReactElement => {
 
   // Chart data
   const revenueTrendData = {
-    labels: selectedTimeRange <= 30
-      ? financialData.revenueByDay.map(d => formatDate(d.date))
-      : financialData.revenueByMonth.map(d => formatMonth(d.month)),
+    labels:
+      selectedTimeRange <= 30
+        ? financialData.revenueByDay.map((d) => formatDate(d.date))
+        : financialData.revenueByMonth.map((d) => formatMonth(d.month)),
     datasets: [
       {
         label: 'Revenue',
-        data: selectedTimeRange <= 30
-          ? financialData.revenueByDay.map(d => d.revenue)
-          : financialData.revenueByMonth.map(d => d.revenue),
+        data:
+          selectedTimeRange <= 30
+            ? financialData.revenueByDay.map((d) => d.revenue)
+            : financialData.revenueByMonth.map((d) => d.revenue),
         borderColor: 'rgb(34, 197, 94)',
         backgroundColor: 'rgba(34, 197, 94, 0.1)',
         tension: 0.4,
@@ -257,44 +271,43 @@ const FinancialAnalyticsPage: React.FC = (): React.ReactElement => {
           'rgba(59, 130, 246, 0.7)',
           'rgba(251, 191, 36, 0.7)',
         ],
-        borderColor: [
-          'rgb(34, 197, 94)',
-          'rgb(59, 130, 246)',
-          'rgb(251, 191, 36)',
-        ],
+        borderColor: ['rgb(34, 197, 94)', 'rgb(59, 130, 246)', 'rgb(251, 191, 36)'],
         borderWidth: 1,
       },
     ],
   };
 
-  const chartOptions = useMemo(() => ({
-    responsive: true,
-    maintainAspectRatio: true,
-    plugins: {
-      legend: {
-        position: 'top' as const,
-        labels: {
-          color: theme === 'dark' ? '#e5e7eb' : '#374151',
+  const chartOptions = useMemo(
+    () =>
+      ({
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: {
+            position: 'top' as const,
+            labels: {
+              color: theme === 'dark' ? '#e5e7eb' : '#374151',
+            },
+          },
+          tooltip: {
+            backgroundColor: theme === 'dark' ? '#1f2937' : 'rgba(0,0,0,0.8)',
+            titleColor: theme === 'dark' ? '#f9fafb' : '#ffffff',
+            bodyColor: theme === 'dark' ? '#d1d5db' : '#ffffff',
+          },
         },
-      },
-      tooltip: {
-        backgroundColor: theme === 'dark' ? '#1f2937' : 'rgba(0,0,0,0.8)',
-        titleColor: theme === 'dark' ? '#f9fafb' : '#ffffff',
-        bodyColor: theme === 'dark' ? '#d1d5db' : '#ffffff',
-      },
-    },
-    scales: {
-      x: {
-        ticks: { color: theme === 'dark' ? '#9ca3af' : '#6b7280' },
-        grid: { color: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' },
-      },
-      y: {
-        ticks: { color: theme === 'dark' ? '#9ca3af' : '#6b7280' },
-        grid: { color: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' },
-      },
-    },
-  }) satisfies ChartOptions<'line'>, [theme]);
-
+        scales: {
+          x: {
+            ticks: { color: theme === 'dark' ? '#9ca3af' : '#6b7280' },
+            grid: { color: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' },
+          },
+          y: {
+            ticks: { color: theme === 'dark' ? '#9ca3af' : '#6b7280' },
+            grid: { color: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' },
+          },
+        },
+      }) satisfies ChartOptions<'line'>,
+    [theme]
+  );
 
   const financialSummaryData = [
     { metric: 'Gross Revenue', amount: formatCurrency(financialData.totalRevenue) },
@@ -303,7 +316,7 @@ const FinancialAnalyticsPage: React.FC = (): React.ReactElement => {
     { metric: 'Taxes', amount: formatCurrency(financialData.taxes) },
     { metric: 'Discounts', amount: formatCurrency(financialData.discounts) },
     { metric: 'Refunds', amount: formatCurrency(financialData.refunds) },
-  ] as (Record<string, unknown>)[];
+  ] as Record<string, unknown>[];
 
   const { handleExportCSV, handleExportPDF, handlePrint } = useReportExport({
     reportName: 'Financial Analytics',
@@ -359,7 +372,9 @@ const FinancialAnalyticsPage: React.FC = (): React.ReactElement => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Revenue</div>
+            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Total Revenue
+            </div>
             <DollarSign className="w-5 h-5 text-green-600 dark:text-green-400" />
           </div>
           <div className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
@@ -371,7 +386,9 @@ const FinancialAnalyticsPage: React.FC = (): React.ReactElement => {
             ) : (
               <ArrowDown className="w-4 h-4 text-red-600" />
             )}
-            <span className={`text-sm font-medium ${financialData.growthRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <span
+              className={`text-sm font-medium ${financialData.growthRate >= 0 ? 'text-green-600' : 'text-red-600'}`}
+            >
               {Math.abs(financialData.growthRate).toFixed(1)}%
             </span>
             <span className="text-sm text-gray-600 dark:text-gray-400">vs previous period</span>
@@ -386,42 +403,42 @@ const FinancialAnalyticsPage: React.FC = (): React.ReactElement => {
           <div className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
             {formatCurrency(financialData.netRevenue)}
           </div>
-          <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            After refunds
-          </div>
+          <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">After refunds</div>
         </div>
 
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Avg. Transaction</div>
+            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Avg. Transaction
+            </div>
             <CreditCard className="w-5 h-5 text-purple-600 dark:text-purple-400" />
           </div>
           <div className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
             {formatCurrency(financialData.averageTransactionValue)}
           </div>
-          <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            Per completed order
-          </div>
+          <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">Per completed order</div>
         </div>
 
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Profit Margin</div>
+            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Profit Margin
+            </div>
             <PieChart className="w-5 h-5 text-green-600 dark:text-green-400" />
           </div>
           <div className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
             {financialData.profitMargin.toFixed(1)}%
           </div>
-          <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            Estimated margin
-          </div>
+          <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">Estimated margin</div>
         </div>
       </div>
 
       {/* Financial Breakdown */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-          <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Shipping Revenue</div>
+          <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            Shipping Revenue
+          </div>
           <div className="mt-2 text-2xl font-bold text-blue-600 dark:text-blue-400">
             {formatCurrency(financialData.shipping)}
           </div>
@@ -435,7 +452,9 @@ const FinancialAnalyticsPage: React.FC = (): React.ReactElement => {
         </div>
 
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-          <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Discounts Given</div>
+          <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            Discounts Given
+          </div>
           <div className="mt-2 text-2xl font-bold text-orange-600 dark:text-orange-400">
             {formatCurrency(financialData.discounts)}
           </div>
@@ -495,10 +514,16 @@ const FinancialAnalyticsPage: React.FC = (): React.ReactElement => {
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-700/50">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                >
                   Metric
                 </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                >
                   Amount
                 </th>
               </tr>

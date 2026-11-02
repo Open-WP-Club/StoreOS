@@ -49,14 +49,22 @@ function createOrder(overrides = {}) {
 describe('OrderSidebar', () => {
   describe('Order Actions', () => {
     it('renders status select with current status', () => {
-      render(<OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />);
+      render(
+        <OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />
+      );
       const select = screen.getByLabelText('Update Status') as HTMLSelectElement;
       expect(select.value).toBe('processing');
     });
 
     it('calls onStatusUpdate when status changes', () => {
       const onStatusUpdate = vi.fn();
-      render(<OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={onStatusUpdate} />);
+      render(
+        <OrderSidebar
+          order={createOrder()}
+          updatingStatus={false}
+          onStatusUpdate={onStatusUpdate}
+        />
+      );
       fireEvent.change(screen.getByLabelText('Update Status'), { target: { value: 'completed' } });
       expect(onStatusUpdate).toHaveBeenCalledWith('completed');
     });
@@ -72,42 +80,56 @@ describe('OrderSidebar', () => {
     });
 
     it('hides "Updating..." when not updating', () => {
-      render(<OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />);
+      render(
+        <OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />
+      );
       expect(screen.queryByText('Updating...')).not.toBeInTheDocument();
     });
   });
 
   describe('Customer Details', () => {
     it('renders billing name', () => {
-      render(<OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />);
+      render(
+        <OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />
+      );
       expect(screen.getByText('Alice Wonder')).toBeInTheDocument();
     });
 
     it('renders billing company', () => {
-      render(<OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />);
+      render(
+        <OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />
+      );
       expect(screen.getByText('Acme Corp')).toBeInTheDocument();
     });
 
     it('renders billing address', () => {
-      render(<OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />);
+      render(
+        <OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />
+      );
       expect(screen.getByText('123 Main St')).toBeInTheDocument();
       expect(screen.getByText('Suite 4')).toBeInTheDocument();
     });
 
     it('renders email as mailto link', () => {
-      render(<OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />);
+      render(
+        <OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />
+      );
       const emailLink = screen.getByText('alice@test.com');
       expect(emailLink.closest('a')).toHaveAttribute('href', 'mailto:alice@test.com');
     });
 
     it('renders phone as tel link', () => {
-      render(<OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />);
+      render(
+        <OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />
+      );
       const phoneLink = screen.getByText('+359888123456');
       expect(phoneLink.closest('a')).toHaveAttribute('href', 'tel:+359888123456');
     });
 
     it('renders shipping address when present', () => {
-      render(<OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />);
+      render(
+        <OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />
+      );
       expect(screen.getByText('Shipping Address')).toBeInTheDocument();
       expect(screen.getByText('Bob Ship')).toBeInTheDocument();
       expect(screen.getByText('456 Port Ave')).toBeInTheDocument();
@@ -135,17 +157,23 @@ describe('OrderSidebar', () => {
 
   describe('Payment Details', () => {
     it('renders payment method', () => {
-      render(<OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />);
+      render(
+        <OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />
+      );
       expect(screen.getByText('Credit Card')).toBeInTheDocument();
     });
 
     it('renders transaction ID', () => {
-      render(<OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />);
+      render(
+        <OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />
+      );
       expect(screen.getByText('TX-789')).toBeInTheDocument();
     });
 
     it('shows "Paid" when date_paid exists', () => {
-      render(<OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />);
+      render(
+        <OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />
+      );
       expect(screen.getByText('Paid')).toBeInTheDocument();
     });
 
@@ -170,12 +198,16 @@ describe('OrderSidebar', () => {
 
   describe('Order Information', () => {
     it('renders order number', () => {
-      render(<OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />);
+      render(
+        <OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />
+      );
       expect(screen.getByText('#42')).toBeInTheDocument();
     });
 
     it('renders customer ID when > 0', () => {
-      render(<OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />);
+      render(
+        <OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />
+      );
       expect(screen.getByText('5')).toBeInTheDocument();
     });
 
@@ -186,12 +218,16 @@ describe('OrderSidebar', () => {
     });
 
     it('renders customer IP', () => {
-      render(<OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />);
+      render(
+        <OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />
+      );
       expect(screen.getByText('192.168.1.1')).toBeInTheDocument();
     });
 
     it('renders user agent', () => {
-      render(<OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />);
+      render(
+        <OrderSidebar order={createOrder()} updatingStatus={false} onStatusUpdate={vi.fn()} />
+      );
       expect(screen.getByText('Mozilla/5.0')).toBeInTheDocument();
     });
 

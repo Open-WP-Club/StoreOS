@@ -58,7 +58,11 @@ vi.mock('../../components/ToastContainer', () => ({
 }));
 
 vi.mock('../../components/LoadingIndicator', () => ({
-  default: function MockLoadingIndicator({ loadingState }: { loadingState?: { isLoading: boolean } }) {
+  default: function MockLoadingIndicator({
+    loadingState,
+  }: {
+    loadingState?: { isLoading: boolean };
+  }) {
     if (loadingState && !loadingState.isLoading) return null;
     return <div data-testid="loading-indicator">Loading...</div>;
   },
@@ -100,10 +104,12 @@ describe('CustomersPage', () => {
     mockSetCachedData.mockResolvedValue(undefined);
     mockClearCacheForType.mockResolvedValue(undefined);
 
-    (useStoreConfig as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
-      const state = { getCurrentStore: () => mockStore };
-      return selector ? selector(state) : state;
-    });
+    (useStoreConfig as unknown as Mock).mockImplementation(
+      (selector?: (state: unknown) => unknown) => {
+        const state = { getCurrentStore: () => mockStore };
+        return selector ? selector(state) : state;
+      }
+    );
 
     (useCache as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
       const state = {

@@ -72,7 +72,8 @@ export async function exportOrderInvoice(
   const dateStr = new Date(order.date_created).toLocaleDateString();
   doc.text(`Date: ${dateStr}`, pageWidth / 2, y + 3, { align: 'center' });
 
-  const statusLabel = (order.status || 'pending').charAt(0).toUpperCase() + (order.status || 'pending').slice(1);
+  const statusLabel =
+    (order.status || 'pending').charAt(0).toUpperCase() + (order.status || 'pending').slice(1);
   doc.text(`Status: ${statusLabel}`, pageWidth - 20, y + 3, { align: 'right' });
   y += 22;
 
@@ -110,7 +111,7 @@ export async function exportOrderInvoice(
   const shipping = order.shipping;
   const hasShipping = shipping?.address_1 || shipping?.first_name;
   if (hasShipping) {
-    let sy = y - (billingLines.length * 4); // Same starting Y as billing
+    let sy = y - billingLines.length * 4; // Same starting Y as billing
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(40);
@@ -451,7 +452,9 @@ export async function exportReportToPDF<T extends object>(
   const meta = [
     timeRange ? `Period: ${timeRange}` : null,
     `Generated: ${new Date().toLocaleString()}`,
-  ].filter(Boolean).join('  |  ');
+  ]
+    .filter(Boolean)
+    .join('  |  ');
   doc.text(meta, pageWidth / 2, y, { align: 'center' });
   y += 10;
 
@@ -488,11 +491,13 @@ export async function exportReportToPDF<T extends object>(
     const headers = columns.map((col) => col.label);
     const body = data.map((item) =>
       columns.map((col) => {
-        const value = col.key.split('.').reduce(
-          (obj: Record<string, unknown> | undefined, key: string) =>
-            obj?.[key] as Record<string, unknown> | undefined,
-          item as Record<string, unknown>
-        );
+        const value = col.key
+          .split('.')
+          .reduce(
+            (obj: Record<string, unknown> | undefined, key: string) =>
+              obj?.[key] as Record<string, unknown> | undefined,
+            item as Record<string, unknown>
+          );
         if (col.format) {
           return col.format(value, item);
         }
@@ -537,11 +542,7 @@ export async function exportTableToPDF<T extends object>(
   columns: PDFColumn<T>[],
   options: TablePDFOptions = {}
 ): Promise<void> {
-  const {
-    title = 'Report',
-    filename,
-    orientation = 'portrait',
-  } = options;
+  const { title = 'Report', filename, orientation = 'portrait' } = options;
 
   if (!data || data.length === 0) return;
 
@@ -563,11 +564,13 @@ export async function exportTableToPDF<T extends object>(
   const headers = columns.map((col) => col.label);
   const body = data.map((item) =>
     columns.map((col) => {
-      const value = col.key.split('.').reduce(
-        (obj: Record<string, unknown> | undefined, key: string) =>
-          obj?.[key] as Record<string, unknown> | undefined,
-        item as Record<string, unknown>
-      );
+      const value = col.key
+        .split('.')
+        .reduce(
+          (obj: Record<string, unknown> | undefined, key: string) =>
+            obj?.[key] as Record<string, unknown> | undefined,
+          item as Record<string, unknown>
+        );
       if (col.format) {
         return col.format(value, item);
       }

@@ -126,7 +126,10 @@ const useSearch = create<SearchStore>()(
       /**
        * Get recent searches for a specific type/store
        */
-      getRecentSearchesFor: (type: SearchType | null = null, storeId: string | null = null): RecentSearch[] => {
+      getRecentSearchesFor: (
+        type: SearchType | null = null,
+        storeId: string | null = null
+      ): RecentSearch[] => {
         const { recentSearches } = get();
         return recentSearches.filter((s) => {
           if (type && s.type !== type) return false;
@@ -208,7 +211,10 @@ const useSearch = create<SearchStore>()(
       /**
        * Get filter presets for a specific type and optional store
        */
-      getFilterPresetsForType: (type: FilterPresetType, storeId: string | null = null): FilterPreset[] => {
+      getFilterPresetsForType: (
+        type: FilterPresetType,
+        storeId: string | null = null
+      ): FilterPreset[] => {
         const { savedFilterPresets } = get();
 
         return savedFilterPresets.filter(
@@ -239,4 +245,12 @@ const useSearch = create<SearchStore>()(
 export default useSearch;
 
 // Export types for consumers
-export type { SearchState, SearchActions, SearchStore, SearchType, FilterPresetType, NewSearchInput, NewFilterPresetInput };
+export type {
+  SearchState,
+  SearchActions,
+  SearchStore,
+  SearchType,
+  FilterPresetType,
+  NewSearchInput,
+  NewFilterPresetInput,
+};

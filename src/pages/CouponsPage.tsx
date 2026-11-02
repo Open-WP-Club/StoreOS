@@ -386,14 +386,26 @@ function CouponsPage(): React.ReactElement {
         });
         setSelectedIds(failedIds);
         if (failedIds.length > 0) {
-          toast.showToast(`${failedIds.length} of ${ids.length} coupons failed to delete`, 'warning');
+          toast.showToast(
+            `${failedIds.length} of ${ids.length} coupons failed to delete`,
+            'warning'
+          );
         } else {
           toast.showToast(`Deleted ${deletedIds.length} coupons`, 'success');
         }
       },
       onError: (error) => toast.showToast(`Failed to delete coupons: ${error}`, 'error'),
     });
-  }, [selectedIds, currentStore, coupons, setCachedData, logActivity, toast, offlineMutate, isOnline]);
+  }, [
+    selectedIds,
+    currentStore,
+    coupons,
+    setCachedData,
+    logActivity,
+    toast,
+    offlineMutate,
+    isOnline,
+  ]);
 
   const toggleSelected = useCallback((id: number): void => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));

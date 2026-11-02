@@ -22,7 +22,14 @@ interface ToastProps {
  * - Auto-dismiss with configurable duration
  * - Optional action button (e.g. "Undo")
  */
-const Toast: React.FC<ToastProps> = ({ id, message, type = 'info', duration = 3000, action, onClose }) => {
+const Toast: React.FC<ToastProps> = ({
+  id,
+  message,
+  type = 'info',
+  duration = 3000,
+  action,
+  onClose,
+}) => {
   useEffect(() => {
     if (duration && duration > 0) {
       const timer = setTimeout(() => {
@@ -58,7 +65,8 @@ const Toast: React.FC<ToastProps> = ({ id, message, type = 'info', duration = 30
   const actionColors: Record<ToastType, string> = {
     success: 'text-green-700 dark:text-green-400 hover:text-green-900 dark:hover:text-green-200',
     error: 'text-red-700 dark:text-red-400 hover:text-red-900 dark:hover:text-red-200',
-    warning: 'text-yellow-700 dark:text-yellow-400 hover:text-yellow-900 dark:hover:text-yellow-200',
+    warning:
+      'text-yellow-700 dark:text-yellow-400 hover:text-yellow-900 dark:hover:text-yellow-200',
     info: 'text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-200',
   };
 

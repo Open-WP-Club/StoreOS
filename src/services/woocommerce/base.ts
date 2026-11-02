@@ -126,7 +126,11 @@ export class WooCommerceServiceBase {
       const api = await this.getApi();
       const out: BatchOperationResponse<T> = {};
       const n = this.BATCH_SIZE;
-      const len = Math.max(ops.create?.length ?? 0, ops.update?.length ?? 0, ops.delete?.length ?? 0);
+      const len = Math.max(
+        ops.create?.length ?? 0,
+        ops.update?.length ?? 0,
+        ops.delete?.length ?? 0
+      );
       for (let i = 0; i < len; i += n) {
         const body = {
           create: ops.create?.slice(i, i + n),
@@ -170,7 +174,10 @@ export class WooCommerceServiceBase {
           return { success: false, error: 'Loading cancelled', cancelled: true };
         }
 
-        const response: WooCommerceApiResponse<T[]> = await api.get(endpoint, { ...baseParams, page });
+        const response: WooCommerceApiResponse<T[]> = await api.get(endpoint, {
+          ...baseParams,
+          page,
+        });
 
         if (!response.data) return { success: false, error: 'No data received' };
 
@@ -211,8 +218,9 @@ export class WooCommerceServiceBase {
 
   async testConnection(): Promise<ApiResponse<SystemStatus>> {
     try {
-      const response: WooCommerceApiResponse<SystemStatus> =
-        await (await this.getApi()).get('system_status');
+      const response: WooCommerceApiResponse<SystemStatus> = await (
+        await this.getApi()
+      ).get('system_status');
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);

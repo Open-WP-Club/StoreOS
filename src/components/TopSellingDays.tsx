@@ -50,7 +50,11 @@ export default function TopSellingDays({
   const maxRevenue = derivedTopDays[0]?.revenue ?? 1;
 
   const formatDay = (dateStr: string): string =>
-    new Date(dateStr).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    new Date(dateStr).toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
 
   return (
     <div className="space-y-3">
@@ -60,12 +64,19 @@ export default function TopSellingDays({
           <div key={day.date}>
             <div className="flex items-center justify-between text-sm mb-1">
               <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                <span className={`w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold shrink-0 ${
-                  i === 0 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300' :
-                  i === 1 ? 'bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-300' :
-                  i === 2 ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300' :
-                  'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
-                }`}>{i + 1}</span>
+                <span
+                  className={`w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold shrink-0 ${
+                    i === 0
+                      ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300'
+                      : i === 1
+                        ? 'bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-300'
+                        : i === 2
+                          ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300'
+                          : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
+                  }`}
+                >
+                  {i + 1}
+                </span>
                 <Calendar className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                 <span className="font-medium">{formatDay(day.date)}</span>
               </div>

@@ -26,7 +26,12 @@ import type { LucideIcon } from 'lucide-react';
 import { useCache, useSearch, useStoreConfig, useTheme } from '../stores';
 import { useKeyboardShortcut, getShortcutDisplay } from '../hooks/useKeyboardShortcut';
 import { searchProducts, searchOrders } from '../utils/searchService';
-import type { WooCommerceProduct, WooCommerceOrder, WooCommerceCustomer, WooCommerceCoupon } from '../types';
+import type {
+  WooCommerceProduct,
+  WooCommerceOrder,
+  WooCommerceCustomer,
+  WooCommerceCoupon,
+} from '../types';
 import { EMPTY_ARRAY } from '../constants';
 
 interface CommandAction {
@@ -115,7 +120,10 @@ function CommandPalette(): React.ReactElement | null {
         icon: Home,
         label: 'Go to Dashboard',
         shortcut: 'G H',
-        action: () => { navigate('/'); setIsOpen(false); },
+        action: () => {
+          navigate('/');
+          setIsOpen(false);
+        },
         category: 'Navigation',
         keywords: ['home', 'dashboard', 'main'],
       },
@@ -124,7 +132,10 @@ function CommandPalette(): React.ReactElement | null {
         icon: ShoppingCart,
         label: 'Go to Orders',
         shortcut: 'G O',
-        action: () => { navigate('/orders'); setIsOpen(false); },
+        action: () => {
+          navigate('/orders');
+          setIsOpen(false);
+        },
         category: 'Navigation',
         keywords: ['orders', 'sales'],
       },
@@ -133,7 +144,10 @@ function CommandPalette(): React.ReactElement | null {
         icon: Package,
         label: 'Go to Products',
         shortcut: 'G P',
-        action: () => { navigate('/products'); setIsOpen(false); },
+        action: () => {
+          navigate('/products');
+          setIsOpen(false);
+        },
         category: 'Navigation',
         keywords: ['products', 'items', 'inventory'],
       },
@@ -142,7 +156,10 @@ function CommandPalette(): React.ReactElement | null {
         icon: Users,
         label: 'Go to Customers',
         shortcut: 'G C',
-        action: () => { navigate('/customers'); setIsOpen(false); },
+        action: () => {
+          navigate('/customers');
+          setIsOpen(false);
+        },
         category: 'Navigation',
         keywords: ['customers', 'users', 'clients'],
       },
@@ -151,7 +168,10 @@ function CommandPalette(): React.ReactElement | null {
         icon: Tag,
         label: 'Go to Coupons',
         shortcut: 'G U',
-        action: () => { navigate('/coupons'); setIsOpen(false); },
+        action: () => {
+          navigate('/coupons');
+          setIsOpen(false);
+        },
         category: 'Navigation',
         keywords: ['coupons', 'discounts', 'promo'],
       },
@@ -159,7 +179,10 @@ function CommandPalette(): React.ReactElement | null {
         id: 'nav-inventory',
         icon: Box,
         label: 'Go to Inventory',
-        action: () => { navigate('/inventory'); setIsOpen(false); },
+        action: () => {
+          navigate('/inventory');
+          setIsOpen(false);
+        },
         category: 'Navigation',
         keywords: ['inventory', 'stock'],
       },
@@ -167,7 +190,10 @@ function CommandPalette(): React.ReactElement | null {
         id: 'nav-analytics',
         icon: BarChart3,
         label: 'Go to Analytics',
-        action: () => { navigate('/analytics'); setIsOpen(false); },
+        action: () => {
+          navigate('/analytics');
+          setIsOpen(false);
+        },
         category: 'Navigation',
         keywords: ['analytics', 'reports', 'stats'],
       },
@@ -175,7 +201,10 @@ function CommandPalette(): React.ReactElement | null {
         id: 'nav-pos',
         icon: Monitor,
         label: 'Go to POS',
-        action: () => { navigate('/pos'); setIsOpen(false); },
+        action: () => {
+          navigate('/pos');
+          setIsOpen(false);
+        },
         category: 'Navigation',
         keywords: ['pos', 'point of sale', 'register'],
       },
@@ -183,7 +212,10 @@ function CommandPalette(): React.ReactElement | null {
         id: 'nav-multi-store',
         icon: Store,
         label: 'Go to Multi-Store View',
-        action: () => { navigate('/multi-store'); setIsOpen(false); },
+        action: () => {
+          navigate('/multi-store');
+          setIsOpen(false);
+        },
         category: 'Navigation',
         keywords: ['multi', 'store', 'compare'],
       },
@@ -191,7 +223,10 @@ function CommandPalette(): React.ReactElement | null {
         id: 'nav-settings',
         icon: Settings,
         label: 'Go to Settings',
-        action: () => { navigate('/settings'); setIsOpen(false); },
+        action: () => {
+          navigate('/settings');
+          setIsOpen(false);
+        },
         category: 'Navigation',
         keywords: ['settings', 'preferences', 'config'],
       },
@@ -202,7 +237,10 @@ function CommandPalette(): React.ReactElement | null {
         id: 'action-toggle-theme',
         icon: theme === 'light' ? Moon : Sun,
         label: theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode',
-        action: () => { toggleTheme(); setIsOpen(false); },
+        action: () => {
+          toggleTheme();
+          setIsOpen(false);
+        },
         category: 'Actions',
         keywords: ['theme', 'dark', 'light', 'mode'],
       },
@@ -210,7 +248,10 @@ function CommandPalette(): React.ReactElement | null {
         id: 'action-refresh-orders',
         icon: RefreshCw,
         label: 'Refresh Orders',
-        action: async () => { await clearCacheForType('orders'); window.location.reload(); },
+        action: async () => {
+          await clearCacheForType('orders');
+          window.location.reload();
+        },
         category: 'Actions',
         keywords: ['refresh', 'reload', 'orders', 'sync'],
       },
@@ -218,7 +259,10 @@ function CommandPalette(): React.ReactElement | null {
         id: 'action-refresh-products',
         icon: RefreshCw,
         label: 'Refresh Products',
-        action: async () => { await clearCacheForType('products'); window.location.reload(); },
+        action: async () => {
+          await clearCacheForType('products');
+          window.location.reload();
+        },
         category: 'Actions',
         keywords: ['refresh', 'reload', 'products', 'sync'],
       },
@@ -226,7 +270,10 @@ function CommandPalette(): React.ReactElement | null {
         id: 'action-refresh-customers',
         icon: RefreshCw,
         label: 'Refresh Customers',
-        action: async () => { await clearCacheForType('customers'); window.location.reload(); },
+        action: async () => {
+          await clearCacheForType('customers');
+          window.location.reload();
+        },
         category: 'Actions',
         keywords: ['refresh', 'reload', 'customers', 'sync'],
       },
@@ -234,7 +281,10 @@ function CommandPalette(): React.ReactElement | null {
         id: 'action-clear-cache',
         icon: Database,
         label: 'Clear All Cache',
-        action: async () => { await clearCache(); window.location.reload(); },
+        action: async () => {
+          await clearCache();
+          window.location.reload();
+        },
         category: 'Actions',
         keywords: ['clear', 'cache', 'reset'],
       },
@@ -242,7 +292,10 @@ function CommandPalette(): React.ReactElement | null {
         id: 'action-new-order',
         icon: Plus,
         label: 'Create New Order (POS)',
-        action: () => { navigate('/pos'); setIsOpen(false); },
+        action: () => {
+          navigate('/pos');
+          setIsOpen(false);
+        },
         category: 'Actions',
         keywords: ['new', 'order', 'create', 'pos'],
       },
@@ -250,7 +303,10 @@ function CommandPalette(): React.ReactElement | null {
         id: 'action-new-coupon',
         icon: Plus,
         label: 'Create New Coupon',
-        action: () => { navigate('/coupons?action=new'); setIsOpen(false); },
+        action: () => {
+          navigate('/coupons?action=new');
+          setIsOpen(false);
+        },
         category: 'Actions',
         keywords: ['new', 'coupon', 'create', 'discount'],
       },
@@ -281,13 +337,25 @@ function CommandPalette(): React.ReactElement | null {
         icon: Bookmark,
         label: `View: ${p.name}`,
         sublabel: `Saved ${p.type} view`,
-        action: () => { navigate(`/${p.type}?view=${encodeURIComponent(p.id)}`); setIsOpen(false); },
+        action: () => {
+          navigate(`/${p.type}?view=${encodeURIComponent(p.id)}`);
+          setIsOpen(false);
+        },
         category: 'Saved Views',
         keywords: ['view', 'saved', 'preset', 'filter', p.type, p.name.toLowerCase()],
       }));
 
     return [...navCommands, ...viewCommands, ...actionCommands];
-  }, [navigate, savedPresets, currentStoreId, theme, toggleTheme, clearCache, clearCacheForType, location.pathname]);
+  }, [
+    navigate,
+    savedPresets,
+    currentStoreId,
+    theme,
+    toggleTheme,
+    clearCache,
+    clearCacheForType,
+    location.pathname,
+  ]);
 
   // Search results
   const searchResults = useMemo((): CommandAction[] => {
@@ -304,7 +372,10 @@ function CommandPalette(): React.ReactElement | null {
         icon: Package,
         label: product.name,
         sublabel: `${product.sku || 'No SKU'} - ${product.price}`,
-        action: () => { navigate(`/products/${product.id}`); setIsOpen(false); },
+        action: () => {
+          navigate(`/products/${product.id}`);
+          setIsOpen(false);
+        },
         category: 'Search Results',
       }));
     results.push(...productResults);
@@ -317,18 +388,22 @@ function CommandPalette(): React.ReactElement | null {
         icon: ShoppingCart,
         label: `Order #${order.id}`,
         sublabel: `${order.billing?.first_name || ''} ${order.billing?.last_name || ''} - ${order.total}`,
-        action: () => { navigate(`/orders/${order.id}`); setIsOpen(false); },
+        action: () => {
+          navigate(`/orders/${order.id}`);
+          setIsOpen(false);
+        },
         category: 'Search Results',
       }));
     results.push(...orderResults);
 
     // Search customers
     const customerResults = customersFromCache
-      .filter((c) =>
-        c.email?.toLowerCase().includes(searchQuery) ||
-        c.first_name?.toLowerCase().includes(searchQuery) ||
-        c.last_name?.toLowerCase().includes(searchQuery) ||
-        `${c.first_name} ${c.last_name}`.toLowerCase().includes(searchQuery)
+      .filter(
+        (c) =>
+          c.email?.toLowerCase().includes(searchQuery) ||
+          c.first_name?.toLowerCase().includes(searchQuery) ||
+          c.last_name?.toLowerCase().includes(searchQuery) ||
+          `${c.first_name} ${c.last_name}`.toLowerCase().includes(searchQuery)
       )
       .slice(0, 5)
       .map((customer): CommandAction => ({
@@ -336,16 +411,20 @@ function CommandPalette(): React.ReactElement | null {
         icon: Users,
         label: `${customer.first_name} ${customer.last_name}`,
         sublabel: customer.email,
-        action: () => { navigate(`/customers?search=${encodeURIComponent(customer.email)}`); setIsOpen(false); },
+        action: () => {
+          navigate(`/customers?search=${encodeURIComponent(customer.email)}`);
+          setIsOpen(false);
+        },
         category: 'Search Results',
       }));
     results.push(...customerResults);
 
     // Search coupons
     const couponResults = couponsFromCache
-      .filter((c) =>
-        c.code?.toLowerCase().includes(searchQuery) ||
-        c.description?.toLowerCase().includes(searchQuery)
+      .filter(
+        (c) =>
+          c.code?.toLowerCase().includes(searchQuery) ||
+          c.description?.toLowerCase().includes(searchQuery)
       )
       .slice(0, 5)
       .map((coupon): CommandAction => ({
@@ -353,7 +432,10 @@ function CommandPalette(): React.ReactElement | null {
         icon: Tag,
         label: coupon.code,
         sublabel: `${coupon.discount_type} - ${coupon.amount}`,
-        action: () => { navigate(`/coupons?search=${encodeURIComponent(coupon.code)}`); setIsOpen(false); },
+        action: () => {
+          navigate(`/coupons?search=${encodeURIComponent(coupon.code)}`);
+          setIsOpen(false);
+        },
         category: 'Search Results',
       }));
     results.push(...couponResults);
@@ -391,31 +473,36 @@ function CommandPalette(): React.ReactElement | null {
   }, [allResults]);
 
   // Handle keyboard navigation
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>): void => {
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        setSelectedIndex((prev) => (prev + 1) % Math.max(1, allResults.length));
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        setSelectedIndex((prev) => (prev - 1 + allResults.length) % Math.max(1, allResults.length));
-        break;
-      case 'Enter':
-        e.preventDefault();
-        if (allResults[selectedIndex]) {
-          allResults[selectedIndex].action();
-        }
-        break;
-      case 'Escape':
-        setIsOpen(false);
-        break;
-      case 'Tab':
-        e.preventDefault();
-        setMode(mode === 'commands' ? 'search' : 'commands');
-        break;
-    }
-  }, [allResults, selectedIndex, mode, setIsOpen]);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>): void => {
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          setSelectedIndex((prev) => (prev + 1) % Math.max(1, allResults.length));
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setSelectedIndex(
+            (prev) => (prev - 1 + allResults.length) % Math.max(1, allResults.length)
+          );
+          break;
+        case 'Enter':
+          e.preventDefault();
+          if (allResults[selectedIndex]) {
+            allResults[selectedIndex].action();
+          }
+          break;
+        case 'Escape':
+          setIsOpen(false);
+          break;
+        case 'Tab':
+          e.preventDefault();
+          setMode(mode === 'commands' ? 'search' : 'commands');
+          break;
+      }
+    },
+    [allResults, selectedIndex, mode, setIsOpen]
+  );
 
   if (!isOpen) return null;
 
@@ -460,8 +547,8 @@ function CommandPalette(): React.ReactElement | null {
             </button>
             <div className="flex-1" />
             <div className="px-4 text-xs text-gray-400">
-              <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs">Tab</kbd>
-              {' '}to switch
+              <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs">Tab</kbd>{' '}
+              to switch
             </div>
           </div>
 
@@ -477,7 +564,11 @@ function CommandPalette(): React.ReactElement | null {
                 setSelectedIndex(0);
               }}
               onKeyDown={handleKeyDown}
-              placeholder={mode === 'commands' ? 'Type a command or search...' : 'Search products, orders, customers, coupons...'}
+              placeholder={
+                mode === 'commands'
+                  ? 'Type a command or search...'
+                  : 'Search products, orders, customers, coupons...'
+              }
               className="flex-1 bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-400 text-lg"
             />
           </div>
@@ -522,7 +613,9 @@ function CommandPalette(): React.ReactElement | null {
                         <div className="flex-1 min-w-0">
                           <div
                             className={`text-sm font-medium truncate ${
-                              isSelected ? 'text-blue-900 dark:text-blue-100' : 'text-gray-900 dark:text-white'
+                              isSelected
+                                ? 'text-blue-900 dark:text-blue-100'
+                                : 'text-gray-900 dark:text-white'
                             }`}
                           >
                             {item.label}

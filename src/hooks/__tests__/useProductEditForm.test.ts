@@ -24,14 +24,18 @@ beforeEach(() => {
   vi.useFakeTimers();
   mockActiveStore = createMockStore();
 
-  (useStoreConfig as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
-    const state = { getCurrentStore: () => mockActiveStore };
-    return selector ? selector(state) : state;
-  });
+  (useStoreConfig as unknown as Mock).mockImplementation(
+    (selector?: (state: unknown) => unknown) => {
+      const state = { getCurrentStore: () => mockActiveStore };
+      return selector ? selector(state) : state;
+    }
+  );
 
-  (WooCommerceService as Mock).mockImplementation(function () { return {
-    updateProduct: mockUpdateProduct,
-  }; });
+  (WooCommerceService as Mock).mockImplementation(function () {
+    return {
+      updateProduct: mockUpdateProduct,
+    };
+  });
 });
 
 afterEach(() => {

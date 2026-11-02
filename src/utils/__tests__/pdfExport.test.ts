@@ -52,7 +52,9 @@ beforeEach(() => {
     lastAutoTable: { finalY: 150 },
   };
 
-  (jsPDF as unknown as Mock).mockImplementation(function () { return mockDoc; });
+  (jsPDF as unknown as Mock).mockImplementation(function () {
+    return mockDoc;
+  });
 });
 
 // ============================================
@@ -64,7 +66,14 @@ describe('exportOrderInvoice', () => {
     const order = createMockOrder({
       number: '1234',
       line_items: [
-        createMockLineItem({ name: 'Widget', sku: 'W-1', quantity: 2, price: 25, subtotal: '50.00', total: '50.00' }),
+        createMockLineItem({
+          name: 'Widget',
+          sku: 'W-1',
+          quantity: 2,
+          price: 25,
+          subtotal: '50.00',
+          total: '50.00',
+        }),
       ],
       total: '50.00',
     });
@@ -176,7 +185,18 @@ describe('exportOrderInvoice', () => {
   it('shows shipping line when shipping_total > 0', async () => {
     const order = createMockOrder({
       shipping_total: '5.00',
-      shipping_lines: [{ id: 1, method_title: 'Flat Rate', method_id: 'flat', instance_id: '', total: '5.00', total_tax: '0', taxes: [], meta_data: [] }],
+      shipping_lines: [
+        {
+          id: 1,
+          method_title: 'Flat Rate',
+          method_id: 'flat',
+          instance_id: '',
+          total: '5.00',
+          total_tax: '0',
+          taxes: [],
+          meta_data: [],
+        },
+      ],
     });
 
     await exportOrderInvoice(order);

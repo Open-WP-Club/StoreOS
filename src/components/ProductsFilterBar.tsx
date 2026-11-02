@@ -259,8 +259,7 @@ export function ProductsFilterBar({
       {selectedProductIds.length > 0 && (
         <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-md">
           <span className="text-sm font-medium text-blue-900">
-            {selectedProductIds.length} product{selectedProductIds.length !== 1 ? 's' : ''}{' '}
-            selected
+            {selectedProductIds.length} product{selectedProductIds.length !== 1 ? 's' : ''} selected
           </span>
           <div className="flex gap-2">
             <button

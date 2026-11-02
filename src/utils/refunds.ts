@@ -65,8 +65,7 @@ export function defaultRefundAmount(row: RefundableItem, quantity: number): numb
 }
 
 export type RefundBuildResult =
-  | { ok: true; request: CreateRefundRequest; total: number }
-  | { ok: false; error: string };
+  { ok: true; request: CreateRefundRequest; total: number } | { ok: false; error: string };
 
 /** Validate selections against remaining refundable amounts and build the API payload. */
 export function buildRefundRequest(

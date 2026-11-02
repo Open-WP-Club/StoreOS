@@ -75,12 +75,11 @@ export default function OrderFunnel({ orders }: OrderFunnelProps): React.ReactEl
       {stages.map((stage, i) => {
         const widthPct = Math.max((stage.count / maxCount) * 100, 8);
         const prevCount = i > 0 ? (stages[i - 1]?.count ?? stage.count) : stage.count;
-        const dropOff = prevCount > 0 && i > 0
-          ? (((prevCount - stage.count) / prevCount) * 100).toFixed(1)
-          : null;
-        const convRate = maxCount > 0
-          ? ((stage.count / maxCount) * 100).toFixed(1)
-          : '0';
+        const dropOff =
+          prevCount > 0 && i > 0
+            ? (((prevCount - stage.count) / prevCount) * 100).toFixed(1)
+            : null;
+        const convRate = maxCount > 0 ? ((stage.count / maxCount) * 100).toFixed(1) : '0';
 
         return (
           <div key={stage.label}>
@@ -88,9 +87,7 @@ export default function OrderFunnel({ orders }: OrderFunnelProps): React.ReactEl
             {dropOff !== null && parseFloat(dropOff) > 0 && (
               <div className="flex items-center gap-2 py-0.5 pl-2">
                 <div className="h-px flex-1 border-t border-dashed border-gray-300 dark:border-gray-600" />
-                <span className="text-xs text-red-500 dark:text-red-400 shrink-0">
-                  −{dropOff}%
-                </span>
+                <span className="text-xs text-red-500 dark:text-red-400 shrink-0">−{dropOff}%</span>
               </div>
             )}
 
@@ -114,7 +111,9 @@ export default function OrderFunnel({ orders }: OrderFunnelProps): React.ReactEl
             </div>
 
             {/* Description */}
-            <p className="text-xs text-gray-400 dark:text-gray-500 pl-2 mt-0.5">{stage.description}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 pl-2 mt-0.5">
+              {stage.description}
+            </p>
           </div>
         );
       })}

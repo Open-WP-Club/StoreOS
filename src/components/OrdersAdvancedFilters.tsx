@@ -48,7 +48,9 @@ function OrdersAdvancedFilters({
           <select
             id="order-status-filter"
             value={filters.status}
-            onChange={(e: ChangeEvent<HTMLSelectElement>) => onFilterChange({ status: e.target.value })}
+            onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+              onFilterChange({ status: e.target.value })
+            }
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="all">All Status</option>
@@ -130,7 +132,9 @@ function OrdersAdvancedFilters({
             id="date-from"
             type="date"
             value={filters.dateFrom}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => onFilterChange({ dateFrom: e.target.value })}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              onFilterChange({ dateFrom: e.target.value })
+            }
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
@@ -145,7 +149,9 @@ function OrdersAdvancedFilters({
             id="date-to"
             type="date"
             value={filters.dateTo}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => onFilterChange({ dateTo: e.target.value })}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              onFilterChange({ dateTo: e.target.value })
+            }
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500"
           />
         </div>

@@ -34,7 +34,10 @@ export function POSScratchpad({
               <Trash2 className="w-4 h-4" />
             </button>
           )}
-          <button onClick={onClose} className="p-1 hover:bg-yellow-100 dark:hover:bg-gray-700 rounded">
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-yellow-100 dark:hover:bg-gray-700 rounded"
+          >
             <X className="w-4 h-4 text-gray-400" />
           </button>
         </div>
@@ -46,9 +49,7 @@ export function POSScratchpad({
         rows={6}
         className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-yellow-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 resize-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
       />
-      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-        Запазва се автоматично
-      </p>
+      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Запазва се автоматично</p>
     </div>
   );
 }

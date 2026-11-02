@@ -19,8 +19,7 @@ const inputCls =
 export default function OrderTrackingSection({ order, showToast, onSaved }: Props): ReactElement {
   const activeStore = useStoreConfig((s) => s.getCurrentStore)();
   const existing = order.meta_data?.find((m) => m.key === TRACKING_META_KEY)?.value as
-    | { number?: string; carrier?: string }
-    | undefined;
+    { number?: string; carrier?: string } | undefined;
   const [number, setNumber] = useState(existing?.number ?? '');
   const [carrier, setCarrier] = useState(existing?.carrier ?? '');
   const [saving, setSaving] = useState(false);

@@ -40,14 +40,8 @@ export function usePOSCheckout(
   const currentStore = getCurrentStore();
   const toast = useToast();
 
-  const {
-    cart,
-    clearCart,
-    paymentMethod,
-    discountType,
-    discountValue,
-    getDiscountAmount,
-  } = usePOSStore();
+  const { cart, clearCart, paymentMethod, discountType, discountValue, getDiscountAmount } =
+    usePOSStore();
 
   const checkoutInFlight = useRef(false);
   const [showCheckout, setShowCheckout] = useState(false);

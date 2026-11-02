@@ -5,7 +5,13 @@ import ReviewsPage from '../ReviewsPage';
 import { createMockStore } from '../../__test_utils__';
 import { useStoreConfig, useCache } from '../../stores';
 
-const { mockGetAllReviews, mockUpdateReview, mockDeleteReview, mockBatchUpdateReviews, MockWooCommerceService } = vi.hoisted(() => ({
+const {
+  mockGetAllReviews,
+  mockUpdateReview,
+  mockDeleteReview,
+  mockBatchUpdateReviews,
+  MockWooCommerceService,
+} = vi.hoisted(() => ({
   mockGetAllReviews: vi.fn(),
   mockUpdateReview: vi.fn(),
   mockDeleteReview: vi.fn(),
@@ -180,10 +186,12 @@ describe('ReviewsPage', () => {
     mockSetCachedData.mockResolvedValue(undefined);
     mockClearCacheForType.mockResolvedValue(undefined);
 
-    (useStoreConfig as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
-      const state = { getCurrentStore: () => mockStore };
-      return selector ? selector(state) : state;
-    });
+    (useStoreConfig as unknown as Mock).mockImplementation(
+      (selector?: (state: unknown) => unknown) => {
+        const state = { getCurrentStore: () => mockStore };
+        return selector ? selector(state) : state;
+      }
+    );
 
     (useCache as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
       const state = {
@@ -222,10 +230,12 @@ describe('ReviewsPage', () => {
   });
 
   it('should show empty state when no store is selected', () => {
-    (useStoreConfig as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
-      const state = { getCurrentStore: () => undefined };
-      return selector ? selector(state) : state;
-    });
+    (useStoreConfig as unknown as Mock).mockImplementation(
+      (selector?: (state: unknown) => unknown) => {
+        const state = { getCurrentStore: () => undefined };
+        return selector ? selector(state) : state;
+      }
+    );
 
     render(
       <MemoryRouter>

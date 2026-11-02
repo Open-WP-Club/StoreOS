@@ -37,19 +37,23 @@ describe('usePOSProducts', () => {
   beforeEach(() => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
 
-    (useStoreConfig as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
-      const state = { getCurrentStore: () => mockStore };
-      return selector ? selector(state) : state;
-    });
+    (useStoreConfig as unknown as Mock).mockImplementation(
+      (selector?: (state: unknown) => unknown) => {
+        const state = { getCurrentStore: () => mockStore };
+        return selector ? selector(state) : state;
+      }
+    );
 
     (useCache as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
       const state = { cache: { products: { data: null } } };
       return selector ? selector(state) : state;
     });
 
-    (WooCommerceService as Mock).mockImplementation(function () { return {
-      getProducts: mockGetProducts,
-    }; });
+    (WooCommerceService as Mock).mockImplementation(function () {
+      return {
+        getProducts: mockGetProducts,
+      };
+    });
   });
 
   afterEach(() => {
@@ -158,8 +162,18 @@ describe('usePOSProducts', () => {
 
   it('should extract categories from products', async () => {
     const products = [
-      createMockProduct({ id: 1, status: 'publish', stock_status: 'instock', categories: [{ id: 1, name: 'Drinks', slug: 'drinks' }] }),
-      createMockProduct({ id: 2, status: 'publish', stock_status: 'instock', categories: [{ id: 2, name: 'Food', slug: 'food' }] }),
+      createMockProduct({
+        id: 1,
+        status: 'publish',
+        stock_status: 'instock',
+        categories: [{ id: 1, name: 'Drinks', slug: 'drinks' }],
+      }),
+      createMockProduct({
+        id: 2,
+        status: 'publish',
+        stock_status: 'instock',
+        categories: [{ id: 2, name: 'Food', slug: 'food' }],
+      }),
     ] as WooCommerceProduct[];
 
     (useCache as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
@@ -179,8 +193,20 @@ describe('usePOSProducts', () => {
 
   it('should filter by selected category', async () => {
     const products = [
-      createMockProduct({ id: 1, name: 'Cola', status: 'publish', stock_status: 'instock', categories: [{ id: 1, name: 'Drinks', slug: 'drinks' }] }),
-      createMockProduct({ id: 2, name: 'Pizza', status: 'publish', stock_status: 'instock', categories: [{ id: 2, name: 'Food', slug: 'food' }] }),
+      createMockProduct({
+        id: 1,
+        name: 'Cola',
+        status: 'publish',
+        stock_status: 'instock',
+        categories: [{ id: 1, name: 'Drinks', slug: 'drinks' }],
+      }),
+      createMockProduct({
+        id: 2,
+        name: 'Pizza',
+        status: 'publish',
+        stock_status: 'instock',
+        categories: [{ id: 2, name: 'Food', slug: 'food' }],
+      }),
     ] as WooCommerceProduct[];
 
     (useCache as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
@@ -234,7 +260,13 @@ describe('usePOSProducts', () => {
 
   it('should handle barcode scan (Enter key) and add to cart', async () => {
     const products = [
-      createMockProduct({ id: 1, name: 'Product', sku: 'BAR123', status: 'publish', stock_status: 'instock' }),
+      createMockProduct({
+        id: 1,
+        name: 'Product',
+        sku: 'BAR123',
+        status: 'publish',
+        stock_status: 'instock',
+      }),
     ] as WooCommerceProduct[];
 
     (useCache as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
@@ -260,10 +292,12 @@ describe('usePOSProducts', () => {
   });
 
   it('should not load when no store configured', async () => {
-    (useStoreConfig as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
-      const state = { getCurrentStore: () => undefined };
-      return selector ? selector(state) : state;
-    });
+    (useStoreConfig as unknown as Mock).mockImplementation(
+      (selector?: (state: unknown) => unknown) => {
+        const state = { getCurrentStore: () => undefined };
+        return selector ? selector(state) : state;
+      }
+    );
 
     const { result } = renderHook(() => usePOSProducts(mockAddToCart));
 
@@ -293,8 +327,18 @@ describe('usePOSProducts', () => {
 
   it('should filter categories by search term', async () => {
     const products = [
-      createMockProduct({ id: 1, status: 'publish', stock_status: 'instock', categories: [{ id: 1, name: 'Electronics', slug: 'electronics' }] }),
-      createMockProduct({ id: 2, status: 'publish', stock_status: 'instock', categories: [{ id: 2, name: 'Clothing', slug: 'clothing' }] }),
+      createMockProduct({
+        id: 1,
+        status: 'publish',
+        stock_status: 'instock',
+        categories: [{ id: 1, name: 'Electronics', slug: 'electronics' }],
+      }),
+      createMockProduct({
+        id: 2,
+        status: 'publish',
+        stock_status: 'instock',
+        categories: [{ id: 2, name: 'Clothing', slug: 'clothing' }],
+      }),
     ] as WooCommerceProduct[];
 
     (useCache as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {

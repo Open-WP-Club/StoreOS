@@ -17,7 +17,13 @@ describe('searchService - edge cases', () => {
   describe('searchCustomers', () => {
     const customers = [
       { id: 1, first_name: 'John', last_name: 'Doe', email: 'john@example.com', username: 'johnd' },
-      { id: 2, first_name: 'Jane', last_name: 'Smith', email: 'jane@example.com', username: 'janes' },
+      {
+        id: 2,
+        first_name: 'Jane',
+        last_name: 'Smith',
+        email: 'jane@example.com',
+        username: 'janes',
+      },
       { id: 3, first_name: 'Bob', last_name: 'Johnson', email: 'bob@test.org', username: 'bobj' },
     ];
 
@@ -84,9 +90,7 @@ describe('searchService - edge cases', () => {
     });
 
     it('should handle customers with missing fields', () => {
-      const incomplete = [
-        { id: 10, first_name: '', last_name: '', email: '', username: '' },
-      ];
+      const incomplete = [{ id: 10, first_name: '', last_name: '', email: '', username: '' }];
       const results = searchCustomers(incomplete, 'test');
       // ID '10' won't match 'test', but fuzzy matching may find something
       expect(Array.isArray(results)).toBe(true);
@@ -112,12 +116,15 @@ describe('searchService - edge cases', () => {
   // ============================================
 
   describe('universalSearch', () => {
-    const products = [
-      { id: 1, name: 'Blue Widget', sku: 'BW-001', price: '10.00' },
-    ];
+    const products = [{ id: 1, name: 'Blue Widget', sku: 'BW-001', price: '10.00' }];
 
     const orders = [
-      { id: 101, number: 101, total: '50.00', billing: { first_name: 'John', last_name: 'Doe', email: 'john@test.com' } },
+      {
+        id: 101,
+        number: 101,
+        total: '50.00',
+        billing: { first_name: 'John', last_name: 'Doe', email: 'john@test.com' },
+      },
     ];
 
     const customers = [
@@ -236,25 +243,26 @@ describe('searchService - edge cases', () => {
   describe('searchProducts - edge cases', () => {
     it('should search in description field when specified (strip HTML)', () => {
       const products = [
-        { id: 1, name: 'Widget', sku: '', description: '<p>Amazing <strong>blue</strong> widget</p>' },
+        {
+          id: 1,
+          name: 'Widget',
+          sku: '',
+          description: '<p>Amazing <strong>blue</strong> widget</p>',
+        },
       ];
       const results = searchProducts(products, 'blue', { searchFields: ['description'] });
       expect(results.length).toBeGreaterThan(0);
     });
 
     it('should handle products with null name and sku', () => {
-      const products = [
-        { id: 1, name: null, sku: null, price: '10.00' },
-      ];
+      const products = [{ id: 1, name: null, sku: null, price: '10.00' }];
       const results = searchProducts(products, 'test');
       // Should not crash, may return 0 results
       expect(Array.isArray(results)).toBe(true);
     });
 
     it('should return empty for very short query with high fuzzy threshold', () => {
-      const products = [
-        { id: 1, name: 'A very long product name', sku: 'XY', price: '10.00' },
-      ];
+      const products = [{ id: 1, name: 'A very long product name', sku: 'XY', price: '10.00' }];
       // Single char query shouldn't trigger fuzzy matching
       const results = searchProducts(products, 'Z', { minScore: 0.5 });
       expect(results.length).toBe(0);
@@ -301,7 +309,11 @@ describe('searchService - edge cases', () => {
 
     it('should handle custom search field on order', () => {
       const orders = [
-        { id: 1, billing: { first_name: 'A', last_name: 'B', email: '' }, payment_method: 'stripe' },
+        {
+          id: 1,
+          billing: { first_name: 'A', last_name: 'B', email: '' },
+          payment_method: 'stripe',
+        },
       ];
       const results = searchOrders(orders, 'stripe', {
         searchFields: ['payment_method'],
@@ -344,8 +356,22 @@ describe('searchService - edge cases', () => {
 
     it('should filter by category', () => {
       const products = [
-        { id: 1, stock_status: 'instock', price: '10', stock_quantity: 5, status: 'publish', categories: [{ id: 15, name: 'Clothing' }] },
-        { id: 2, stock_status: 'instock', price: '20', stock_quantity: 3, status: 'publish', categories: [{ id: 20, name: 'Electronics' }] },
+        {
+          id: 1,
+          stock_status: 'instock',
+          price: '10',
+          stock_quantity: 5,
+          status: 'publish',
+          categories: [{ id: 15, name: 'Clothing' }],
+        },
+        {
+          id: 2,
+          stock_status: 'instock',
+          price: '20',
+          stock_quantity: 3,
+          status: 'publish',
+          categories: [{ id: 20, name: 'Electronics' }],
+        },
       ];
       const results = applyProductFilters(products, { category: '15' });
       expect(results.length).toBe(1);
@@ -354,7 +380,14 @@ describe('searchService - edge cases', () => {
 
     it('should pass "all" category filter', () => {
       const products = [
-        { id: 1, stock_status: 'instock', price: '10', stock_quantity: 5, status: 'publish', categories: [{ id: 15 }] },
+        {
+          id: 1,
+          stock_status: 'instock',
+          price: '10',
+          stock_quantity: 5,
+          status: 'publish',
+          categories: [{ id: 15 }],
+        },
       ];
       const results = applyProductFilters(products, { category: 'all' });
       expect(results.length).toBe(1);
@@ -395,8 +428,20 @@ describe('searchService - edge cases', () => {
   describe('applyOrderFilters - edge cases', () => {
     it('should handle "all" status filter', () => {
       const orders = [
-        { id: 1, status: 'processing', total: '50', date_created: '2025-01-10', payment_method: 'stripe' },
-        { id: 2, status: 'completed', total: '100', date_created: '2025-01-15', payment_method: 'paypal' },
+        {
+          id: 1,
+          status: 'processing',
+          total: '50',
+          date_created: '2025-01-10',
+          payment_method: 'stripe',
+        },
+        {
+          id: 2,
+          status: 'completed',
+          total: '100',
+          date_created: '2025-01-15',
+          payment_method: 'paypal',
+        },
       ];
       const results = applyOrderFilters(orders, { status: 'all' });
       expect(results.length).toBe(2);
@@ -404,7 +449,13 @@ describe('searchService - edge cases', () => {
 
     it('should handle "all" payment method filter', () => {
       const orders = [
-        { id: 1, status: 'processing', total: '50', date_created: '2025-01-10', payment_method: 'stripe' },
+        {
+          id: 1,
+          status: 'processing',
+          total: '50',
+          date_created: '2025-01-10',
+          payment_method: 'stripe',
+        },
       ];
       const results = applyOrderFilters(orders, { paymentMethod: 'all' });
       expect(results.length).toBe(1);
@@ -412,8 +463,20 @@ describe('searchService - edge cases', () => {
 
     it('should handle only dateFrom filter', () => {
       const orders = [
-        { id: 1, status: 'processing', total: '50', date_created: '2025-01-10', payment_method: 'stripe' },
-        { id: 2, status: 'processing', total: '100', date_created: '2025-02-15', payment_method: 'stripe' },
+        {
+          id: 1,
+          status: 'processing',
+          total: '50',
+          date_created: '2025-01-10',
+          payment_method: 'stripe',
+        },
+        {
+          id: 2,
+          status: 'processing',
+          total: '100',
+          date_created: '2025-02-15',
+          payment_method: 'stripe',
+        },
       ];
       const results = applyOrderFilters(orders, { dateFrom: '2025-02-01' });
       expect(results.length).toBe(1);
@@ -422,8 +485,20 @@ describe('searchService - edge cases', () => {
 
     it('should handle only dateTo filter', () => {
       const orders = [
-        { id: 1, status: 'processing', total: '50', date_created: '2025-01-10', payment_method: 'stripe' },
-        { id: 2, status: 'processing', total: '100', date_created: '2025-02-15', payment_method: 'stripe' },
+        {
+          id: 1,
+          status: 'processing',
+          total: '50',
+          date_created: '2025-01-10',
+          payment_method: 'stripe',
+        },
+        {
+          id: 2,
+          status: 'processing',
+          total: '100',
+          date_created: '2025-02-15',
+          payment_method: 'stripe',
+        },
       ];
       const results = applyOrderFilters(orders, { dateTo: '2025-01-31' });
       expect(results.length).toBe(1);
@@ -432,8 +507,20 @@ describe('searchService - edge cases', () => {
 
     it('should handle only totalMin filter', () => {
       const orders = [
-        { id: 1, status: 'processing', total: '25', date_created: '2025-01-10', payment_method: 'stripe' },
-        { id: 2, status: 'processing', total: '100', date_created: '2025-01-10', payment_method: 'stripe' },
+        {
+          id: 1,
+          status: 'processing',
+          total: '25',
+          date_created: '2025-01-10',
+          payment_method: 'stripe',
+        },
+        {
+          id: 2,
+          status: 'processing',
+          total: '100',
+          date_created: '2025-01-10',
+          payment_method: 'stripe',
+        },
       ];
       const results = applyOrderFilters(orders, { totalMin: '50' });
       expect(results.length).toBe(1);
@@ -442,7 +529,13 @@ describe('searchService - edge cases', () => {
 
     it('should handle NaN total in orders', () => {
       const orders = [
-        { id: 1, status: 'processing', total: 'invalid', date_created: '2025-01-10', payment_method: 'stripe' },
+        {
+          id: 1,
+          status: 'processing',
+          total: 'invalid',
+          date_created: '2025-01-10',
+          payment_method: 'stripe',
+        },
       ];
       // Invalid total should become 0
       const results = applyOrderFilters(orders, { totalMin: '1' });

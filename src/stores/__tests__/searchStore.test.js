@@ -238,10 +238,7 @@ describe('searchStore', () => {
           });
         });
 
-        const store1Searches = result.current.getRecentSearchesFor(
-          null,
-          'store-1'
-        );
+        const store1Searches = result.current.getRecentSearchesFor(null, 'store-1');
 
         expect(store1Searches).toHaveLength(2);
         store1Searches.forEach((s) => expect(s.storeId).toBe('store-1'));
@@ -268,10 +265,7 @@ describe('searchStore', () => {
           });
         });
 
-        const filtered = result.current.getRecentSearchesFor(
-          'products',
-          'store-1'
-        );
+        const filtered = result.current.getRecentSearchesFor('products', 'store-1');
 
         expect(filtered).toHaveLength(1);
         expect(filtered[0].query).toBe('test1');
@@ -454,10 +448,7 @@ describe('searchStore', () => {
           });
         });
 
-        const store1Presets = result.current.getFilterPresetsForType(
-          'products',
-          'store-1'
-        );
+        const store1Presets = result.current.getFilterPresetsForType('products', 'store-1');
 
         expect(store1Presets).toHaveLength(1);
         expect(store1Presets[0].name).toBe('Preset 1');
@@ -479,10 +470,7 @@ describe('searchStore', () => {
           });
         });
 
-        const presets = result.current.getFilterPresetsForType(
-          'products',
-          'store-1'
-        );
+        const presets = result.current.getFilterPresetsForType('products', 'store-1');
 
         expect(presets).toHaveLength(2);
       });

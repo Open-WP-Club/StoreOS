@@ -125,7 +125,9 @@ export function OrderNotesSection({
                       {note.customer_note && (
                         <>
                           <span>•</span>
-                          <span className="text-blue-600 dark:text-blue-400">Видима за клиента</span>
+                          <span className="text-blue-600 dark:text-blue-400">
+                            Видима за клиента
+                          </span>
                         </>
                       )}
                     </div>
@@ -147,9 +149,7 @@ export function OrderNotesSection({
             ))}
           </div>
         ) : !loadingNotes ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
-            Няма бележки
-          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">Няма бележки</p>
         ) : null}
       </div>
     </div>

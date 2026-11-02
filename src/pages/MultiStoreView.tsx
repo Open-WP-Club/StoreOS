@@ -64,7 +64,7 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
 
           // Try to get orders from cache first (using store-specific method)
           try {
-            const cachedOrders = await getCachedOrders(store.id) as Order[] | null;
+            const cachedOrders = (await getCachedOrders(store.id)) as Order[] | null;
             if (cachedOrders && Array.isArray(cachedOrders)) {
               orders = cachedOrders;
             }
@@ -74,7 +74,11 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
 
           // If no cached orders, fetch from API
           if (orders.length === 0) {
-            const ordersResult = await service.getAllOrders({ per_page: 100, orderby: 'date', order: 'desc' });
+            const ordersResult = await service.getAllOrders({
+              per_page: 100,
+              orderby: 'date',
+              order: 'desc',
+            });
             orders = ordersResult.success ? ordersResult.data : [];
             // Note: We don't save to cache here to avoid store switching
             // The individual store pages will handle caching
@@ -82,7 +86,7 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
 
           // Try to get products from cache first (using store-specific method)
           try {
-            const cachedProducts = await getCachedProducts(store.id) as Product[] | null;
+            const cachedProducts = (await getCachedProducts(store.id)) as Product[] | null;
             if (cachedProducts && Array.isArray(cachedProducts)) {
               products = cachedProducts;
             }
@@ -104,7 +108,10 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
           ).length;
 
           const lowStockProducts = products.filter(
-            (p) => p.stock_quantity !== null && p.stock_quantity !== undefined && p.stock_quantity <= lowStockThreshold
+            (p) =>
+              p.stock_quantity !== null &&
+              p.stock_quantity !== undefined &&
+              p.stock_quantity <= lowStockThreshold
           );
 
           const recentOrders = orders.slice(0, 5); // Get 5 most recent
@@ -150,7 +157,9 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
       );
 
       // Sort by date (most recent first)
-      combinedOrders.sort((a, b) => new Date(b.date_created).getTime() - new Date(a.date_created).getTime());
+      combinedOrders.sort(
+        (a, b) => new Date(b.date_created).getTime() - new Date(a.date_created).getTime()
+      );
 
       setAllOrders(combinedOrders);
     } catch (err) {
@@ -234,8 +243,7 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
   };
 
   const filteredOrders = allOrders.filter((order) => {
-    const matchesStatus =
-      selectedStatuses.length === 0 || selectedStatuses.includes(order.status);
+    const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(order.status);
     const matchesSearch =
       searchTerm === '' ||
       order.id.toString().includes(searchTerm) ||
@@ -251,9 +259,12 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
     return (
       <div className="text-center py-12">
         <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400"></div>
-        <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">Loading data from all stores...</p>
+        <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">
+          Loading data from all stores...
+        </p>
         <p className="mt-2 text-gray-500 dark:text-gray-400 text-sm max-w-md mx-auto">
-          Fetching orders, products, and inventory from {stores.length} store{stores.length !== 1 ? 's' : ''}
+          Fetching orders, products, and inventory from {stores.length} store
+          {stores.length !== 1 ? 's' : ''}
         </p>
       </div>
     );
@@ -282,7 +293,15 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
   }
 
   const metrics = aggregateMetrics();
-  const statuses: string[] = ['pending', 'processing', 'on-hold', 'completed', 'cancelled', 'refunded', 'failed'];
+  const statuses: string[] = [
+    'pending',
+    'processing',
+    'on-hold',
+    'completed',
+    'cancelled',
+    'refunded',
+    'failed',
+  ];
 
   return (
     <div>
@@ -299,7 +318,9 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-3xl">📦</span>
-            <span className="text-3xl font-bold text-blue-600 dark:text-blue-400">{metrics.totalOrders}</span>
+            <span className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+              {metrics.totalOrders}
+            </span>
           </div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Total Orders</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Across all stores</p>
@@ -308,7 +329,9 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-3xl">⏳</span>
-            <span className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{metrics.pendingOrders}</span>
+            <span className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
+              {metrics.pendingOrders}
+            </span>
           </div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Pending Orders</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Needs attention</p>
@@ -317,7 +340,9 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-3xl">🛍️</span>
-            <span className="text-3xl font-bold text-green-600 dark:text-green-400">{metrics.totalProducts}</span>
+            <span className="text-3xl font-bold text-green-600 dark:text-green-400">
+              {metrics.totalProducts}
+            </span>
           </div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Total Products</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Combined catalog</p>
@@ -326,7 +351,9 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-3xl">⚠️</span>
-            <span className="text-3xl font-bold text-red-600 dark:text-red-400">{metrics.lowStock}</span>
+            <span className="text-3xl font-bold text-red-600 dark:text-red-400">
+              {metrics.lowStock}
+            </span>
           </div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Low Stock Items</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Across all stores</p>
@@ -356,19 +383,27 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <p className="text-gray-500 dark:text-gray-400">Orders</p>
-                    <p className="font-semibold text-gray-900 dark:text-white">{data.metrics.totalOrders}</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">
+                      {data.metrics.totalOrders}
+                    </p>
                   </div>
                   <div>
                     <p className="text-gray-500 dark:text-gray-400">Pending</p>
-                    <p className="font-semibold text-yellow-600 dark:text-yellow-400">{data.metrics.pendingOrders}</p>
+                    <p className="font-semibold text-yellow-600 dark:text-yellow-400">
+                      {data.metrics.pendingOrders}
+                    </p>
                   </div>
                   <div>
                     <p className="text-gray-500 dark:text-gray-400">Products</p>
-                    <p className="font-semibold text-gray-900 dark:text-white">{data.metrics.totalProducts}</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">
+                      {data.metrics.totalProducts}
+                    </p>
                   </div>
                   <div>
                     <p className="text-gray-500 dark:text-gray-400">Low Stock</p>
-                    <p className="font-semibold text-red-600 dark:text-red-400">{data.metrics.lowStock}</p>
+                    <p className="font-semibold text-red-600 dark:text-red-400">
+                      {data.metrics.lowStock}
+                    </p>
                   </div>
                 </div>
               )}
@@ -410,9 +445,7 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
                   key={status}
                   onClick={() => {
                     setSelectedStatuses((prev) =>
-                      prev.includes(status)
-                        ? prev.filter((s) => s !== status)
-                        : [...prev, status]
+                      prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]
                     );
                   }}
                   className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
@@ -459,13 +492,19 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                  <td
+                    colSpan={7}
+                    className="px-6 py-12 text-center text-gray-500 dark:text-gray-400"
+                  >
                     No orders found
                   </td>
                 </tr>
               ) : (
                 filteredOrders.slice(0, 50).map((order) => (
-                  <tr key={`${order.storeId}-${order.id}`} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <tr
+                    key={`${order.storeId}-${order.id}`}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                       #{order.id}
                     </td>
@@ -478,7 +517,9 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
                       <div>
                         {order.billing?.first_name || ''} {order.billing?.last_name || ''}
                       </div>
-                      <div className="text-gray-500 dark:text-gray-400 text-xs">{order.billing?.email || ''}</div>
+                      <div className="text-gray-500 dark:text-gray-400 text-xs">
+                        {order.billing?.email || ''}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {new Date(order.date_created).toLocaleDateString()}
@@ -490,7 +531,9 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <select
                         value={order.status}
-                        onChange={(e: ChangeEvent<HTMLSelectElement>) => handleStatusChange(order, e.target.value)}
+                        onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+                          handleStatusChange(order, e.target.value)
+                        }
                         className={`px-2 py-1 rounded-full text-xs font-medium border-none cursor-pointer ${getStatusColor(
                           order.status
                         )}`}
@@ -534,8 +577,12 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
       {metrics.lowStock > 0 && (
         <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-md">
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Low Stock Alerts</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Products with 5 or fewer items in stock</p>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Low Stock Alerts
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Products with 5 or fewer items in stock
+            </p>
           </div>
           <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {storeData.map((data) =>
@@ -593,8 +640,12 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
       {/* Recent Activity */}
       <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-md">
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Order Activity</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Latest orders from all stores</p>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Recent Order Activity
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Latest orders from all stores
+          </p>
         </div>
         <div className="divide-y divide-gray-200 dark:divide-gray-700">
           {allOrders.slice(0, 10).map((order) => (
@@ -605,7 +656,9 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-gray-900 dark:text-white">Order #{order.id}</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      Order #{order.id}
+                    </span>
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300">
                       {order.storeName}
                     </span>

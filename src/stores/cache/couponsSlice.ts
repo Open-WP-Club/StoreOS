@@ -7,7 +7,10 @@ import type { CacheStore, CouponsSlice } from './types';
 
 type Mutators = [['zustand/immer', never]];
 
-export const createCouponsSlice: StateCreator<CacheStore, Mutators, [], CouponsSlice> = (set, get) => ({
+export const createCouponsSlice: StateCreator<CacheStore, Mutators, [], CouponsSlice> = (
+  set,
+  get
+) => ({
   getCachedCoupons: async (currentStoreId: string): Promise<WooCommerceCoupon[] | null> => {
     const state = get();
     const now = Date.now();

@@ -57,7 +57,9 @@ export function useOrderNotes(
   // need notes for changes (including on mount, via the NOT_SYNCED sentinel),
   // instead of synchronously inside the effect.
   // See https://react.dev/learn/you-might-not-need-an-effect
-  const [prevOrderId, setPrevOrderId] = useState<number | undefined | typeof NOT_SYNCED>(NOT_SYNCED);
+  const [prevOrderId, setPrevOrderId] = useState<number | undefined | typeof NOT_SYNCED>(
+    NOT_SYNCED
+  );
   if (prevOrderId !== order?.id) {
     setPrevOrderId(order?.id);
     if (order && activeStore) {

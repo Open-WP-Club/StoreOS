@@ -8,7 +8,9 @@ import { createMockStore, createMockOrder, createMockProduct } from '../../__tes
 vi.mock('../../stores', () => ({
   useStoreConfig: vi.fn(),
   useCache: vi.fn(),
-  useTheme: vi.fn((selector?: (state: unknown) => unknown) => selector ? selector({ theme: 'light' }) : { theme: 'light' }),
+  useTheme: vi.fn((selector?: (state: unknown) => unknown) =>
+    selector ? selector({ theme: 'light' }) : { theme: 'light' }
+  ),
 }));
 
 vi.mock('../../services/woocommerce');
@@ -68,8 +70,16 @@ const mockSetCachedData = vi.fn();
 describe('AnalyticsPage', () => {
   const mockStore = createMockStore();
   const orders = [
-    createMockOrder({ status: 'completed', total: '100.00', date_created: new Date().toISOString() }),
-    createMockOrder({ status: 'processing', total: '50.00', date_created: new Date().toISOString() }),
+    createMockOrder({
+      status: 'completed',
+      total: '100.00',
+      date_created: new Date().toISOString(),
+    }),
+    createMockOrder({
+      status: 'processing',
+      total: '50.00',
+      date_created: new Date().toISOString(),
+    }),
   ];
   const products = [createMockProduct(), createMockProduct()];
 
@@ -81,10 +91,12 @@ describe('AnalyticsPage', () => {
     });
     mockSetCachedData.mockResolvedValue(undefined);
 
-    (useStoreConfig as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
-      const state = { getCurrentStore: () => mockStore };
-      return selector ? selector(state) : state;
-    });
+    (useStoreConfig as unknown as Mock).mockImplementation(
+      (selector?: (state: unknown) => unknown) => {
+        const state = { getCurrentStore: () => mockStore };
+        return selector ? selector(state) : state;
+      }
+    );
 
     (useCache as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
       const state = {
@@ -98,10 +110,12 @@ describe('AnalyticsPage', () => {
       return selector ? selector(state) : state;
     });
 
-    (WooCommerceService as unknown as Mock).mockImplementation(function () { return {
-      getAllOrders: vi.fn().mockResolvedValue({ success: true, data: orders }),
-      getAllProducts: vi.fn().mockResolvedValue({ success: true, data: products }),
-    }; });
+    (WooCommerceService as unknown as Mock).mockImplementation(function () {
+      return {
+        getAllOrders: vi.fn().mockResolvedValue({ success: true, data: orders }),
+        getAllProducts: vi.fn().mockResolvedValue({ success: true, data: products }),
+      };
+    });
   });
 
   it('should render analytics page', async () => {

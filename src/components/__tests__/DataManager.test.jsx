@@ -152,11 +152,13 @@ describe('DataManager', () => {
     });
 
     // WooCommerceService constructor mock
-    WooCommerceService.mockImplementation(function () { return {
-      getAllOrders: mockGetAllOrders,
-      getAllProducts: mockGetAllProducts,
-      getProductsSince: mockGetProductsSince,
-    }; });
+    WooCommerceService.mockImplementation(function () {
+      return {
+        getAllOrders: mockGetAllOrders,
+        getAllProducts: mockGetAllProducts,
+        getProductsSince: mockGetProductsSince,
+      };
+    });
   });
 
   afterEach(() => {
@@ -421,11 +423,13 @@ describe('DataManager', () => {
         finishLoading: mockFinishLoading,
         isCancelled: mockIsCancelled,
       });
-      WooCommerceService.mockImplementation(function () { return {
-        getAllOrders: mockGetAllOrders,
-        getAllProducts: mockGetAllProducts,
-        getProductsSince: mockGetProductsSince,
-      }; });
+      WooCommerceService.mockImplementation(function () {
+        return {
+          getAllOrders: mockGetAllOrders,
+          getAllProducts: mockGetAllProducts,
+          getProductsSince: mockGetProductsSince,
+        };
+      });
 
       rerender(<DataManager />);
 

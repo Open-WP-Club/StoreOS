@@ -46,11 +46,7 @@ const mockOrders = [
 ];
 
 const renderWithRouter = (ui) => {
-  return render(
-    <MemoryRouter>
-      {ui}
-    </MemoryRouter>
-  );
+  return render(<MemoryRouter>{ui}</MemoryRouter>);
 };
 
 describe('QuickSwitcher', () => {
@@ -92,14 +88,14 @@ describe('QuickSwitcher', () => {
 
     searchProducts.mockImplementation((products, query) => {
       if (query.toLowerCase().includes('test')) {
-        return products.filter(p => p.name.toLowerCase().includes('test'));
+        return products.filter((p) => p.name.toLowerCase().includes('test'));
       }
       return [];
     });
 
     searchOrders.mockImplementation((orders, query) => {
       if (query.includes('101')) {
-        return orders.filter(o => o.id === 101);
+        return orders.filter((o) => o.id === 101);
       }
       return [];
     });

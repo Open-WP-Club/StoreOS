@@ -72,9 +72,7 @@ describe('startupMetrics', () => {
 
       // Marks should be sorted by timestamp
       for (let i = 1; i < report.marks.length; i++) {
-        expect(report.marks[i].timestamp).toBeGreaterThanOrEqual(
-          report.marks[i - 1].timestamp
-        );
+        expect(report.marks[i].timestamp).toBeGreaterThanOrEqual(report.marks[i - 1].timestamp);
       }
     });
 
@@ -106,9 +104,7 @@ describe('startupMetrics', () => {
     it('should log startup performance report', () => {
       startupMetrics.logReport();
 
-      expect(consoleGroupSpy).toHaveBeenCalledWith(
-        '🚀 Startup Performance Report'
-      );
+      expect(consoleGroupSpy).toHaveBeenCalledWith('🚀 Startup Performance Report');
       expect(consoleLogSpy).toHaveBeenCalled();
       expect(consoleGroupEndSpy).toHaveBeenCalled();
     });
@@ -117,8 +113,8 @@ describe('startupMetrics', () => {
       startupMetrics.logReport();
 
       const logCalls = consoleLogSpy.mock.calls.map((call) => call[0]);
-      const hasStartupTime = logCalls.some((msg) =>
-        typeof msg === 'string' && msg.includes('Total startup time')
+      const hasStartupTime = logCalls.some(
+        (msg) => typeof msg === 'string' && msg.includes('Total startup time')
       );
 
       expect(hasStartupTime).toBe(true);

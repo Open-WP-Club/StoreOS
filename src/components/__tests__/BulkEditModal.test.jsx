@@ -190,9 +190,7 @@ describe('BulkEditModal', () => {
     });
 
     it('should show saving state while saving', async () => {
-      const slowSave = vi.fn(
-        () => new Promise((resolve) => setTimeout(resolve, 100))
-      );
+      const slowSave = vi.fn(() => new Promise((resolve) => setTimeout(resolve, 100)));
       render(<BulkEditModal {...defaultProps} onSave={slowSave} />);
 
       await userEvent.click(screen.getByRole('button', { name: /preview changes/i }));
@@ -229,9 +227,7 @@ describe('BulkEditModal', () => {
     });
 
     it('should disable the confirm button while saving', async () => {
-      const slowSave = vi.fn(
-        () => new Promise((resolve) => setTimeout(resolve, 100))
-      );
+      const slowSave = vi.fn(() => new Promise((resolve) => setTimeout(resolve, 100)));
       render(<BulkEditModal {...defaultProps} onSave={slowSave} />);
 
       await userEvent.click(screen.getByRole('button', { name: /preview changes/i }));

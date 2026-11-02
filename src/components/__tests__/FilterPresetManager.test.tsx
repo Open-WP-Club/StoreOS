@@ -25,8 +25,20 @@ describe('FilterPresetManager', () => {
   };
 
   const mockPresets = [
-    { id: 'preset-1', name: 'Low Stock', type: 'products', filters: { stockMin: 5 }, storeId: 'store-1' },
-    { id: 'preset-2', name: 'Global Filter', type: 'products', filters: { status: 'draft' }, storeId: 'all' },
+    {
+      id: 'preset-1',
+      name: 'Low Stock',
+      type: 'products',
+      filters: { stockMin: 5 },
+      storeId: 'store-1',
+    },
+    {
+      id: 'preset-2',
+      name: 'Global Filter',
+      type: 'products',
+      filters: { status: 'draft' },
+      storeId: 'all',
+    },
   ];
 
   beforeEach(() => {
@@ -36,10 +48,12 @@ describe('FilterPresetManager', () => {
     mockAddFilterPreset.mockReturnValue({ id: 'new-preset', name: 'Test', filters: {} });
 
     // Re-set mock implementations (resetMocks clears them between tests)
-    mockUseStoreConfig.mockImplementation((selector: (state: Record<string, unknown>) => unknown) => {
-      const state = { getCurrentStore: mockGetCurrentStore };
-      return selector(state);
-    });
+    mockUseStoreConfig.mockImplementation(
+      (selector: (state: Record<string, unknown>) => unknown) => {
+        const state = { getCurrentStore: mockGetCurrentStore };
+        return selector(state);
+      }
+    );
     mockUseSearch.mockImplementation((selector: (state: Record<string, unknown>) => unknown) => {
       const state = {
         getFilterPresetsForType: mockGetFilterPresetsForType,
@@ -148,10 +162,7 @@ describe('FilterPresetManager', () => {
 
   it('should disable save button when no active filters', () => {
     render(
-      <FilterPresetManager
-        {...defaultProps}
-        currentFilters={{ status: 'all', stockStatus: '' }}
-      />
+      <FilterPresetManager {...defaultProps} currentFilters={{ status: 'all', stockStatus: '' }} />
     );
 
     fireEvent.click(screen.getByText('Presets'));
@@ -211,9 +222,7 @@ describe('FilterPresetManager', () => {
     // Save
     fireEvent.click(screen.getByText('Save Preset'));
 
-    expect(mockAddFilterPreset).toHaveBeenCalledWith(
-      expect.objectContaining({ storeId: 'all' })
-    );
+    expect(mockAddFilterPreset).toHaveBeenCalledWith(expect.objectContaining({ storeId: 'all' }));
   });
 
   it('should close save modal on Cancel', () => {
@@ -236,9 +245,13 @@ describe('FilterPresetManager', () => {
     fireEvent.click(screen.getByText('Presets'));
 
     // Find delete buttons by their classes
-    const trashButtons = screen.getAllByRole('button').filter(
-      (btn) => btn.className.includes('hover:text-red-600') || btn.className.includes('hover:text-red-400')
-    );
+    const trashButtons = screen
+      .getAllByRole('button')
+      .filter(
+        (btn) =>
+          btn.className.includes('hover:text-red-600') ||
+          btn.className.includes('hover:text-red-400')
+      );
     if (trashButtons.length > 0) {
       fireEvent.click(trashButtons[0]!);
       expect(window.confirm).toHaveBeenCalledWith('Delete this filter preset?');
@@ -253,9 +266,13 @@ describe('FilterPresetManager', () => {
 
     fireEvent.click(screen.getByText('Presets'));
 
-    const trashButtons = screen.getAllByRole('button').filter(
-      (btn) => btn.className.includes('hover:text-red-600') || btn.className.includes('hover:text-red-400')
-    );
+    const trashButtons = screen
+      .getAllByRole('button')
+      .filter(
+        (btn) =>
+          btn.className.includes('hover:text-red-600') ||
+          btn.className.includes('hover:text-red-400')
+      );
     if (trashButtons.length > 0) {
       fireEvent.click(trashButtons[0]!);
       expect(mockDeleteFilterPreset).not.toHaveBeenCalled();

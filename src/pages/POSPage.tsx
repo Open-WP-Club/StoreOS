@@ -145,12 +145,24 @@ export default function POSPage(): ReactElement {
       }
 
       if (checkout.showCheckout) {
-        if (e.key === 'F1') { e.preventDefault(); setPaymentMethod('cash'); }
-        if (e.key === 'F2') { e.preventDefault(); setPaymentMethod('card'); }
-        if (e.key === 'F3') { e.preventDefault(); setPaymentMethod('other'); }
+        if (e.key === 'F1') {
+          e.preventDefault();
+          setPaymentMethod('cash');
+        }
+        if (e.key === 'F2') {
+          e.preventDefault();
+          setPaymentMethod('card');
+        }
+        if (e.key === 'F3') {
+          e.preventDefault();
+          setPaymentMethod('other');
+        }
         if (e.key === 'F4' || (e.key === 'Enter' && !isInputField)) {
           e.preventDefault();
-          if (!checkout.processingOrder && (paymentMethod !== 'cash' || amountTendered >= getTotal())) {
+          if (
+            !checkout.processingOrder &&
+            (paymentMethod !== 'cash' || amountTendered >= getTotal())
+          ) {
             checkout.handleCheckout();
           }
         }
@@ -158,7 +170,9 @@ export default function POSPage(): ReactElement {
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    return () => { document.removeEventListener('keydown', handleKeyDown); };
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, [
     cart,
     checkout,
@@ -288,7 +302,9 @@ export default function POSPage(): ReactElement {
           categorySearch={productsHook.categorySearch}
           onCategorySearchChange={productsHook.setCategorySearch}
           showCategoryDropdown={productsHook.showCategoryDropdown}
-          onToggleCategoryDropdown={() => productsHook.setShowCategoryDropdown(!productsHook.showCategoryDropdown)}
+          onToggleCategoryDropdown={() =>
+            productsHook.setShowCategoryDropdown(!productsHook.showCategoryDropdown)
+          }
           onCloseCategoryDropdown={() => productsHook.setShowCategoryDropdown(false)}
           categories={productsHook.categories}
           filteredCategories={productsHook.filteredCategories}

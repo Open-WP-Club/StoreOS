@@ -100,7 +100,18 @@ describe('OrderItemsTable', () => {
   it('renders shipping total when > 0', () => {
     const order = createOrder({
       shipping_total: '5.00',
-      shipping_lines: [{ id: 1, method_title: 'Flat Rate', method_id: 'flat', instance_id: '', total: '5.00', total_tax: '0', taxes: [], meta_data: [] }],
+      shipping_lines: [
+        {
+          id: 1,
+          method_title: 'Flat Rate',
+          method_id: 'flat',
+          instance_id: '',
+          total: '5.00',
+          total_tax: '0',
+          taxes: [],
+          meta_data: [],
+        },
+      ],
     });
     render(<OrderItemsTable order={order} onOpenLightbox={vi.fn()} />);
     expect(screen.getByText(/Flat Rate/)).toBeInTheDocument();

@@ -5,11 +5,34 @@ import BulkEditModal from '../BulkEditModal';
 import type { WooCommerceProduct } from '../../types';
 
 const prod = (over: Record<string, unknown>) =>
-  ({ regular_price: '', sale_price: '', stock_quantity: null, categories: [], ...over }) as unknown as WooCommerceProduct;
+  ({
+    regular_price: '',
+    sale_price: '',
+    stock_quantity: null,
+    categories: [],
+    ...over,
+  }) as unknown as WooCommerceProduct;
 
-const A = prod({ id: 1, name: 'Alpha', regular_price: '100.00', sale_price: '80.00', stock_quantity: 5, categories: [{ id: 3, name: 'Shoes', slug: 's' }] });
-const B = prod({ id: 2, name: 'Beta', regular_price: '50.00', categories: [{ id: 4, name: 'Hats', slug: 'h' }] });
-const C = prod({ id: 3, name: 'Gamma', regular_price: '', categories: [{ id: 3, name: 'Shoes', slug: 's' }] });
+const A = prod({
+  id: 1,
+  name: 'Alpha',
+  regular_price: '100.00',
+  sale_price: '80.00',
+  stock_quantity: 5,
+  categories: [{ id: 3, name: 'Shoes', slug: 's' }],
+});
+const B = prod({
+  id: 2,
+  name: 'Beta',
+  regular_price: '50.00',
+  categories: [{ id: 4, name: 'Hats', slug: 'h' }],
+});
+const C = prod({
+  id: 3,
+  name: 'Gamma',
+  regular_price: '',
+  categories: [{ id: 3, name: 'Shoes', slug: 's' }],
+});
 
 const onSave = vi.fn();
 const onClose = vi.fn();
@@ -113,7 +136,9 @@ describe('BulkEditModal field -> payload mapping', () => {
     fireEvent.change(screen.getAllByRole('combobox')[0]!, { target: { value: 'decrease' } });
     fireEvent.change(screen.getByPlaceholderText('Value'), { target: { value: '10' } });
     fireEvent.change(screen.getAllByRole('combobox')[1]!, { target: { value: 'percent' } });
-    fireEvent.change(screen.getByLabelText(/sale start date/i), { target: { value: '2030-01-01' } });
+    fireEvent.change(screen.getByLabelText(/sale start date/i), {
+      target: { value: '2030-01-01' },
+    });
     await confirm();
     expect(onSave).toHaveBeenCalledWith([
       { id: 1, sale_price: '72.00', date_on_sale_from: '2030-01-01' },

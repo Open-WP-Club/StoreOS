@@ -9,11 +9,7 @@ export function searchProducts(
   query: string,
   options: SearchOptions = {}
 ): ProductSearchResult[] {
-  const {
-    fuzzyThreshold = 0.6,
-    searchFields = ['name', 'sku', 'id'],
-    minScore = 0.3,
-  } = options;
+  const { fuzzyThreshold = 0.6, searchFields = ['name', 'sku', 'id'], minScore = 0.3 } = options;
 
   if (!query || query.trim() === '') {
     return products as ProductSearchResult[];
@@ -70,7 +66,13 @@ export function searchProducts(
  */
 export function applyProductFilters(
   products: WooCommerceProduct[],
-  filters: Partial<ProductFilters> & { category?: string; priceMin?: string | number; priceMax?: string | number; stockMin?: string | number; stockMax?: string | number }
+  filters: Partial<ProductFilters> & {
+    category?: string;
+    priceMin?: string | number;
+    priceMax?: string | number;
+    stockMin?: string | number;
+    stockMax?: string | number;
+  }
 ): WooCommerceProduct[] {
   return products.filter((product) => {
     // Stock status filter
@@ -79,8 +81,14 @@ export function applyProductFilters(
     }
 
     // Price range filter - handle both string and number values
-    const priceMinVal = filters.priceMin !== undefined && filters.priceMin !== '' ? parseFloat(String(filters.priceMin)) : null;
-    const priceMaxVal = filters.priceMax !== undefined && filters.priceMax !== '' ? parseFloat(String(filters.priceMax)) : null;
+    const priceMinVal =
+      filters.priceMin !== undefined && filters.priceMin !== ''
+        ? parseFloat(String(filters.priceMin))
+        : null;
+    const priceMaxVal =
+      filters.priceMax !== undefined && filters.priceMax !== ''
+        ? parseFloat(String(filters.priceMax))
+        : null;
 
     if (priceMinVal !== null || priceMaxVal !== null) {
       const price = parseFloat(product.price) || 0;
@@ -89,8 +97,14 @@ export function applyProductFilters(
     }
 
     // Stock quantity filter - handle both string and number values
-    const stockMinVal = filters.stockMin !== undefined && filters.stockMin !== '' ? parseFloat(String(filters.stockMin)) : null;
-    const stockMaxVal = filters.stockMax !== undefined && filters.stockMax !== '' ? parseFloat(String(filters.stockMax)) : null;
+    const stockMinVal =
+      filters.stockMin !== undefined && filters.stockMin !== ''
+        ? parseFloat(String(filters.stockMin))
+        : null;
+    const stockMaxVal =
+      filters.stockMax !== undefined && filters.stockMax !== ''
+        ? parseFloat(String(filters.stockMax))
+        : null;
 
     if (stockMinVal !== null || stockMaxVal !== null) {
       const stock = product.stock_quantity !== null ? product.stock_quantity : 0;

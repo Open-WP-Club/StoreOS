@@ -40,7 +40,7 @@ describe('dateTime utilities - edge cases', () => {
       expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     });
 
-    it('should return today\'s date', () => {
+    it("should return today's date", () => {
       const result = todayString();
       const now = new Date();
       const expected = now.toISOString().split('T')[0];

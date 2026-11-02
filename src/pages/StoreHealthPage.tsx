@@ -113,11 +113,7 @@ function StoreHealthPage(): ReactElement | null {
       } else {
         setError(result.error || 'Failed to fetch system status');
         if (isInvalidCredentials(result)) {
-          toast.error(
-            loadFailureMessage('store health', result),
-            8000,
-            openSetupAction(navigate)
-          );
+          toast.error(loadFailureMessage('store health', result), 8000, openSetupAction(navigate));
         }
       }
     } catch (err) {
@@ -157,7 +153,9 @@ function StoreHealthPage(): ReactElement | null {
         <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-6">
           <div className="flex items-center gap-3 mb-3">
             <XCircle className="w-6 h-6 text-red-500" />
-            <h2 className="text-lg font-semibold text-red-800 dark:text-red-400">Connection Failed</h2>
+            <h2 className="text-lg font-semibold text-red-800 dark:text-red-400">
+              Connection Failed
+            </h2>
           </div>
           <p className="text-red-700 dark:text-red-300 text-sm mb-4">{error}</p>
           <button
@@ -197,7 +195,8 @@ function StoreHealthPage(): ReactElement | null {
       label: 'PHP Version',
       value: env.php_version,
       status: getPhpVersionStatus(env.php_version),
-      detail: parseInt(env.php_version.split('.')[0] ?? '0', 10) < 8 ? 'PHP 8.1+ recommended' : undefined,
+      detail:
+        parseInt(env.php_version.split('.')[0] ?? '0', 10) < 8 ? 'PHP 8.1+ recommended' : undefined,
     },
     {
       label: 'MySQL Version',
@@ -207,7 +206,12 @@ function StoreHealthPage(): ReactElement | null {
     {
       label: 'Memory Limit',
       value: formatBytes(env.wp_memory_limit),
-      status: env.wp_memory_limit >= 268435456 ? 'good' : env.wp_memory_limit >= 134217728 ? 'warning' : 'error',
+      status:
+        env.wp_memory_limit >= 268435456
+          ? 'good'
+          : env.wp_memory_limit >= 134217728
+            ? 'warning'
+            : 'error',
       detail: env.wp_memory_limit < 134217728 ? 'Increase to at least 256MB' : undefined,
     },
     {
@@ -249,19 +253,20 @@ function StoreHealthPage(): ReactElement | null {
     },
   ];
 
-  const overallStatus: HealthStatus = [
-    ...environmentChecks,
-    ...securityChecks,
-  ].some((c) => c.status === 'error')
+  const overallStatus: HealthStatus = [...environmentChecks, ...securityChecks].some(
+    (c) => c.status === 'error'
+  )
     ? 'error'
     : [...environmentChecks, ...securityChecks].some((c) => c.status === 'warning')
       ? 'warning'
       : 'good';
 
   const overallLabel =
-    overallStatus === 'good' ? 'All systems operational' :
-    overallStatus === 'warning' ? 'Some items need attention' :
-    'Critical issues detected';
+    overallStatus === 'good'
+      ? 'All systems operational'
+      : overallStatus === 'warning'
+        ? 'Some items need attention'
+        : 'Critical issues detected';
 
   return (
     <div>
@@ -325,10 +330,15 @@ function StoreHealthPage(): ReactElement | null {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex items-center gap-2">
             <Settings className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-            <h2 className="text-base font-semibold text-gray-900 dark:text-white">Store Settings</h2>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              Store Settings
+            </h2>
           </div>
           <div className="divide-y divide-gray-100 dark:divide-gray-700">
-            <InfoRow label="Currency" value={`${settings.currency} (${settings.currency_symbol})`} />
+            <InfoRow
+              label="Currency"
+              value={`${settings.currency} (${settings.currency_symbol})`}
+            />
             <InfoRow label="Currency Position" value={settings.currency_position} />
             <InfoRow label="Thousand Separator" value={`"${settings.thousand_separator}"`} />
             <InfoRow label="Decimal Separator" value={`"${settings.decimal_separator}"`} />
@@ -395,7 +405,9 @@ function StoreHealthPage(): ReactElement | null {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden lg:col-span-2">
             <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex items-center gap-2">
               <Puzzle className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-              <h2 className="text-base font-semibold text-gray-900 dark:text-white">Integrations</h2>
+              <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+                Integrations
+              </h2>
             </div>
             <div className="divide-y divide-gray-100 dark:divide-gray-700">
               <InfoRow
@@ -433,18 +445,32 @@ function StoreHealthPage(): ReactElement | null {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-gray-50 dark:bg-gray-700/50">
-                    <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Name</th>
-                    <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Version</th>
-                    <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Author</th>
-                    <th className="px-5 py-2.5 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Network</th>
+                    <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                      Name
+                    </th>
+                    <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                      Version
+                    </th>
+                    <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                      Author
+                    </th>
+                    <th className="px-5 py-2.5 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                      Network
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                   {plugins.map((plugin, i) => (
                     <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                      <td className="px-5 py-2.5 text-gray-900 dark:text-white font-medium">{plugin.name}</td>
-                      <td className="px-5 py-2.5 text-gray-600 dark:text-gray-400">{plugin.version}</td>
-                      <td className="px-5 py-2.5 text-gray-600 dark:text-gray-400">{plugin.author}</td>
+                      <td className="px-5 py-2.5 text-gray-900 dark:text-white font-medium">
+                        {plugin.name}
+                      </td>
+                      <td className="px-5 py-2.5 text-gray-600 dark:text-gray-400">
+                        {plugin.version}
+                      </td>
+                      <td className="px-5 py-2.5 text-gray-600 dark:text-gray-400">
+                        {plugin.author}
+                      </td>
                       <td className="px-5 py-2.5 text-center">
                         {plugin.network_activated && (
                           <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
@@ -493,7 +519,9 @@ function HealthSection({
               )}
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-900 dark:text-white">{check.value}</span>
+              <span className="text-sm font-medium text-gray-900 dark:text-white">
+                {check.value}
+              </span>
               <StatusIcon status={check.status} />
             </div>
           </div>

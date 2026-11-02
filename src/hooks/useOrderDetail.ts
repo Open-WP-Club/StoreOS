@@ -27,7 +27,9 @@ interface UseOrderDetailResult {
 export function useOrderDetail(id: string | undefined): UseOrderDetailResult {
   const navigate = useNavigate();
   const getCurrentStore = useStoreConfig((state) => state.getCurrentStore);
-  const ordersFromCache = useCache((state) => state.cache.orders?.data as WooCommerceOrder[] | undefined);
+  const ordersFromCache = useCache(
+    (state) => state.cache.orders?.data as WooCommerceOrder[] | undefined
+  );
   const logActivity = useActivityLog((state) => state.logActivity);
   const activeStore = getCurrentStore();
 
@@ -45,36 +47,39 @@ export function useOrderDetail(id: string | undefined): UseOrderDetailResult {
     return (ordersFromCache.find((o) => o.id === orderId) as Order) || null;
   }, [ordersFromCache, id]);
 
-  const fetchOrderFromApi = useCallback(async (showLoadingState: boolean = true): Promise<void> => {
-    if (!activeStore || !id) return;
+  const fetchOrderFromApi = useCallback(
+    async (showLoadingState: boolean = true): Promise<void> => {
+      if (!activeStore || !id) return;
 
-    try {
-      if (showLoadingState) {
-        setLoading(true);
-      } else {
-        setRefreshing(true);
-      }
-      setError(null);
-
-      const wc = new WooCommerceService(activeStore);
-      const orderData = await wc.getOrder(parseInt(id));
-
-      if (orderData.success) {
-        setOrder(orderData.data);
-      } else {
+      try {
         if (showLoadingState) {
-          setError(orderData.error || 'Failed to load order');
+          setLoading(true);
+        } else {
+          setRefreshing(true);
         }
+        setError(null);
+
+        const wc = new WooCommerceService(activeStore);
+        const orderData = await wc.getOrder(parseInt(id));
+
+        if (orderData.success) {
+          setOrder(orderData.data);
+        } else {
+          if (showLoadingState) {
+            setError(orderData.error || 'Failed to load order');
+          }
+        }
+      } catch {
+        if (showLoadingState) {
+          setError('Failed to load order');
+        }
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-    } catch {
-      if (showLoadingState) {
-        setError('Failed to load order');
-      }
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [activeStore, id]);
+    },
+    [activeStore, id]
+  );
 
   // Render-time adjustment: when `id` changes (including on mount, via the
   // NOT_SYNCED sentinel below), immediately reflect any cached order and
@@ -123,7 +128,10 @@ export function useOrderDetail(id: string | undefined): UseOrderDetailResult {
         });
         showToast('Order status updated successfully', 'success');
       } else {
-        showToast('Failed to update order status: ' + (updatedOrder.error || 'Unknown error'), 'error');
+        showToast(
+          'Failed to update order status: ' + (updatedOrder.error || 'Unknown error'),
+          'error'
+        );
       }
     } catch (err) {
       showToast('Failed to update order status: ' + (err as Error).message, 'error');

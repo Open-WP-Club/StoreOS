@@ -52,7 +52,15 @@ export {
 export { t, getSupportedLanguages, isLanguageSupported, getLanguageInfo } from './i18n';
 
 // Memory monitor utilities
-export { startMemoryMonitor, stopMemoryMonitor, getMemoryUsage, getMemoryStatus, formatBytes, getMemoryReport, clearOldCache } from './memoryMonitor';
+export {
+  startMemoryMonitor,
+  stopMemoryMonitor,
+  getMemoryUsage,
+  getMemoryStatus,
+  formatBytes,
+  getMemoryReport,
+  clearOldCache,
+} from './memoryMonitor';
 
 // Startup metrics
 export { startupMetrics } from './startupMetrics';

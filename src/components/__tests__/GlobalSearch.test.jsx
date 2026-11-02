@@ -39,11 +39,7 @@ const mockOrders = [
 ];
 
 const renderWithRouter = (ui, { route = '/' } = {}) => {
-  return render(
-    <MemoryRouter initialEntries={[route]}>
-      {ui}
-    </MemoryRouter>
-  );
+  return render(<MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>);
 };
 
 describe('GlobalSearch', () => {
@@ -84,7 +80,14 @@ describe('GlobalSearch', () => {
       if (query.toLowerCase().includes('test')) {
         return {
           products: [
-            { id: 1, type: 'product', title: 'Test Product', subtitle: 'SKU: TP001', score: 0.9, data: mockProducts[0] },
+            {
+              id: 1,
+              type: 'product',
+              title: 'Test Product',
+              subtitle: 'SKU: TP001',
+              score: 0.9,
+              data: mockProducts[0],
+            },
           ],
           orders: [],
           customers: [],

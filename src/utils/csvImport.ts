@@ -5,20 +5,18 @@
 import type { Product } from '../types';
 
 export type ImportField =
-  | 'sku'
-  | 'name'
-  | 'regular_price'
-  | 'sale_price'
-  | 'stock_quantity'
-  | 'stock_status'
-  | 'status';
+  'sku' | 'name' | 'regular_price' | 'sale_price' | 'stock_quantity' | 'stock_status' | 'status';
 
 export const IMPORT_FIELDS: { field: ImportField; label: string; aliases: string[] }[] = [
   { field: 'sku', label: 'SKU', aliases: ['sku'] },
   { field: 'name', label: 'Name', aliases: ['product name', 'name'] },
   { field: 'regular_price', label: 'Regular price', aliases: ['regular price', 'regular_price'] },
   { field: 'sale_price', label: 'Sale price', aliases: ['sale price', 'sale_price'] },
-  { field: 'stock_quantity', label: 'Stock quantity', aliases: ['stock', 'stock quantity', 'stock_quantity'] },
+  {
+    field: 'stock_quantity',
+    label: 'Stock quantity',
+    aliases: ['stock', 'stock quantity', 'stock_quantity'],
+  },
   { field: 'stock_status', label: 'Stock status', aliases: ['stock status', 'stock_status'] },
   { field: 'status', label: 'Status', aliases: ['status'] },
 ];
@@ -117,7 +115,9 @@ function validate(field: ImportField, v: string): string | null {
     case 'stock_quantity':
       return /^-?\d+$/.test(v) ? null : `stock_quantity must be an integer (got "${v}")`;
     case 'stock_status':
-      return STOCK_STATUSES.includes(v) ? null : `stock_status must be one of ${STOCK_STATUSES.join('/')}`;
+      return STOCK_STATUSES.includes(v)
+        ? null
+        : `stock_status must be one of ${STOCK_STATUSES.join('/')}`;
     case 'status':
       return STATUSES.includes(v) ? null : `status must be one of ${STATUSES.join('/')}`;
     default:
@@ -142,7 +142,14 @@ export function computeImportDiff(
 
   return rows.slice(1).map((r, i) => {
     const sku = cell(r, 'sku');
-    const out: ImportRow = { line: i + 2, sku, action: 'invalid', changes: [], errors: [], payload: {} };
+    const out: ImportRow = {
+      line: i + 2,
+      sku,
+      action: 'invalid',
+      changes: [],
+      errors: [],
+      payload: {},
+    };
     if (mapping.sku < 0) out.errors.push('SKU column is not mapped');
     else if (!sku) out.errors.push('Missing SKU');
     else if (seen.has(sku)) out.errors.push('Duplicate SKU in file');

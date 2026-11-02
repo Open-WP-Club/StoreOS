@@ -8,7 +8,11 @@ import {
   calculateConcentrationKPIs,
   calculateAllKPIs,
 } from '../kpiCalculator';
-import { createMockOrder, createMockProduct, createMockLineItem } from '../../__test_utils__/mockFactories';
+import {
+  createMockOrder,
+  createMockProduct,
+  createMockLineItem,
+} from '../../__test_utils__/mockFactories';
 import type { WooCommerceOrder, WooCommerceProduct } from '../../types';
 
 // ============================================
@@ -23,7 +27,10 @@ function daysAgo(days: number): string {
   return d.toISOString();
 }
 
-function createOrderInPeriod(daysBack: number, overrides: Partial<WooCommerceOrder> = {}): WooCommerceOrder {
+function createOrderInPeriod(
+  daysBack: number,
+  overrides: Partial<WooCommerceOrder> = {}
+): WooCommerceOrder {
   return createMockOrder({
     date_created: daysAgo(daysBack),
     ...overrides,
@@ -37,11 +44,11 @@ function createOrderInPeriod(daysBack: number, overrides: Partial<WooCommerceOrd
 describe('filterOrdersByPeriod', () => {
   it('splits orders into current and previous period', () => {
     const orders = [
-      createOrderInPeriod(3),   // current (last 7 days)
-      createOrderInPeriod(5),   // current
-      createOrderInPeriod(10),  // previous (7-14 days ago)
-      createOrderInPeriod(12),  // previous
-      createOrderInPeriod(20),  // neither (too old)
+      createOrderInPeriod(3), // current (last 7 days)
+      createOrderInPeriod(5), // current
+      createOrderInPeriod(10), // previous (7-14 days ago)
+      createOrderInPeriod(12), // previous
+      createOrderInPeriod(20), // neither (too old)
     ];
 
     const result = filterOrdersByPeriod(orders, 7);
@@ -58,10 +65,10 @@ describe('filterOrdersByPeriod', () => {
   it('handles single-day period', () => {
     // days=1 means currentStart = 1 day ago, so both today and yesterday are >= currentStart
     const orders = [
-      createOrderInPeriod(0),   // today = current (>= 1 day ago)
-      createOrderInPeriod(1),   // yesterday = current (>= 1 day ago)
-      createOrderInPeriod(2),   // 2 days ago = previous
-      createOrderInPeriod(3),   // too old
+      createOrderInPeriod(0), // today = current (>= 1 day ago)
+      createOrderInPeriod(1), // yesterday = current (>= 1 day ago)
+      createOrderInPeriod(2), // 2 days ago = previous
+      createOrderInPeriod(3), // too old
     ];
 
     const result = filterOrdersByPeriod(orders, 1);
@@ -70,10 +77,7 @@ describe('filterOrdersByPeriod', () => {
   });
 
   it('all orders in current period', () => {
-    const orders = [
-      createOrderInPeriod(1),
-      createOrderInPeriod(2),
-    ];
+    const orders = [createOrderInPeriod(1), createOrderInPeriod(2)];
 
     const result = filterOrdersByPeriod(orders, 30);
     expect(result.current).toHaveLength(2);
@@ -141,9 +145,7 @@ describe('calculateRevenueKPIs', () => {
         createMockOrder({ status: 'processing', total: '100.00' }),
         createMockOrder({ status: 'completed', total: '200.00' }),
       ],
-      previous: [
-        createMockOrder({ status: 'processing', total: '150.00' }),
-      ],
+      previous: [createMockOrder({ status: 'processing', total: '150.00' })],
     };
 
     const result = calculateRevenueKPIs(periodOrders);
@@ -208,13 +210,37 @@ describe('calculateCustomerKPIs', () => {
       current: [
         createMockOrder({
           customer_id: 0,
-          billing: { first_name: 'A', last_name: 'B', company: '', address_1: '', address_2: '', city: '', state: '', postcode: '', country: '', email: 'repeat@test.com', phone: '' },
+          billing: {
+            first_name: 'A',
+            last_name: 'B',
+            company: '',
+            address_1: '',
+            address_2: '',
+            city: '',
+            state: '',
+            postcode: '',
+            country: '',
+            email: 'repeat@test.com',
+            phone: '',
+          },
           status: 'processing',
           total: '50.00',
         }),
         createMockOrder({
           customer_id: 0,
-          billing: { first_name: 'A', last_name: 'B', company: '', address_1: '', address_2: '', city: '', state: '', postcode: '', country: '', email: 'repeat@test.com', phone: '' },
+          billing: {
+            first_name: 'A',
+            last_name: 'B',
+            company: '',
+            address_1: '',
+            address_2: '',
+            city: '',
+            state: '',
+            postcode: '',
+            country: '',
+            email: 'repeat@test.com',
+            phone: '',
+          },
           status: 'processing',
           total: '30.00',
         }),
@@ -231,10 +257,7 @@ describe('calculateCustomerKPIs', () => {
       current: [
         createMockOrder({
           status: 'processing',
-          line_items: [
-            createMockLineItem({ quantity: 3 }),
-            createMockLineItem({ quantity: 2 }),
-          ],
+          line_items: [createMockLineItem({ quantity: 3 }), createMockLineItem({ quantity: 2 })],
         }),
         createMockOrder({
           status: 'processing',
@@ -330,9 +353,7 @@ describe('calculateOperationsKPIs', () => {
 
   it('handles no completed orders for processing time', () => {
     const periodOrders = {
-      current: [
-        createMockOrder({ status: 'processing' }),
-      ],
+      current: [createMockOrder({ status: 'processing' })],
       previous: [],
     };
 
@@ -370,9 +391,7 @@ describe('calculateInventoryKPIs', () => {
         }),
       ],
     };
-    const products = [
-      createMockProduct({ stock_quantity: 100 }),
-    ];
+    const products = [createMockProduct({ stock_quantity: 100 })];
 
     const result = calculateInventoryKPIs(periodOrders, products);
     // current: 10/100 = 0.1, previous: 5/100 = 0.05
@@ -423,9 +442,7 @@ describe('calculateInventoryKPIs', () => {
   });
 
   it('handles products with null stock quantity', () => {
-    const products = [
-      createMockProduct({ stock_quantity: null, price: '10.00' }),
-    ];
+    const products = [createMockProduct({ stock_quantity: null, price: '10.00' })];
 
     const result = calculateInventoryKPIs({ current: [], previous: [] }, products);
     expect(result.inventoryValue.current).toBe(0); // null * 10 = 0
@@ -441,9 +458,7 @@ describe('calculateConcentrationKPIs', () => {
     const orders = [
       createMockOrder({
         status: 'processing',
-        line_items: [
-          createMockLineItem({ product_id: 1, name: 'Big Seller', total: '800.00' }),
-        ],
+        line_items: [createMockLineItem({ product_id: 1, name: 'Big Seller', total: '800.00' })],
       }),
       createMockOrder({
         status: 'processing',
@@ -525,7 +540,11 @@ describe('calculateConcentrationKPIs', () => {
 
   it('returns at most 10 pareto products', () => {
     const lineItems = Array.from({ length: 15 }, (_, i) =>
-      createMockLineItem({ product_id: i + 1, name: `Product ${i + 1}`, total: `${(15 - i) * 10}.00` })
+      createMockLineItem({
+        product_id: i + 1,
+        name: `Product ${i + 1}`,
+        total: `${(15 - i) * 10}.00`,
+      })
     );
 
     const orders = [

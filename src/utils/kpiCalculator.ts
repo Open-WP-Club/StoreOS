@@ -145,11 +145,17 @@ export function calculateRevenueKPIs(periodOrders: PeriodOrders): RevenueKPIs {
   const currentRevenueOrders = current.filter(isRevenueOrder);
   const previousRevenueOrders = previous.filter(isRevenueOrder);
 
-  const currentAOV = currentRevenueOrders.length > 0 ? currentRevenue / currentRevenueOrders.length : 0;
-  const previousAOV = previousRevenueOrders.length > 0 ? previousRevenue / previousRevenueOrders.length : 0;
+  const currentAOV =
+    currentRevenueOrders.length > 0 ? currentRevenue / currentRevenueOrders.length : 0;
+  const previousAOV =
+    previousRevenueOrders.length > 0 ? previousRevenue / previousRevenueOrders.length : 0;
 
   const revenueGrowthRate =
-    previousRevenue > 0 ? ((currentRevenue - previousRevenue) / previousRevenue) * 100 : currentRevenue > 0 ? 100 : 0;
+    previousRevenue > 0
+      ? ((currentRevenue - previousRevenue) / previousRevenue) * 100
+      : currentRevenue > 0
+        ? 100
+        : 0;
 
   return {
     totalRevenue: buildKPIValue(currentRevenue, previousRevenue),
@@ -245,7 +251,10 @@ export function calculateOperationsKPIs(periodOrders: PeriodOrders): OperationsK
   return {
     refundRate: buildKPIValue(calcRefundRate(current), calcRefundRate(previous)),
     orderCompletionRate: buildKPIValue(calcCompletionRate(current), calcCompletionRate(previous)),
-    avgProcessingTimeDays: buildKPIValue(calcAvgProcessingTime(current), calcAvgProcessingTime(previous)),
+    avgProcessingTimeDays: buildKPIValue(
+      calcAvgProcessingTime(current),
+      calcAvgProcessingTime(previous)
+    ),
   };
 }
 
@@ -282,8 +291,10 @@ export function calculateInventoryKPIs(
   // Low stock count: stock_quantity between 1 and threshold, or out of stock
   const lowStockThreshold = useSettings.getState().lowStockThreshold;
   const currentLowStock =
-    products.filter((p) => p.stock_quantity !== null && p.stock_quantity > 0 && p.stock_quantity <= lowStockThreshold).length +
-    products.filter((p) => p.stock_status === 'outofstock').length;
+    products.filter(
+      (p) =>
+        p.stock_quantity !== null && p.stock_quantity > 0 && p.stock_quantity <= lowStockThreshold
+    ).length + products.filter((p) => p.stock_status === 'outofstock').length;
 
   // Inventory doesn't have a previous period value (it's a snapshot), so set previous = current
   return {
@@ -293,9 +304,7 @@ export function calculateInventoryKPIs(
   };
 }
 
-export function calculateConcentrationKPIs(
-  orders: WooCommerceOrder[]
-): ConcentrationKPIs {
+export function calculateConcentrationKPIs(orders: WooCommerceOrder[]): ConcentrationKPIs {
   const revenueOrders = orders.filter(isRevenueOrder);
 
   // Aggregate revenue per product

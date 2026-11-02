@@ -16,7 +16,6 @@ interface EditData {
   short_description: string;
 }
 
-
 interface UseProductActionsResult {
   selectedProduct: Product | null;
   editMode: boolean;
@@ -35,11 +34,27 @@ interface UseProductActionsResult {
   setBulkEditModalOpen: (open: boolean) => void;
   handleEdit: (product: Product) => void;
   handleSave: (products: Product[], setProducts: (p: Product[]) => void) => Promise<void>;
-  handleDelete: (productId: number, products: Product[], setProducts: (p: Product[]) => void) => Promise<void>;
-  handleDuplicate: (product: Product, products: Product[], setProducts: (p: Product[]) => void) => Promise<void>;
-  handleQuickEditPrice: (productId: number, products: Product[], setProducts: (p: Product[]) => void) => Promise<void>;
+  handleDelete: (
+    productId: number,
+    products: Product[],
+    setProducts: (p: Product[]) => void
+  ) => Promise<void>;
+  handleDuplicate: (
+    product: Product,
+    products: Product[],
+    setProducts: (p: Product[]) => void
+  ) => Promise<void>;
+  handleQuickEditPrice: (
+    productId: number,
+    products: Product[],
+    setProducts: (p: Product[]) => void
+  ) => Promise<void>;
   handleBulkDelete: (products: Product[], setProducts: (p: Product[]) => void) => Promise<void>;
-  handleBulkSave: (updates: BatchProductUpdate[], products: Product[], setProducts: (p: Product[]) => void) => Promise<void>;
+  handleBulkSave: (
+    updates: BatchProductUpdate[],
+    products: Product[],
+    setProducts: (p: Product[]) => void
+  ) => Promise<void>;
   handleSelectProduct: (productId: number) => void;
   handleSelectAll: (paginatedProducts: Product[], checked: boolean) => void;
   getSelectedProducts: (products: Product[]) => Product[];
@@ -93,7 +108,10 @@ export function useProductActions(
     });
   };
 
-  const handleSave = async (products: Product[], setProducts: (p: Product[]) => void): Promise<void> => {
+  const handleSave = async (
+    products: Product[],
+    setProducts: (p: Product[]) => void
+  ): Promise<void> => {
     if (!selectedProduct || !currentStore) return;
 
     const service = new WooCommerceService(currentStore);
@@ -101,7 +119,10 @@ export function useProductActions(
       name: editData.name,
       regular_price: editData.regular_price,
       sale_price: editData.sale_price,
-      stock_quantity: typeof editData.stock_quantity === 'string' ? parseInt(editData.stock_quantity) || null : editData.stock_quantity,
+      stock_quantity:
+        typeof editData.stock_quantity === 'string'
+          ? parseInt(editData.stock_quantity) || null
+          : editData.stock_quantity,
       stock_status: editData.stock_status,
       description: editData.description,
       short_description: editData.short_description,
@@ -151,7 +172,11 @@ export function useProductActions(
     });
   };
 
-  const handleDelete = async (productId: number, products: Product[], setProducts: (p: Product[]) => void): Promise<void> => {
+  const handleDelete = async (
+    productId: number,
+    products: Product[],
+    setProducts: (p: Product[]) => void
+  ): Promise<void> => {
     if (!window.confirm('Are you sure you want to delete this product?') || !currentStore) return;
 
     try {
@@ -182,7 +207,11 @@ export function useProductActions(
     }
   };
 
-  const handleDuplicate = async (product: Product, products: Product[], setProducts: (p: Product[]) => void): Promise<void> => {
+  const handleDuplicate = async (
+    product: Product,
+    products: Product[],
+    setProducts: (p: Product[]) => void
+  ): Promise<void> => {
     if (!window.confirm(`Duplicate "${product.name}"?`) || !currentStore) return;
 
     const service = new WooCommerceService(currentStore);
@@ -231,7 +260,11 @@ export function useProductActions(
     });
   };
 
-  const handleQuickEditPrice = async (productId: number, products: Product[], setProducts: (p: Product[]) => void): Promise<void> => {
+  const handleQuickEditPrice = async (
+    productId: number,
+    products: Product[],
+    setProducts: (p: Product[]) => void
+  ): Promise<void> => {
     if (!quickEditPrice || !currentStore) return;
 
     setUpdating(true);
@@ -275,7 +308,12 @@ export function useProductActions(
             storeId: currentStore?.id ?? null,
             storeName: currentStore?.name,
             details: 'Price updated',
-            changes: { regular_price: { from: products.find((p) => p.id === productId)?.regular_price, to: quickEditPrice } },
+            changes: {
+              regular_price: {
+                from: products.find((p) => p.id === productId)?.regular_price,
+                to: quickEditPrice,
+              },
+            },
           });
           showToast('Price updated successfully', 'success');
         },
@@ -286,7 +324,10 @@ export function useProductActions(
     }
   };
 
-  const handleBulkDelete = async (products: Product[], setProducts: (p: Product[]) => void): Promise<void> => {
+  const handleBulkDelete = async (
+    products: Product[],
+    setProducts: (p: Product[]) => void
+  ): Promise<void> => {
     if (
       !window.confirm(`Are you sure you want to delete ${selectedProductIds.length} products?`) ||
       !currentStore
@@ -302,7 +343,10 @@ export function useProductActions(
       const deletedIds = selectedProductIds.filter((id) => !failedIds.includes(id));
       const failedCount = failedIds.length;
       if (deletedIds.length === 0) {
-        showToast(`Error deleting products: ${failedCount} of ${selectedProductIds.length} failed`, 'error');
+        showToast(
+          `Error deleting products: ${failedCount} of ${selectedProductIds.length} failed`,
+          'error'
+        );
         return;
       }
 
@@ -318,7 +362,10 @@ export function useProductActions(
       });
       setSelectedProductIds(selectedProductIds.filter((id) => !deletedIds.includes(id)));
       if (failedCount > 0) {
-        showToast(`${failedCount} of ${selectedProductIds.length} products failed to delete`, 'warning');
+        showToast(
+          `${failedCount} of ${selectedProductIds.length} products failed to delete`,
+          'warning'
+        );
       } else {
         showToast(`Successfully deleted ${deletedIds.length} products`, 'success');
       }
@@ -330,7 +377,11 @@ export function useProductActions(
     }
   };
 
-  const handleBulkSave = async (updates: BatchProductUpdate[], products: Product[], setProducts: (p: Product[]) => void): Promise<void> => {
+  const handleBulkSave = async (
+    updates: BatchProductUpdate[],
+    products: Product[],
+    setProducts: (p: Product[]) => void
+  ): Promise<void> => {
     if (!currentStore) return;
 
     try {
@@ -361,7 +412,10 @@ export function useProductActions(
         });
         setSelectedProductIds([]);
         if (failedIds.length > 0) {
-          showToast(`${failedIds.length} of ${updates.length} products failed to update`, 'warning');
+          showToast(
+            `${failedIds.length} of ${updates.length} products failed to update`,
+            'warning'
+          );
         } else {
           showToast(`Successfully updated ${updates.length} products`, 'success');
         }

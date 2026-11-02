@@ -31,8 +31,9 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
     params: ProductQueryParams = {}
   ): Promise<ApiResponse<WooCommerceProduct[]> & { headers?: Record<string, string> }> {
     try {
-      const response: WooCommerceApiResponse<WooCommerceProduct[]> =
-        await (await this.getApi()).get('products', params);
+      const response: WooCommerceApiResponse<WooCommerceProduct[]> = await (
+        await this.getApi()
+      ).get('products', params);
       return { success: true, data: response.data, headers: response.headers };
     } catch (error) {
       return this.fail(error);
@@ -68,18 +69,23 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
 
   async getProduct(id: number): Promise<ApiResponse<WooCommerceProduct>> {
     try {
-      const response: WooCommerceApiResponse<WooCommerceProduct> =
-        await (await this.getApi()).get(`products/${id}`);
+      const response: WooCommerceApiResponse<WooCommerceProduct> = await (
+        await this.getApi()
+      ).get(`products/${id}`);
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
     }
   }
 
-  async updateProduct(id: number, data: ProductUpdateData): Promise<ApiResponse<WooCommerceProduct>> {
+  async updateProduct(
+    id: number,
+    data: ProductUpdateData
+  ): Promise<ApiResponse<WooCommerceProduct>> {
     try {
-      const response: WooCommerceApiResponse<WooCommerceProduct> =
-        await (await this.getApi()).put(`products/${id}`, data);
+      const response: WooCommerceApiResponse<WooCommerceProduct> = await (
+        await this.getApi()
+      ).put(`products/${id}`, data);
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -88,8 +94,9 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
 
   async createProduct(data: ProductUpdateData): Promise<ApiResponse<WooCommerceProduct>> {
     try {
-      const response: WooCommerceApiResponse<WooCommerceProduct> =
-        await (await this.getApi()).post('products', data);
+      const response: WooCommerceApiResponse<WooCommerceProduct> = await (
+        await this.getApi()
+      ).post('products', data);
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -98,8 +105,9 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
 
   async deleteProduct(id: number): Promise<ApiResponse<WooCommerceProduct>> {
     try {
-      const response: WooCommerceApiResponse<WooCommerceProduct> =
-        await (await this.getApi()).delete(`products/${id}`, { force: true });
+      const response: WooCommerceApiResponse<WooCommerceProduct> = await (
+        await this.getApi()
+      ).delete(`products/${id}`, { force: true });
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -110,11 +118,13 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
     params: ProductQueryParams = {}
   ): Promise<ApiResponse<Partial<WooCommerceProduct>[]>> {
     try {
-      const response: WooCommerceApiResponse<Partial<WooCommerceProduct>[]> =
-        await (await this.getApi()).get('products', {
-          ...params,
-          _fields: 'id,name,sku,price,regular_price,sale_price,stock_quantity,stock_status,status,images',
-        });
+      const response: WooCommerceApiResponse<Partial<WooCommerceProduct>[]> = await (
+        await this.getApi()
+      ).get('products', {
+        ...params,
+        _fields:
+          'id,name,sku,price,regular_price,sale_price,stock_quantity,stock_status,status,images',
+      });
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -129,10 +139,11 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
     updates: BatchProductUpdate | BatchProductUpdate[]
   ): Promise<ApiResponse<BatchOperationResponse<WooCommerceProduct>>> {
     try {
-      const response: WooCommerceApiResponse<BatchOperationResponse<WooCommerceProduct>> =
-        await (await this.getApi()).post('products/batch', {
-          update: Array.isArray(updates) ? updates : [updates],
-        });
+      const response: WooCommerceApiResponse<BatchOperationResponse<WooCommerceProduct>> = await (
+        await this.getApi()
+      ).post('products/batch', {
+        update: Array.isArray(updates) ? updates : [updates],
+      });
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -190,12 +201,13 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
     stockStatus: StockStatus = 'instock'
   ): Promise<ApiResponse<WooCommerceProduct>> {
     try {
-      const response: WooCommerceApiResponse<WooCommerceProduct> =
-        await (await this.getApi()).put(`products/${productId}`, {
-          stock_quantity: quantity,
-          stock_status: stockStatus,
-          manage_stock: true,
-        });
+      const response: WooCommerceApiResponse<WooCommerceProduct> = await (
+        await this.getApi()
+      ).put(`products/${productId}`, {
+        stock_quantity: quantity,
+        stock_status: stockStatus,
+        manage_stock: true,
+      });
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -208,9 +220,7 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
       if (!result.success) return result;
       return {
         success: true,
-        data: result.data.filter(
-          (p) => p.stock_quantity !== null && p.stock_quantity <= threshold
-        ),
+        data: result.data.filter((p) => p.stock_quantity !== null && p.stock_quantity <= threshold),
       };
     } catch (error) {
       return this.fail(error);
@@ -226,10 +236,11 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
     params: { per_page?: number } = {}
   ): Promise<ApiResponse<ProductVariation[]>> {
     try {
-      const response: WooCommerceApiResponse<ProductVariation[]> =
-        await (await this.getApi()).get(`products/${productId}/variations`, {
-          per_page: params.per_page || 100,
-        });
+      const response: WooCommerceApiResponse<ProductVariation[]> = await (
+        await this.getApi()
+      ).get(`products/${productId}/variations`, {
+        per_page: params.per_page || 100,
+      });
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -241,8 +252,9 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
     data: VariationCreateData
   ): Promise<ApiResponse<ProductVariation>> {
     try {
-      const response: WooCommerceApiResponse<ProductVariation> =
-        await (await this.getApi()).post(`products/${productId}/variations`, data);
+      const response: WooCommerceApiResponse<ProductVariation> = await (
+        await this.getApi()
+      ).post(`products/${productId}/variations`, data);
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -255,8 +267,9 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
     data: VariationUpdateData
   ): Promise<ApiResponse<ProductVariation>> {
     try {
-      const response: WooCommerceApiResponse<ProductVariation> =
-        await (await this.getApi()).put(`products/${productId}/variations/${variationId}`, data);
+      const response: WooCommerceApiResponse<ProductVariation> = await (
+        await this.getApi()
+      ).put(`products/${productId}/variations/${variationId}`, data);
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -268,11 +281,9 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
     variationId: number
   ): Promise<ApiResponse<ProductVariation>> {
     try {
-      const response: WooCommerceApiResponse<ProductVariation> =
-        await (await this.getApi()).delete(
-          `products/${productId}/variations/${variationId}`,
-          { force: true }
-        );
+      const response: WooCommerceApiResponse<ProductVariation> = await (
+        await this.getApi()
+      ).delete(`products/${productId}/variations/${variationId}`, { force: true });
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -284,8 +295,9 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
     batch: { create?: VariationCreateData[]; update?: VariationUpdateData[]; delete?: number[] }
   ): Promise<ApiResponse<BatchOperationResponse<ProductVariation>>> {
     try {
-      const response: WooCommerceApiResponse<BatchOperationResponse<ProductVariation>> =
-        await (await this.getApi()).post(`products/${productId}/variations/batch`, batch);
+      const response: WooCommerceApiResponse<BatchOperationResponse<ProductVariation>> = await (
+        await this.getApi()
+      ).post(`products/${productId}/variations/batch`, batch);
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -300,8 +312,9 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
     params: ProductCategoryQueryParams = {}
   ): Promise<ApiResponse<WooCommerceProductCategory[]>> {
     try {
-      const response: WooCommerceApiResponse<WooCommerceProductCategory[]> =
-        await (await this.getApi()).get('products/categories', { per_page: 100, ...params });
+      const response: WooCommerceApiResponse<WooCommerceProductCategory[]> = await (
+        await this.getApi()
+      ).get('products/categories', { per_page: 100, ...params });
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -312,8 +325,9 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
     data: ProductCategoryUpdateData
   ): Promise<ApiResponse<WooCommerceProductCategory>> {
     try {
-      const response: WooCommerceApiResponse<WooCommerceProductCategory> =
-        await (await this.getApi()).post('products/categories', data);
+      const response: WooCommerceApiResponse<WooCommerceProductCategory> = await (
+        await this.getApi()
+      ).post('products/categories', data);
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -325,8 +339,9 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
     data: ProductCategoryUpdateData
   ): Promise<ApiResponse<WooCommerceProductCategory>> {
     try {
-      const response: WooCommerceApiResponse<WooCommerceProductCategory> =
-        await (await this.getApi()).put(`products/categories/${id}`, data);
+      const response: WooCommerceApiResponse<WooCommerceProductCategory> = await (
+        await this.getApi()
+      ).put(`products/categories/${id}`, data);
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -335,8 +350,9 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
 
   async deleteProductCategory(id: number): Promise<ApiResponse<WooCommerceProductCategory>> {
     try {
-      const response: WooCommerceApiResponse<WooCommerceProductCategory> =
-        await (await this.getApi()).delete(`products/categories/${id}`, { force: true });
+      const response: WooCommerceApiResponse<WooCommerceProductCategory> = await (
+        await this.getApi()
+      ).delete(`products/categories/${id}`, { force: true });
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -349,8 +365,9 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
 
   async getProductAttributes(): Promise<ApiResponse<WooCommerceProductAttribute[]>> {
     try {
-      const response: WooCommerceApiResponse<WooCommerceProductAttribute[]> =
-        await (await this.getApi()).get('products/attributes');
+      const response: WooCommerceApiResponse<WooCommerceProductAttribute[]> = await (
+        await this.getApi()
+      ).get('products/attributes');
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -361,8 +378,9 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
     data: ProductAttributeUpdateData
   ): Promise<ApiResponse<WooCommerceProductAttribute>> {
     try {
-      const response: WooCommerceApiResponse<WooCommerceProductAttribute> =
-        await (await this.getApi()).post('products/attributes', data);
+      const response: WooCommerceApiResponse<WooCommerceProductAttribute> = await (
+        await this.getApi()
+      ).post('products/attributes', data);
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -374,8 +392,9 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
     data: ProductAttributeUpdateData
   ): Promise<ApiResponse<WooCommerceProductAttribute>> {
     try {
-      const response: WooCommerceApiResponse<WooCommerceProductAttribute> =
-        await (await this.getApi()).put(`products/attributes/${id}`, data);
+      const response: WooCommerceApiResponse<WooCommerceProductAttribute> = await (
+        await this.getApi()
+      ).put(`products/attributes/${id}`, data);
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -384,8 +403,9 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
 
   async deleteProductAttribute(id: number): Promise<ApiResponse<WooCommerceProductAttribute>> {
     try {
-      const response: WooCommerceApiResponse<WooCommerceProductAttribute> =
-        await (await this.getApi()).delete(`products/attributes/${id}`, { force: true });
+      const response: WooCommerceApiResponse<WooCommerceProductAttribute> = await (
+        await this.getApi()
+      ).delete(`products/attributes/${id}`, { force: true });
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -394,8 +414,9 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
 
   async getAttributeTerms(attributeId: number): Promise<ApiResponse<WooCommerceAttributeTerm[]>> {
     try {
-      const response: WooCommerceApiResponse<WooCommerceAttributeTerm[]> =
-        await (await this.getApi()).get(`products/attributes/${attributeId}/terms`, { per_page: 100 });
+      const response: WooCommerceApiResponse<WooCommerceAttributeTerm[]> = await (
+        await this.getApi()
+      ).get(`products/attributes/${attributeId}/terms`, { per_page: 100 });
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -407,8 +428,9 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
     data: AttributeTermUpdateData
   ): Promise<ApiResponse<WooCommerceAttributeTerm>> {
     try {
-      const response: WooCommerceApiResponse<WooCommerceAttributeTerm> =
-        await (await this.getApi()).post(`products/attributes/${attributeId}/terms`, data);
+      const response: WooCommerceApiResponse<WooCommerceAttributeTerm> = await (
+        await this.getApi()
+      ).post(`products/attributes/${attributeId}/terms`, data);
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -421,11 +443,9 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
     data: AttributeTermUpdateData
   ): Promise<ApiResponse<WooCommerceAttributeTerm>> {
     try {
-      const response: WooCommerceApiResponse<WooCommerceAttributeTerm> =
-        await (await this.getApi()).put(
-          `products/attributes/${attributeId}/terms/${termId}`,
-          data
-        );
+      const response: WooCommerceApiResponse<WooCommerceAttributeTerm> = await (
+        await this.getApi()
+      ).put(`products/attributes/${attributeId}/terms/${termId}`, data);
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -437,11 +457,9 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
     termId: number
   ): Promise<ApiResponse<WooCommerceAttributeTerm>> {
     try {
-      const response: WooCommerceApiResponse<WooCommerceAttributeTerm> =
-        await (await this.getApi()).delete(
-          `products/attributes/${attributeId}/terms/${termId}`,
-          { force: true }
-        );
+      const response: WooCommerceApiResponse<WooCommerceAttributeTerm> = await (
+        await this.getApi()
+      ).delete(`products/attributes/${attributeId}/terms/${termId}`, { force: true });
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);

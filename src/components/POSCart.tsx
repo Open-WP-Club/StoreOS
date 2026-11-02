@@ -170,10 +170,7 @@ export function POSCart({
           </div>
         ) : (
           cart.map((item) => (
-            <div
-              key={item.product.id}
-              className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3"
-            >
+            <div key={item.product.id} className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
               <div className="flex items-start gap-3">
                 <div className="w-12 h-12 rounded-lg bg-gray-200 dark:bg-gray-600 overflow-hidden flex-shrink-0">
                   {item.product.images?.[0]?.src ? (
@@ -376,7 +373,9 @@ export function POSCart({
               </button>
               <button
                 onClick={onCheckout}
-                disabled={processingOrder || (paymentMethod === 'cash' && amountTendered < getTotal())}
+                disabled={
+                  processingOrder || (paymentMethod === 'cash' && amountTendered < getTotal())
+                }
                 className="flex-1 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
               >
                 {processingOrder ? (

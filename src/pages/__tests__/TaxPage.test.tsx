@@ -75,7 +75,13 @@ describe('TaxPage', () => {
       data: [rate(), rate({ id: 2, country: 'DE', rate: '7', class: 'reduced', compound: true })],
     });
     m.getTaxClasses.mockResolvedValue({ success: true, data: classes });
-    for (const k of ['createTaxRate', 'updateTaxRate', 'deleteTaxRate', 'createTaxClass', 'deleteTaxClass'] as const) {
+    for (const k of [
+      'createTaxRate',
+      'updateTaxRate',
+      'deleteTaxRate',
+      'createTaxClass',
+      'deleteTaxClass',
+    ] as const) {
       m[k].mockResolvedValue({ success: true, data: {} });
     }
   });
@@ -175,7 +181,9 @@ describe('TaxPage', () => {
     await user.click(screen.getByRole('button', { name: /add tax rate/i }));
     await user.type(screen.getByLabelText('Rate (%) *'), '5');
     await user.click(screen.getByRole('button', { name: 'Create' }));
-    await waitFor(() => expect(m.showToast).toHaveBeenCalledWith('Failed to save tax rate', 'error'));
+    await waitFor(() =>
+      expect(m.showToast).toHaveBeenCalledWith('Failed to save tax rate', 'error')
+    );
     expect(screen.getByText('New Tax Rate')).toBeInTheDocument();
   });
 

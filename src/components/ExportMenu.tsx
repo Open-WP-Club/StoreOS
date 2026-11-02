@@ -9,7 +9,13 @@ interface ExportMenuProps {
   disabled?: boolean;
 }
 
-export default function ExportMenu({ onExportCSV, onExportPDF, onPrint, onImport, disabled }: ExportMenuProps): ReactElement {
+export default function ExportMenu({
+  onExportCSV,
+  onExportPDF,
+  onPrint,
+  onImport,
+  disabled,
+}: ExportMenuProps): ReactElement {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 

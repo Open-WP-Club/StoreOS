@@ -19,9 +19,27 @@ function wrapper({ children }: { children: ReactNode }) {
 
 describe('useProductFilters', () => {
   const products = [
-    createMockProduct({ id: 1, name: 'Product A', stock_status: 'instock', stock_quantity: 50, price: '10.00' }),
-    createMockProduct({ id: 2, name: 'Product B', stock_status: 'outofstock', stock_quantity: 0, price: '20.00' }),
-    createMockProduct({ id: 3, name: 'Product C', stock_status: 'instock', stock_quantity: 3, price: '30.00' }),
+    createMockProduct({
+      id: 1,
+      name: 'Product A',
+      stock_status: 'instock',
+      stock_quantity: 50,
+      price: '10.00',
+    }),
+    createMockProduct({
+      id: 2,
+      name: 'Product B',
+      stock_status: 'outofstock',
+      stock_quantity: 0,
+      price: '20.00',
+    }),
+    createMockProduct({
+      id: 3,
+      name: 'Product C',
+      stock_status: 'instock',
+      stock_quantity: 3,
+      price: '30.00',
+    }),
   ] as WooCommerceProduct[];
 
   beforeEach(() => {
@@ -158,7 +176,14 @@ describe('useProductFilters', () => {
 
     act(() => {
       result.current.handleApplyPreset(
-        { stockStatus: 'instock', status: 'publish', priceMin: '', priceMax: '', stockMin: '', stockMax: '' },
+        {
+          stockStatus: 'instock',
+          status: 'publish',
+          priceMin: '',
+          priceMax: '',
+          stockMin: '',
+          stockMax: '',
+        },
         mockShowToast
       );
     });

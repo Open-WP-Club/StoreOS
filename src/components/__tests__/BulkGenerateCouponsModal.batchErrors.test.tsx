@@ -7,7 +7,12 @@ describe('BulkGenerateCouponsModal', () => {
   it('counts per-item batch errors as failures and only passes real coupons', async () => {
     const batchCreateCoupons = vi.fn().mockResolvedValue({
       success: true,
-      data: { create: [{ id: 1, code: 'A' }, { id: 0, error: { code: 'dup' } }] },
+      data: {
+        create: [
+          { id: 1, code: 'A' },
+          { id: 0, error: { code: 'dup' } },
+        ],
+      },
     });
     const onGenerated = vi.fn();
     render(

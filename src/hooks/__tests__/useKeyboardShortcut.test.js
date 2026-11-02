@@ -183,10 +183,9 @@ describe('useKeyboardShortcut', () => {
     const callback1 = vi.fn();
     const callback2 = vi.fn();
 
-    const { rerender } = renderHook(
-      ({ cb }) => useKeyboardShortcut('ctrl+k', cb),
-      { initialProps: { cb: callback1 } }
-    );
+    const { rerender } = renderHook(({ cb }) => useKeyboardShortcut('ctrl+k', cb), {
+      initialProps: { cb: callback1 },
+    });
 
     const event = new KeyboardEvent('keydown', {
       key: 'k',

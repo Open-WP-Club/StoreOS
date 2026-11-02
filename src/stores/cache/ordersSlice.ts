@@ -13,7 +13,10 @@ const FINAL_STATUSES = ['completed', 'cancelled', 'refunded', 'failed', 'trash']
  * Orders slice: split active/final caching (see cacheStore.ts module docs
  * for the overall cache strategy).
  */
-export const createOrdersSlice: StateCreator<CacheStore, Mutators, [], OrdersSlice> = (set, get) => ({
+export const createOrdersSlice: StateCreator<CacheStore, Mutators, [], OrdersSlice> = (
+  set,
+  get
+) => ({
   saveOrdersSync: async (storeId, sync) => {
     try {
       await saveToCache(STORES.ORDERS, `${storeId}_lastSync`, sync);

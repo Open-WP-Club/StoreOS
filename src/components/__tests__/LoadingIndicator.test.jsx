@@ -95,10 +95,7 @@ describe('LoadingIndicator', () => {
 
     const status = screen.getByRole('status');
     expect(status).toHaveAttribute('aria-live', 'polite');
-    expect(status).toHaveAttribute(
-      'aria-label',
-      'Loading products: 50 of 100 items'
-    );
+    expect(status).toHaveAttribute('aria-label', 'Loading products: 50 of 100 items');
   });
 
   it('should have correct progressbar ARIA attributes', () => {

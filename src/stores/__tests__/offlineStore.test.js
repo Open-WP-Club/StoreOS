@@ -330,7 +330,11 @@ describe('offlineStore', () => {
       let operationId1, operationId2;
       act(() => {
         operationId1 = result.current.addPendingOperation('update_order', { id: 1 }, 'store-1');
-        operationId2 = result.current.addPendingOperation('create_product', { name: 'Test' }, 'store-1');
+        operationId2 = result.current.addPendingOperation(
+          'create_product',
+          { name: 'Test' },
+          'store-1'
+        );
       });
 
       // Increment operation1 to MAX_RETRY_COUNT (3)

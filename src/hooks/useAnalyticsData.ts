@@ -70,7 +70,15 @@ export interface DataQuality {
 
 const EMPTY_STATS: AnalyticsStats = {
   revenue: { total: 0, average: 0, completed: 0, pending: 0 },
-  orders: { total: 0, completed: 0, processing: 0, pending: 0, cancelled: 0, refunded: 0, failed: 0 },
+  orders: {
+    total: 0,
+    completed: 0,
+    processing: 0,
+    pending: 0,
+    cancelled: 0,
+    refunded: 0,
+    failed: 0,
+  },
   products: { total: 0, inStock: 0, lowStock: 0, outOfStock: 0, inventoryValue: 0 },
   topProducts: [],
   revenueByDay: [],
@@ -131,11 +139,13 @@ export function useAnalyticsData({
         .filter((o) => o.status === 'pending' || o.status === 'processing')
         .reduce((s, o) => s + parseFloat(o.total || '0'), 0);
 
-      const productRevenue: Record<string, { name: string; revenue: number; quantity: number }> = {};
+      const productRevenue: Record<string, { name: string; revenue: number; quantity: number }> =
+        {};
       filtered.forEach((order) => {
         order.line_items?.forEach((item) => {
           const id = String(item.product_id);
-          if (!productRevenue[id]) productRevenue[id] = { name: item.name, revenue: 0, quantity: 0 };
+          if (!productRevenue[id])
+            productRevenue[id] = { name: item.name, revenue: 0, quantity: 0 };
           productRevenue[id].revenue += parseFloat(item.total || '0');
           productRevenue[id].quantity += parseInt(String(item.quantity || 0));
         });
@@ -173,7 +183,10 @@ export function useAnalyticsData({
           total: products.length,
           inStock: products.filter((p) => p.stock_status === 'instock').length,
           lowStock: products.filter(
-            (p) => p.stock_quantity !== null && p.stock_quantity <= lowStockThreshold && p.stock_quantity > 0
+            (p) =>
+              p.stock_quantity !== null &&
+              p.stock_quantity <= lowStockThreshold &&
+              p.stock_quantity > 0
           ).length,
           outOfStock: products.filter((p) => p.stock_status === 'outofstock').length,
           inventoryValue: products.reduce((s, p) => {
@@ -185,13 +198,18 @@ export function useAnalyticsData({
           .sort((a, b) => b.revenue - a.revenue)
           .slice(0, 5),
         revenueByDay: sortedDates.map((date) => ({ date, revenue: dailyData[date]?.revenue ?? 0 })),
-        ordersByDay: sortedDates.map((date) => ({ date, revenue: 0, orders: dailyData[date]?.orders ?? 0 })),
+        ordersByDay: sortedDates.map((date) => ({
+          date,
+          revenue: 0,
+          orders: dailyData[date]?.orders ?? 0,
+        })),
       });
 
       setDataQuality({
         hasEnoughOrders: filtered.length >= 5,
         hasEnoughProducts: products.length >= 3,
-        hasEnoughHistory: filtered.filter((o) => new Date(o.date_created) >= sevenDaysAgo).length >= 3,
+        hasEnoughHistory:
+          filtered.filter((o) => new Date(o.date_created) >= sevenDaysAgo).length >= 3,
         lastUpdated: new Date(),
         isCalculating: false,
       });

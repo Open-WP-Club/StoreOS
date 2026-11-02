@@ -228,10 +228,7 @@ const resourcePatterns = {
  * @param resource - The expected resource type
  * @returns boolean
  */
-export function isResourceUrl(
-  url: string,
-  resource: keyof typeof resourcePatterns
-): boolean {
+export function isResourceUrl(url: string, resource: keyof typeof resourcePatterns): boolean {
   try {
     return resourcePatterns[resource].test(url);
   } catch {

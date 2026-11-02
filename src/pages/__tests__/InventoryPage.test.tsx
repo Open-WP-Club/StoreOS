@@ -28,29 +28,57 @@ vi.mock('../../constants', () => ({
 }));
 
 // Mock child components
-vi.mock('../../components/ExportMenu', () => ({ default: function MockExportMenu({ onExportCSV, onExportPDF }: { onExportCSV: () => void; onExportPDF: () => void }) {
-  return (
-    <div>
-      <button onClick={onExportCSV}>Export CSV</button>
-      <button onClick={onExportPDF}>Export PDF</button>
-    </div>
-  );
-} }));
-vi.mock('../../components/Pagination', () => ({ default: function MockPagination() { return <div data-testid="pagination" />; } }));
-vi.mock('../../components/BulkEditModal', () => ({ default: function MockBulkEditModal({ isOpen }: { isOpen: boolean }) {
-  return isOpen ? <div data-testid="bulk-edit-modal" /> : null;
-} }));
-vi.mock('../../components/ToastContainer', () => ({ default: function MockToastContainer() { return <div data-testid="toast-container" />; } }));
-vi.mock('../../components/LoadingIndicator', () => ({ default: function MockLoadingIndicator() { return null; } }));
-vi.mock('../../components/StatCard', () => ({ default: function MockStatCard({ label, value }: { label: string; value: number }) {
-  return <div data-testid={`stat-${label.toLowerCase().replace(/\s/g, '-')}`}>{value}</div>;
-} }));
-vi.mock('../../components/PageHeader', () => ({ default: function MockPageHeader({ title }: { title: string }) {
-  return <h1>{title}</h1>;
-} }));
-vi.mock('../../components/EmptyState', () => ({ default: function MockEmptyState({ title }: { title: string }) {
-  return <div data-testid="empty-state">{title}</div>;
-} }));
+vi.mock('../../components/ExportMenu', () => ({
+  default: function MockExportMenu({
+    onExportCSV,
+    onExportPDF,
+  }: {
+    onExportCSV: () => void;
+    onExportPDF: () => void;
+  }) {
+    return (
+      <div>
+        <button onClick={onExportCSV}>Export CSV</button>
+        <button onClick={onExportPDF}>Export PDF</button>
+      </div>
+    );
+  },
+}));
+vi.mock('../../components/Pagination', () => ({
+  default: function MockPagination() {
+    return <div data-testid="pagination" />;
+  },
+}));
+vi.mock('../../components/BulkEditModal', () => ({
+  default: function MockBulkEditModal({ isOpen }: { isOpen: boolean }) {
+    return isOpen ? <div data-testid="bulk-edit-modal" /> : null;
+  },
+}));
+vi.mock('../../components/ToastContainer', () => ({
+  default: function MockToastContainer() {
+    return <div data-testid="toast-container" />;
+  },
+}));
+vi.mock('../../components/LoadingIndicator', () => ({
+  default: function MockLoadingIndicator() {
+    return null;
+  },
+}));
+vi.mock('../../components/StatCard', () => ({
+  default: function MockStatCard({ label, value }: { label: string; value: number }) {
+    return <div data-testid={`stat-${label.toLowerCase().replace(/\s/g, '-')}`}>{value}</div>;
+  },
+}));
+vi.mock('../../components/PageHeader', () => ({
+  default: function MockPageHeader({ title }: { title: string }) {
+    return <h1>{title}</h1>;
+  },
+}));
+vi.mock('../../components/EmptyState', () => ({
+  default: function MockEmptyState({ title }: { title: string }) {
+    return <div data-testid="empty-state">{title}</div>;
+  },
+}));
 
 let mockStore: ReturnType<typeof createMockStore> | undefined;
 let mockProducts: Product[];
@@ -65,10 +93,42 @@ const mockBatchUpdateProducts = vi.fn();
 
 function createProducts(): Product[] {
   return [
-    createMockProduct({ id: 1, name: 'Widget A', sku: 'WA', price: '10.00', stock_status: 'instock', stock_quantity: 50, manage_stock: true }) as Product,
-    createMockProduct({ id: 2, name: 'Widget B', sku: 'WB', price: '20.00', stock_status: 'instock', stock_quantity: 3, manage_stock: true }) as Product,
-    createMockProduct({ id: 3, name: 'Widget C', sku: 'WC', price: '30.00', stock_status: 'outofstock', stock_quantity: 0, manage_stock: true }) as Product,
-    createMockProduct({ id: 4, name: 'Gadget', sku: 'GA', price: '40.00', stock_status: 'instock', stock_quantity: null, manage_stock: false }) as Product,
+    createMockProduct({
+      id: 1,
+      name: 'Widget A',
+      sku: 'WA',
+      price: '10.00',
+      stock_status: 'instock',
+      stock_quantity: 50,
+      manage_stock: true,
+    }) as Product,
+    createMockProduct({
+      id: 2,
+      name: 'Widget B',
+      sku: 'WB',
+      price: '20.00',
+      stock_status: 'instock',
+      stock_quantity: 3,
+      manage_stock: true,
+    }) as Product,
+    createMockProduct({
+      id: 3,
+      name: 'Widget C',
+      sku: 'WC',
+      price: '30.00',
+      stock_status: 'outofstock',
+      stock_quantity: 0,
+      manage_stock: true,
+    }) as Product,
+    createMockProduct({
+      id: 4,
+      name: 'Gadget',
+      sku: 'GA',
+      price: '40.00',
+      stock_status: 'instock',
+      stock_quantity: null,
+      manage_stock: false,
+    }) as Product,
   ];
 }
 
@@ -76,10 +136,12 @@ beforeEach(() => {
   mockStore = createMockStore();
   mockProducts = createProducts();
 
-  (useStoreConfig as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
-    const state = { getCurrentStore: () => mockStore };
-    return selector ? selector(state) : state;
-  });
+  (useStoreConfig as unknown as Mock).mockImplementation(
+    (selector?: (state: unknown) => unknown) => {
+      const state = { getCurrentStore: () => mockStore };
+      return selector ? selector(state) : state;
+    }
+  );
 
   (useCache as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
     const state = {
@@ -90,10 +152,12 @@ beforeEach(() => {
     return selector ? selector(state) : state;
   });
 
-  (useActivityLog as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
-    const state = { logActivity: mockLogActivity };
-    return selector ? selector(state) : state;
-  });
+  (useActivityLog as unknown as Mock).mockImplementation(
+    (selector?: (state: unknown) => unknown) => {
+      const state = { logActivity: mockLogActivity };
+      return selector ? selector(state) : state;
+    }
+  );
 
   (useSettings as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
     const state = { lowStockThreshold: 5 };
@@ -110,12 +174,14 @@ beforeEach(() => {
     loadingState: { isLoading: false },
   });
 
-  (WooCommerceService as Mock).mockImplementation(function () { return {
-    updateStock: mockUpdateStock,
-    deleteProduct: mockDeleteProduct,
-    batchProducts: mockBatchProducts,
-    batchUpdateProducts: mockBatchUpdateProducts,
-  }; });
+  (WooCommerceService as Mock).mockImplementation(function () {
+    return {
+      updateStock: mockUpdateStock,
+      deleteProduct: mockDeleteProduct,
+      batchProducts: mockBatchProducts,
+      batchUpdateProducts: mockBatchUpdateProducts,
+    };
+  });
 
   window.confirm = vi.fn(() => true);
   window.scrollTo = vi.fn();

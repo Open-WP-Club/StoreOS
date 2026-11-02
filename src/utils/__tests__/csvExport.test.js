@@ -5,8 +5,8 @@ describe('csvExport utilities', () => {
   describe('convertToCSV', () => {
     const testData = [
       { id: 1, name: 'Product A', price: 10.99, category: { name: 'Electronics' } },
-      { id: 2, name: 'Product B', price: 20.50, category: { name: 'Books' } },
-      { id: 3, name: 'Product C', price: 5.00, category: { name: 'Toys' } },
+      { id: 2, name: 'Product B', price: 20.5, category: { name: 'Books' } },
+      { id: 3, name: 'Product C', price: 5.0, category: { name: 'Toys' } },
     ];
 
     const simpleColumns = [
@@ -158,7 +158,6 @@ describe('csvExport utilities', () => {
       expect(removeChildSpy).toHaveBeenCalled();
       expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
     });
-
   });
 
   describe('exportToCSV', () => {

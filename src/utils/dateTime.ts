@@ -131,9 +131,7 @@ export const toPlainDate = (date: DateInput): string | null => {
 
   try {
     if (hasTemporalAPI) {
-      const instant = Temporal.Instant.from(
-        typeof date === 'string' ? date : date.toISOString()
-      );
+      const instant = Temporal.Instant.from(typeof date === 'string' ? date : date.toISOString());
       return instant.toZonedDateTimeISO(Temporal.Now.timeZoneId()).toPlainDate().toString();
     }
     return new Date(date).toISOString().split('T')[0] ?? null;
@@ -152,10 +150,14 @@ export const daysBetween = (startDate: DateInput, endDate: DateInput): number | 
   try {
     if (hasTemporalAPI) {
       const start = Temporal.PlainDate.from(
-        typeof startDate === 'string' ? (startDate.split('T')[0] ?? '') : (startDate.toISOString().split('T')[0] ?? '')
+        typeof startDate === 'string'
+          ? (startDate.split('T')[0] ?? '')
+          : (startDate.toISOString().split('T')[0] ?? '')
       );
       const end = Temporal.PlainDate.from(
-        typeof endDate === 'string' ? (endDate.split('T')[0] ?? '') : (endDate.toISOString().split('T')[0] ?? '')
+        typeof endDate === 'string'
+          ? (endDate.split('T')[0] ?? '')
+          : (endDate.toISOString().split('T')[0] ?? '')
       );
       return start.until(end, { largestUnit: 'day' }).days;
     }
@@ -178,7 +180,9 @@ export const addDays = (date: DateInput, days: number): string | null => {
   try {
     if (hasTemporalAPI) {
       const plainDate = Temporal.PlainDate.from(
-        typeof date === 'string' ? (date.split('T')[0] ?? '') : (date.toISOString().split('T')[0] ?? '')
+        typeof date === 'string'
+          ? (date.split('T')[0] ?? '')
+          : (date.toISOString().split('T')[0] ?? '')
       );
       return plainDate.add({ days }).toString();
     }

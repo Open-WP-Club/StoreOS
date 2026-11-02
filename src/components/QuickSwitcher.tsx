@@ -1,15 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Search,
-  Clock,
-  Package,
-  ShoppingCart,
-  BarChart3,
-  Store,
-  Settings,
-  X,
-} from 'lucide-react';
+import { Search, Clock, Package, ShoppingCart, BarChart3, Store, Settings, X } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useStoreConfig, useCache, useSearch } from '../stores';
 import { useKeyboardShortcut, getShortcutDisplay } from '../hooks/useKeyboardShortcut';
@@ -115,7 +106,11 @@ function QuickSwitcher(): React.ReactElement | null {
         sublabel: `${product.sku || 'No SKU'} - $${product.price}`,
         action: () => {
           navigate(`/products/${product.id}`);
-          addRecentSearch({ query: product.name, type: 'products', storeId: currentStore?.id ?? null });
+          addRecentSearch({
+            query: product.name,
+            type: 'products',
+            storeId: currentStore?.id ?? null,
+          });
           setIsOpen(false);
         },
         category: 'Products',

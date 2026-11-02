@@ -20,8 +20,9 @@ export class WooCommerceServiceCustomers extends WooCommerceServiceProducts {
     params: CustomerQueryParams = {}
   ): Promise<ApiResponse<WooCommerceCustomer[]> & { headers?: Record<string, string> }> {
     try {
-      const response: WooCommerceApiResponse<WooCommerceCustomer[]> =
-        await (await this.getApi()).get('customers', params);
+      const response: WooCommerceApiResponse<WooCommerceCustomer[]> = await (
+        await this.getApi()
+      ).get('customers', params);
       return { success: true, data: response.data, headers: response.headers };
     } catch (error) {
       return this.fail(error);
@@ -43,8 +44,9 @@ export class WooCommerceServiceCustomers extends WooCommerceServiceProducts {
 
   async getCustomer(id: number): Promise<ApiResponse<WooCommerceCustomer>> {
     try {
-      const response: WooCommerceApiResponse<WooCommerceCustomer> =
-        await (await this.getApi()).get(`customers/${id}`);
+      const response: WooCommerceApiResponse<WooCommerceCustomer> = await (
+        await this.getApi()
+      ).get(`customers/${id}`);
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -56,8 +58,9 @@ export class WooCommerceServiceCustomers extends WooCommerceServiceProducts {
     data: Partial<WooCommerceCustomer>
   ): Promise<ApiResponse<WooCommerceCustomer>> {
     try {
-      const response: WooCommerceApiResponse<WooCommerceCustomer> =
-        await (await this.getApi()).put(`customers/${id}`, data);
+      const response: WooCommerceApiResponse<WooCommerceCustomer> = await (
+        await this.getApi()
+      ).put(`customers/${id}`, data);
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -69,8 +72,9 @@ export class WooCommerceServiceCustomers extends WooCommerceServiceProducts {
     params: OrderQueryParams = {}
   ): Promise<ApiResponse<WooCommerceOrder[]>> {
     try {
-      const response: WooCommerceApiResponse<WooCommerceOrder[]> =
-        await (await this.getApi()).get('orders', { ...params, customer: customerId });
+      const response: WooCommerceApiResponse<WooCommerceOrder[]> = await (
+        await this.getApi()
+      ).get('orders', { ...params, customer: customerId });
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);

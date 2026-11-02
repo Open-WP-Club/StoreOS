@@ -24,7 +24,8 @@ function renderModal() {
 const type = (label: string | RegExp, value: string) =>
   fireEvent.change(screen.getByLabelText(label), { target: { value } });
 
-const generateBtn = () => screen.getByRole('button', { name: /^generate \d+ coupons$|generating/i });
+const generateBtn = () =>
+  screen.getByRole('button', { name: /^generate \d+ coupons$|generating/i });
 
 beforeEach(() => {
   batchCreateCoupons.mockResolvedValue(okCreate(10));
@@ -148,7 +149,11 @@ describe('BulkGenerateCouponsModal', () => {
     await userEvent.click(generateBtn());
     await waitFor(() => expect(batchCreateCoupons).toHaveBeenCalled());
     const batch = batchCreateCoupons.mock.calls[0]![0] as Array<Record<string, unknown>>;
-    expect(batch[0]).toMatchObject({ date_expires: null, usage_limit: null, usage_limit_per_user: null });
+    expect(batch[0]).toMatchObject({
+      date_expires: null,
+      usage_limit: null,
+      usage_limit_per_user: null,
+    });
     expect(batch[0]!.code).toMatch(/^[A-Z2-9]{6}$/);
   });
 

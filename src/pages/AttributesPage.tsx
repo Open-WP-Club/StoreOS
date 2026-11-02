@@ -297,7 +297,10 @@ function AttributesPage(): React.ReactElement {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="attr-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="attr-name"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 Name *
               </label>
               <input
@@ -310,7 +313,10 @@ function AttributesPage(): React.ReactElement {
               />
             </div>
             <div>
-              <label htmlFor="attr-slug" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="attr-slug"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 Slug
               </label>
               <input
@@ -323,7 +329,10 @@ function AttributesPage(): React.ReactElement {
               />
             </div>
             <div>
-              <label htmlFor="attr-order-by" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="attr-order-by"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 Sort By
               </label>
               <select
@@ -351,10 +360,7 @@ function AttributesPage(): React.ReactElement {
                 onChange={(e) => setAttrForm({ ...attrForm, has_archives: e.target.checked })}
                 className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
               />
-              <label
-                htmlFor="has_archives"
-                className="text-sm text-gray-700 dark:text-gray-300"
-              >
+              <label htmlFor="has_archives" className="text-sm text-gray-700 dark:text-gray-300">
                 Enable archives
               </label>
             </div>
@@ -386,11 +392,15 @@ function AttributesPage(): React.ReactElement {
       {showTermForm && termAttrId && (
         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-6 space-y-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {editingTermId ? 'Edit Term' : 'New Term'} for &quot;{attributes.find((a) => a.id === termAttrId)?.name}&quot;
+            {editingTermId ? 'Edit Term' : 'New Term'} for &quot;
+            {attributes.find((a) => a.id === termAttrId)?.name}&quot;
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label htmlFor="term-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="term-name"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 Name *
               </label>
               <input
@@ -403,7 +413,10 @@ function AttributesPage(): React.ReactElement {
               />
             </div>
             <div>
-              <label htmlFor="term-slug" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="term-slug"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 Slug
               </label>
               <input
@@ -416,7 +429,10 @@ function AttributesPage(): React.ReactElement {
               />
             </div>
             <div>
-              <label htmlFor="term-description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="term-description"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 Description
               </label>
               <input
@@ -489,9 +505,7 @@ function AttributesPage(): React.ReactElement {
                     )}
                     <Layers className="w-5 h-5 text-purple-500" />
                     <div>
-                      <span className="font-medium text-gray-900 dark:text-white">
-                        {attr.name}
-                      </span>
+                      <span className="font-medium text-gray-900 dark:text-white">{attr.name}</span>
                       <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
                         ({attr.slug}) &middot; Sort: {attr.order_by}
                       </span>

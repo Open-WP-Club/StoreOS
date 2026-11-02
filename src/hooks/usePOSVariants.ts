@@ -28,46 +28,49 @@ export function usePOSVariants(
 
   const requestId = useRef(0);
   const [showVariantPicker, setShowVariantPicker] = useState(false);
-  const [selectedVariableProduct, setSelectedVariableProduct] = useState<WooCommerceProduct | null>(null);
+  const [selectedVariableProduct, setSelectedVariableProduct] = useState<WooCommerceProduct | null>(
+    null
+  );
   const [productVariations, setProductVariations] = useState<ProductVariation[]>([]);
   const [loadingVariations, setLoadingVariations] = useState(false);
 
   const getVariationName = (variation: ProductVariation): string => {
     if (variation.attributes && variation.attributes.length > 0) {
-      return variation.attributes
-        .map((attr) => attr.option || attr.name)
-        .join(' / ');
+      return variation.attributes.map((attr) => attr.option || attr.name).join(' / ');
     }
     return `#${variation.id}`;
   };
 
-  const handleProductClick = useCallback(async (product: WooCommerceProduct): Promise<void> => {
-    if (product.type === 'variable' && product.variations && product.variations.length > 0) {
-      const id = ++requestId.current;
-      setSelectedVariableProduct(product);
-      setProductVariations([]);
-      setShowVariantPicker(true);
-      setLoadingVariations(true);
+  const handleProductClick = useCallback(
+    async (product: WooCommerceProduct): Promise<void> => {
+      if (product.type === 'variable' && product.variations && product.variations.length > 0) {
+        const id = ++requestId.current;
+        setSelectedVariableProduct(product);
+        setProductVariations([]);
+        setShowVariantPicker(true);
+        setLoadingVariations(true);
 
-      try {
-        if (currentStore) {
-          const service = new WooCommerceService(currentStore);
-          const result = await service.getProductVariations(product.id);
-          if (id === requestId.current && result.success && result.data) {
-            setProductVariations(result.data);
-          } else if (id === requestId.current && !result.success) {
-            toast.error('Грешка при зареждане на вариантите: ' + result.error);
+        try {
+          if (currentStore) {
+            const service = new WooCommerceService(currentStore);
+            const result = await service.getProductVariations(product.id);
+            if (id === requestId.current && result.success && result.data) {
+              setProductVariations(result.data);
+            } else if (id === requestId.current && !result.success) {
+              toast.error('Грешка при зареждане на вариантите: ' + result.error);
+            }
           }
+        } catch {
+          if (id === requestId.current) toast.error('Грешка при зареждане на вариантите');
+        } finally {
+          if (id === requestId.current) setLoadingVariations(false);
         }
-      } catch {
-        if (id === requestId.current) toast.error('Грешка при зареждане на вариантите');
-      } finally {
-        if (id === requestId.current) setLoadingVariations(false);
+      } else {
+        addToCart(product);
       }
-    } else {
-      addToCart(product);
-    }
-  }, [currentStore, addToCart, toast]);
+    },
+    [currentStore, addToCart, toast]
+  );
 
   const handleAddVariation = (variation: ProductVariation): void => {
     const variationProduct = {

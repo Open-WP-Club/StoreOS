@@ -135,9 +135,7 @@ describe('Pagination', () => {
   });
 
   it('should render custom page size options', () => {
-    render(
-      <Pagination {...defaultProps} pageSizeOptions={[10, 20, 30]} />
-    );
+    render(<Pagination {...defaultProps} pageSizeOptions={[10, 20, 30]} />);
 
     const select = screen.getByLabelText('Per page:');
     const options = Array.from(select.options).map((o) => Number(o.value));

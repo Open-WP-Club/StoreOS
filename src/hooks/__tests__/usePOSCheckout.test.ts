@@ -1,7 +1,11 @@
 import { vi, Mock } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { usePOSCheckout } from '../usePOSCheckout';
-import { createMockStore, createMockCustomer, createMockProduct } from '../../__test_utils__/mockFactories';
+import {
+  createMockStore,
+  createMockCustomer,
+  createMockProduct,
+} from '../../__test_utils__/mockFactories';
 import type { WooCommerceStore, WooCommerceCustomer } from '../../types';
 import WooCommerceService from '../../services/woocommerce';
 import { useStoreConfig } from '../../stores';
@@ -49,10 +53,12 @@ beforeEach(() => {
   mockDiscountValue = 0;
   mockGetDiscountAmount.mockReturnValue(0);
 
-  (useStoreConfig as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
-    const state = { getCurrentStore: () => mockActiveStore };
-    return selector ? selector(state) : state;
-  });
+  (useStoreConfig as unknown as Mock).mockImplementation(
+    (selector?: (state: unknown) => unknown) => {
+      const state = { getCurrentStore: () => mockActiveStore };
+      return selector ? selector(state) : state;
+    }
+  );
 
   (usePOSStore as unknown as Mock).mockImplementation(() => ({
     cart: mockCart,
@@ -63,10 +69,12 @@ beforeEach(() => {
     getDiscountAmount: mockGetDiscountAmount,
   }));
 
-  (WooCommerceService as Mock).mockImplementation(function () { return {
-    getCustomers: mockGetCustomers,
-    createOrder: mockCreateOrder,
-  }; });
+  (WooCommerceService as Mock).mockImplementation(function () {
+    return {
+      getCustomers: mockGetCustomers,
+      createOrder: mockCreateOrder,
+    };
+  });
 });
 
 afterEach(() => {
@@ -96,9 +104,7 @@ describe('usePOSCheckout', () => {
       });
 
       await waitFor(() => {
-        expect(mockGetCustomers).toHaveBeenCalledWith(
-          expect.objectContaining({ search: 'john' })
-        );
+        expect(mockGetCustomers).toHaveBeenCalledWith(expect.objectContaining({ search: 'john' }));
       });
     });
 

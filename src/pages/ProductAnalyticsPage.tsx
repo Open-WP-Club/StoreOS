@@ -6,7 +6,16 @@ import '../utils/chartSetup';
 import { useAnalyticsBase } from '../hooks/useAnalyticsBase';
 import TimeRangeSelect from '../components/analytics/TimeRangeSelect';
 import { Bar, Doughnut } from 'react-chartjs-2';
-import { Package, DollarSign, AlertTriangle, Box, Tag, ImageOff, FileText, Hash } from 'lucide-react';
+import {
+  Package,
+  DollarSign,
+  AlertTriangle,
+  Box,
+  Tag,
+  ImageOff,
+  FileText,
+  Hash,
+} from 'lucide-react';
 import ExportMenu from '../components/ExportMenu';
 import { useReportExport } from '../hooks/useReportExport';
 import type { Order, Product, OrderLineItem } from '../types';
@@ -47,7 +56,13 @@ const ProductAnalyticsPage: React.FC = (): React.ReactElement => {
   const lowStockThreshold = useSettings((state) => state.lowStockThreshold);
 
   const [loading, setLoading] = useState<boolean>(true);
-  const { setCurrencyCode, selectedTimeRange, handleTimeRangeChange, timeRangeLabel, formatCurrency } = useAnalyticsBase();
+  const {
+    setCurrencyCode,
+    selectedTimeRange,
+    handleTimeRangeChange,
+    timeRangeLabel,
+    formatCurrency,
+  } = useAnalyticsBase();
   const [productData, setProductData] = useState<ProductData>({
     totalProducts: 0,
     inStock: 0,
@@ -65,125 +80,133 @@ const ProductAnalyticsPage: React.FC = (): React.ReactElement => {
     stockDistribution: {},
   });
 
-  const calculateProductMetrics = useCallback((orders: Order[] | null, products: Product[], timeRangeDays: number): void => {
-    if (!products) return;
+  const calculateProductMetrics = useCallback(
+    (orders: Order[] | null, products: Product[], timeRangeDays: number): void => {
+      if (!products) return;
 
-    const detectedCurrency = orders ? getCurrencyCode(orders) : 'USD';
-    setCurrencyCode(detectedCurrency);
+      const detectedCurrency = orders ? getCurrencyCode(orders) : 'USD';
+      setCurrencyCode(detectedCurrency);
 
-    const dateThreshold = new Date();
-    dateThreshold.setDate(dateThreshold.getDate() - timeRangeDays);
+      const dateThreshold = new Date();
+      dateThreshold.setDate(dateThreshold.getDate() - timeRangeDays);
 
-    const filteredOrders = orders ? orders.filter(o => new Date(o.date_created) >= dateThreshold) : [];
+      const filteredOrders = orders
+        ? orders.filter((o) => new Date(o.date_created) >= dateThreshold)
+        : [];
 
-    // Calculate stock metrics
-    const inStock = products.filter(p => p.stock_status === 'instock').length;
-    const lowStock = products.filter(
-      p => p.stock_quantity !== null && p.stock_quantity !== undefined && p.stock_quantity <= lowStockThreshold && p.stock_quantity > 0
-    ).length;
-    const outOfStock = products.filter(p => p.stock_status === 'outofstock').length;
-    const inventoryValue = products.reduce((sum, p) => {
-      const price = parseFloat(p.price || '0');
-      const quantity = parseInt(String(p.stock_quantity || 0));
-      return sum + (price * quantity);
-    }, 0);
+      // Calculate stock metrics
+      const inStock = products.filter((p) => p.stock_status === 'instock').length;
+      const lowStock = products.filter(
+        (p) =>
+          p.stock_quantity !== null &&
+          p.stock_quantity !== undefined &&
+          p.stock_quantity <= lowStockThreshold &&
+          p.stock_quantity > 0
+      ).length;
+      const outOfStock = products.filter((p) => p.stock_status === 'outofstock').length;
+      const inventoryValue = products.reduce((sum, p) => {
+        const price = parseFloat(p.price || '0');
+        const quantity = parseInt(String(p.stock_quantity || 0));
+        return sum + price * quantity;
+      }, 0);
 
-    // Calculate additional metrics
-    const pricesArray = products.map(p => parseFloat(p.price || '0')).filter(p => p > 0);
-    const avgPrice = pricesArray.length > 0 ? pricesArray.reduce((a, b) => a + b, 0) / pricesArray.length : 0;
-    const onSale = products.filter(p => p.sale_price && parseFloat(p.sale_price) > 0).length;
-    const noImages = products.filter(p => !p.images || p.images.length === 0).length;
-    const draft = products.filter(p => p.status === 'draft' || p.status === 'pending').length;
-    const missingSku = products.filter(p => !p.sku || p.sku.trim() === '').length;
+      // Calculate additional metrics
+      const pricesArray = products.map((p) => parseFloat(p.price || '0')).filter((p) => p > 0);
+      const avgPrice =
+        pricesArray.length > 0 ? pricesArray.reduce((a, b) => a + b, 0) / pricesArray.length : 0;
+      const onSale = products.filter((p) => p.sale_price && parseFloat(p.sale_price) > 0).length;
+      const noImages = products.filter((p) => !p.images || p.images.length === 0).length;
+      const draft = products.filter((p) => p.status === 'draft' || p.status === 'pending').length;
+      const missingSku = products.filter((p) => !p.sku || p.sku.trim() === '').length;
 
-    // Calculate product performance from orders
-    const productPerformance: Record<number, ProductPerformance> = {};
-    filteredOrders.forEach(order => {
-      if (order.line_items && Array.isArray(order.line_items)) {
-        order.line_items.forEach((item: OrderLineItem) => {
-          const productId = item.product_id;
-          if (!productPerformance[productId]) {
-            productPerformance[productId] = {
-              id: productId,
-              name: item.name,
-              revenue: 0,
-              quantity: 0,
-              orders: 0,
-            };
-          }
-          if (order.status === 'completed') {
-            productPerformance[productId].revenue += parseFloat(item.total || '0');
-            productPerformance[productId].quantity += parseInt(String(item.quantity || 0));
-            productPerformance[productId].orders += 1;
-          }
-        });
-      }
-    });
-
-    const performanceArray = Object.values(productPerformance);
-
-    // Top products by revenue
-    const topProducts = [...performanceArray]
-      .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 10);
-
-    // Worst performers (products with low sales)
-    const worstPerformers = [...performanceArray]
-      .sort((a, b) => a.revenue - b.revenue)
-      .slice(0, 10);
-
-    // Category performance
-    const categoryMap: Record<string, CategoryPerformance> = {};
-    products.forEach(product => {
-      const categories = product.categories || [];
-      categories.forEach((cat: { name?: string }) => {
-        const catName = cat.name || 'Uncategorized';
-        if (!categoryMap[catName]) {
-          categoryMap[catName] = {
-            count: 0,
-            revenue: 0,
-          };
-        }
-        categoryMap[catName].count++;
-
-        // Add revenue from performance data
-        const perf = productPerformance[product.id];
-        if (perf) {
-          categoryMap[catName].revenue += perf.revenue;
+      // Calculate product performance from orders
+      const productPerformance: Record<number, ProductPerformance> = {};
+      filteredOrders.forEach((order) => {
+        if (order.line_items && Array.isArray(order.line_items)) {
+          order.line_items.forEach((item: OrderLineItem) => {
+            const productId = item.product_id;
+            if (!productPerformance[productId]) {
+              productPerformance[productId] = {
+                id: productId,
+                name: item.name,
+                revenue: 0,
+                quantity: 0,
+                orders: 0,
+              };
+            }
+            if (order.status === 'completed') {
+              productPerformance[productId].revenue += parseFloat(item.total || '0');
+              productPerformance[productId].quantity += parseInt(String(item.quantity || 0));
+              productPerformance[productId].orders += 1;
+            }
+          });
         }
       });
-    });
 
-    // Stock distribution
-    const stockDistribution: Record<string, number> = {
-      'In Stock': inStock,
-      'Low Stock': lowStock,
-      'Out of Stock': outOfStock,
-    };
+      const performanceArray = Object.values(productPerformance);
 
-    setProductData({
-      totalProducts: products.length,
-      inStock,
-      lowStock,
-      outOfStock,
-      inventoryValue,
-      avgPrice,
-      onSale,
-      noImages,
-      draft,
-      missingSku,
-      topProducts,
-      worstPerformers,
-      categoryPerformance: categoryMap,
-      stockDistribution,
-    });
-  }, [lowStockThreshold, setCurrencyCode]);
+      // Top products by revenue
+      const topProducts = [...performanceArray].sort((a, b) => b.revenue - a.revenue).slice(0, 10);
+
+      // Worst performers (products with low sales)
+      const worstPerformers = [...performanceArray]
+        .sort((a, b) => a.revenue - b.revenue)
+        .slice(0, 10);
+
+      // Category performance
+      const categoryMap: Record<string, CategoryPerformance> = {};
+      products.forEach((product) => {
+        const categories = product.categories || [];
+        categories.forEach((cat: { name?: string }) => {
+          const catName = cat.name || 'Uncategorized';
+          if (!categoryMap[catName]) {
+            categoryMap[catName] = {
+              count: 0,
+              revenue: 0,
+            };
+          }
+          categoryMap[catName].count++;
+
+          // Add revenue from performance data
+          const perf = productPerformance[product.id];
+          if (perf) {
+            categoryMap[catName].revenue += perf.revenue;
+          }
+        });
+      });
+
+      // Stock distribution
+      const stockDistribution: Record<string, number> = {
+        'In Stock': inStock,
+        'Low Stock': lowStock,
+        'Out of Stock': outOfStock,
+      };
+
+      setProductData({
+        totalProducts: products.length,
+        inStock,
+        lowStock,
+        outOfStock,
+        inventoryValue,
+        avgPrice,
+        onSale,
+        noImages,
+        draft,
+        missingSku,
+        topProducts,
+        worstPerformers,
+        categoryPerformance: categoryMap,
+        stockDistribution,
+      });
+    },
+    [lowStockThreshold, setCurrencyCode]
+  );
 
   const loadProductAnalytics = useCallback(async (): Promise<void> => {
     setLoading(true);
     try {
-      const products = await getCachedData('products') as Product[] | null;
-      const orders = await getCachedData('orders') as Order[] | null;
+      const products = (await getCachedData('products')) as Product[] | null;
+      const orders = (await getCachedData('orders')) as Order[] | null;
       if (products) {
         calculateProductMetrics(orders, products, selectedTimeRange);
       }
@@ -213,11 +236,7 @@ const ProductAnalyticsPage: React.FC = (): React.ReactElement => {
           'rgba(251, 191, 36, 0.7)',
           'rgba(239, 68, 68, 0.7)',
         ],
-        borderColor: [
-          'rgb(34, 197, 94)',
-          'rgb(251, 191, 36)',
-          'rgb(239, 68, 68)',
-        ],
+        borderColor: ['rgb(34, 197, 94)', 'rgb(251, 191, 36)', 'rgb(239, 68, 68)'],
         borderWidth: 1,
       },
     ],
@@ -228,7 +247,9 @@ const ProductAnalyticsPage: React.FC = (): React.ReactElement => {
     datasets: [
       {
         label: 'Revenue',
-        data: Object.values(productData.categoryPerformance).slice(0, 10).map(c => c.revenue),
+        data: Object.values(productData.categoryPerformance)
+          .slice(0, 10)
+          .map((c) => c.revenue),
         backgroundColor: 'rgba(59, 130, 246, 0.7)',
         borderColor: 'rgb(59, 130, 246)',
         borderWidth: 1,
@@ -236,34 +257,37 @@ const ProductAnalyticsPage: React.FC = (): React.ReactElement => {
     ],
   };
 
-  const chartOptions = useMemo(() => ({
-    responsive: true,
-    maintainAspectRatio: true,
-    plugins: {
-      legend: {
-        position: 'top' as const,
-        labels: {
-          color: theme === 'dark' ? '#e5e7eb' : '#374151',
+  const chartOptions = useMemo(
+    () =>
+      ({
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: {
+            position: 'top' as const,
+            labels: {
+              color: theme === 'dark' ? '#e5e7eb' : '#374151',
+            },
+          },
+          tooltip: {
+            backgroundColor: theme === 'dark' ? '#1f2937' : 'rgba(0,0,0,0.8)',
+            titleColor: theme === 'dark' ? '#f9fafb' : '#ffffff',
+            bodyColor: theme === 'dark' ? '#d1d5db' : '#ffffff',
+          },
         },
-      },
-      tooltip: {
-        backgroundColor: theme === 'dark' ? '#1f2937' : 'rgba(0,0,0,0.8)',
-        titleColor: theme === 'dark' ? '#f9fafb' : '#ffffff',
-        bodyColor: theme === 'dark' ? '#d1d5db' : '#ffffff',
-      },
-    },
-    scales: {
-      x: {
-        ticks: { color: theme === 'dark' ? '#9ca3af' : '#6b7280' },
-        grid: { color: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' },
-      },
-      y: {
-        ticks: { color: theme === 'dark' ? '#9ca3af' : '#6b7280' },
-        grid: { color: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' },
-      },
-    },
-  }) satisfies ChartOptions<'bar'>, [theme]);
-
+        scales: {
+          x: {
+            ticks: { color: theme === 'dark' ? '#9ca3af' : '#6b7280' },
+            grid: { color: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' },
+          },
+          y: {
+            ticks: { color: theme === 'dark' ? '#9ca3af' : '#6b7280' },
+            grid: { color: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' },
+          },
+        },
+      }) satisfies ChartOptions<'bar'>,
+    [theme]
+  );
 
   const { handleExportCSV, handleExportPDF, handlePrint } = useReportExport({
     reportName: 'Product Analytics',
@@ -283,7 +307,8 @@ const ProductAnalyticsPage: React.FC = (): React.ReactElement => {
       { key: 'orders', label: 'Orders', format: (v) => String(v ?? 0) },
       { key: 'revenue', label: 'Revenue', format: (v) => formatCurrency(Number(v) || 0) },
     ],
-    data: productData.topProducts as (typeof productData.topProducts[number] & Record<string, unknown>)[],
+    data: productData.topProducts as ((typeof productData.topProducts)[number] &
+      Record<string, unknown>)[],
   });
 
   if (loading) {
@@ -321,7 +346,9 @@ const ProductAnalyticsPage: React.FC = (): React.ReactElement => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Products</div>
+            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Total Products
+            </div>
             <Box className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           </div>
           <div className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
@@ -361,7 +388,9 @@ const ProductAnalyticsPage: React.FC = (): React.ReactElement => {
 
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Inventory Value</div>
+            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Inventory Value
+            </div>
             <DollarSign className="w-5 h-5 text-green-600 dark:text-green-400" />
           </div>
           <div className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
@@ -404,7 +433,9 @@ const ProductAnalyticsPage: React.FC = (): React.ReactElement => {
 
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Draft/Pending</div>
+            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Draft/Pending
+            </div>
             <FileText className="w-4 h-4 text-gray-600 dark:text-gray-400" />
           </div>
           <div className="mt-2 text-xl font-bold text-gray-600 dark:text-gray-400">
@@ -462,19 +493,34 @@ const ProductAnalyticsPage: React.FC = (): React.ReactElement => {
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-700/50">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                  >
                     Rank
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                  >
                     Product
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                  >
                     Units Sold
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                  >
                     Orders
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                  >
                     Revenue
                   </th>
                 </tr>
@@ -519,16 +565,28 @@ const ProductAnalyticsPage: React.FC = (): React.ReactElement => {
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-700/50">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                  >
                     Product
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                  >
                     Units Sold
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                  >
                     Orders
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                  >
                     Revenue
                   </th>
                 </tr>

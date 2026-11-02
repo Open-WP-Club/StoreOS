@@ -7,7 +7,9 @@ import { createMockOrder, createMockBilling } from '../../__test_utils__';
 vi.mock('../../stores', () => ({
   useCache: vi.fn(),
   useStoreConfig: vi.fn(),
-  useTheme: vi.fn((selector?: (state: unknown) => unknown) => selector ? selector({ theme: 'light' }) : { theme: 'light' }),
+  useTheme: vi.fn((selector?: (state: unknown) => unknown) =>
+    selector ? selector({ theme: 'light' }) : { theme: 'light' }
+  ),
 }));
 
 vi.mock('../../hooks/useReportExport', () => ({
@@ -34,19 +36,37 @@ describe('CustomerAnalyticsPage', () => {
       status: 'completed',
       total: '100.00',
       date_created: now.toISOString(),
-      billing: createMockBilling({ email: 'alice@example.com', first_name: 'Alice', last_name: 'Smith', country: 'US', city: 'New York' }),
+      billing: createMockBilling({
+        email: 'alice@example.com',
+        first_name: 'Alice',
+        last_name: 'Smith',
+        country: 'US',
+        city: 'New York',
+      }),
     }),
     createMockOrder({
       status: 'completed',
       total: '200.00',
       date_created: now.toISOString(),
-      billing: createMockBilling({ email: 'alice@example.com', first_name: 'Alice', last_name: 'Smith', country: 'US', city: 'New York' }),
+      billing: createMockBilling({
+        email: 'alice@example.com',
+        first_name: 'Alice',
+        last_name: 'Smith',
+        country: 'US',
+        city: 'New York',
+      }),
     }),
     createMockOrder({
       status: 'completed',
       total: '50.00',
       date_created: now.toISOString(),
-      billing: createMockBilling({ email: 'bob@example.com', first_name: 'Bob', last_name: 'Jones', country: 'UK', city: 'London' }),
+      billing: createMockBilling({
+        email: 'bob@example.com',
+        first_name: 'Bob',
+        last_name: 'Jones',
+        country: 'UK',
+        city: 'London',
+      }),
     }),
   ];
 

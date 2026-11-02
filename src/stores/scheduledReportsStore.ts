@@ -34,7 +34,10 @@ const useScheduledReports = create<ScheduledReportsState & ScheduledReportsActio
         set((s) => ({
           ...patch,
           // Enabling (or changing the schedule) starts the clock now: no retroactive runs.
-          ...((patch.enabled && !s.enabled) || patch.time || patch.frequency || patch.weekday != null
+          ...((patch.enabled && !s.enabled) ||
+          patch.time ||
+          patch.frequency ||
+          patch.weekday != null
             ? { lastRun: Date.now() }
             : {}),
         })),

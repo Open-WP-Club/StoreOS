@@ -68,9 +68,7 @@ const SettingsPrinter = memo(function SettingsPrinter({
           className="p-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
           title={language === 'bg' ? 'Обнови списъка' : 'Refresh list'}
         >
-          <RefreshCw
-            className={`w-5 h-5 text-gray-500 ${loadingPrinters ? 'animate-spin' : ''}`}
-          />
+          <RefreshCw className={`w-5 h-5 text-gray-500 ${loadingPrinters ? 'animate-spin' : ''}`} />
         </button>
       </div>
     </section>

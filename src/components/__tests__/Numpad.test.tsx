@@ -125,7 +125,11 @@ describe('Numpad', () => {
     const closeButtons = screen.getAllByRole('button');
     // The close button contains the X icon, find it by the header area
     const closeButton = closeButtons.find(
-      (btn) => btn.querySelector('svg') && !btn.textContent?.includes('Потвърди') && !btn.textContent?.includes('Изтрий') && !btn.textContent?.match(/^[0-9C.⌫]$/)
+      (btn) =>
+        btn.querySelector('svg') &&
+        !btn.textContent?.includes('Потвърди') &&
+        !btn.textContent?.includes('Изтрий') &&
+        !btn.textContent?.match(/^[0-9C.⌫]$/)
     );
     if (closeButton) {
       fireEvent.click(closeButton);
@@ -169,9 +173,7 @@ describe('Numpad', () => {
   it('should build multi-digit numbers', () => {
     const onChange = vi.fn();
 
-    const { rerender } = render(
-      <Numpad {...defaultProps} value="" onChange={onChange} />
-    );
+    const { rerender } = render(<Numpad {...defaultProps} value="" onChange={onChange} />);
     fireEvent.click(screen.getByText('1'));
     expect(onChange).toHaveBeenCalledWith('1');
 

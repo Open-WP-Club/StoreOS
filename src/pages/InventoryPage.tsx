@@ -280,7 +280,10 @@ const InventoryPage: React.FC = (): React.ReactElement => {
       const deletedIds = selectedProductIds.filter((id) => !failedIds.includes(id));
       const failedCount = failedIds.length;
       if (deletedIds.length === 0) {
-        showToast(`Error deleting products: ${failedCount} of ${selectedProductIds.length} failed`, 'error');
+        showToast(
+          `Error deleting products: ${failedCount} of ${selectedProductIds.length} failed`,
+          'error'
+        );
         return;
       }
 
@@ -296,7 +299,10 @@ const InventoryPage: React.FC = (): React.ReactElement => {
       });
       setSelectedProductIds(failedIds);
       if (failedCount > 0) {
-        showToast(`${failedCount} of ${selectedProductIds.length} products failed to delete`, 'warning');
+        showToast(
+          `${failedCount} of ${selectedProductIds.length} products failed to delete`,
+          'warning'
+        );
       } else {
         showToast(`Successfully deleted ${deletedIds.length} products`, 'success');
       }
@@ -375,7 +381,10 @@ const InventoryPage: React.FC = (): React.ReactElement => {
                 setProducts(restoredProducts);
                 await setCachedData('products', restoredProducts);
                 if (undoFailed.length > 0) {
-                  showToast(`${undoFailed.length} of ${undoUpdates.length} products failed to revert`, 'warning');
+                  showToast(
+                    `${undoFailed.length} of ${undoUpdates.length} products failed to revert`,
+                    'warning'
+                  );
                 } else {
                   showToast('Changes reverted', 'info');
                 }

@@ -33,34 +33,95 @@ function KPIDashboardPage(): React.ReactElement {
   const { kpis, period, setPeriod, currencyCode, hasData } = useKPIs();
   const theme = useTheme((state) => state.theme);
 
-  const periodLabel = PERIODS.find(p => p.value === period)?.label || '';
+  const periodLabel = PERIODS.find((p) => p.value === period)?.label || '';
 
   // Build KPI table data for export (only when kpis available)
-  const kpiTableData = kpis ? [
-    { category: 'Revenue', metric: 'Total Revenue', value: formatCurrency(kpis.revenue.totalRevenue.current, currencyCode) },
-    { category: 'Revenue', metric: 'Avg Order Value', value: formatCurrency(kpis.revenue.averageOrderValue.current, currencyCode) },
-    { category: 'Revenue', metric: 'Revenue Growth', value: `${kpis.revenue.revenueGrowthRate.toFixed(1)}%` },
-    { category: 'Customers', metric: 'Repeat Purchase Rate', value: `${kpis.customer.repeatPurchaseRate.current.toFixed(1)}%` },
-    { category: 'Customers', metric: 'Avg Basket Size', value: `${kpis.customer.avgItemsPerOrder.current.toFixed(1)} items` },
-    { category: 'Customers', metric: 'Customer Lifetime Value', value: formatCurrency(kpis.customer.customerLifetimeValue.current, currencyCode) },
-    { category: 'Operations', metric: 'Refund Rate', value: `${kpis.operations.refundRate.current.toFixed(1)}%` },
-    { category: 'Operations', metric: 'Completion Rate', value: `${kpis.operations.orderCompletionRate.current.toFixed(1)}%` },
-    { category: 'Operations', metric: 'Avg Processing Time', value: `${kpis.operations.avgProcessingTimeDays.current.toFixed(1)} days` },
-    { category: 'Inventory', metric: 'Stock Turnover', value: kpis.inventory.stockTurnoverRate.current.toFixed(1) },
-    { category: 'Inventory', metric: 'Inventory Value', value: formatCurrency(kpis.inventory.inventoryValue.current, currencyCode) },
-    { category: 'Inventory', metric: 'Low Stock Items', value: String(Math.round(kpis.inventory.lowStockCount.current)) },
-  ] as Record<string, unknown>[] : [];
+  const kpiTableData = kpis
+    ? ([
+        {
+          category: 'Revenue',
+          metric: 'Total Revenue',
+          value: formatCurrency(kpis.revenue.totalRevenue.current, currencyCode),
+        },
+        {
+          category: 'Revenue',
+          metric: 'Avg Order Value',
+          value: formatCurrency(kpis.revenue.averageOrderValue.current, currencyCode),
+        },
+        {
+          category: 'Revenue',
+          metric: 'Revenue Growth',
+          value: `${kpis.revenue.revenueGrowthRate.toFixed(1)}%`,
+        },
+        {
+          category: 'Customers',
+          metric: 'Repeat Purchase Rate',
+          value: `${kpis.customer.repeatPurchaseRate.current.toFixed(1)}%`,
+        },
+        {
+          category: 'Customers',
+          metric: 'Avg Basket Size',
+          value: `${kpis.customer.avgItemsPerOrder.current.toFixed(1)} items`,
+        },
+        {
+          category: 'Customers',
+          metric: 'Customer Lifetime Value',
+          value: formatCurrency(kpis.customer.customerLifetimeValue.current, currencyCode),
+        },
+        {
+          category: 'Operations',
+          metric: 'Refund Rate',
+          value: `${kpis.operations.refundRate.current.toFixed(1)}%`,
+        },
+        {
+          category: 'Operations',
+          metric: 'Completion Rate',
+          value: `${kpis.operations.orderCompletionRate.current.toFixed(1)}%`,
+        },
+        {
+          category: 'Operations',
+          metric: 'Avg Processing Time',
+          value: `${kpis.operations.avgProcessingTimeDays.current.toFixed(1)} days`,
+        },
+        {
+          category: 'Inventory',
+          metric: 'Stock Turnover',
+          value: kpis.inventory.stockTurnoverRate.current.toFixed(1),
+        },
+        {
+          category: 'Inventory',
+          metric: 'Inventory Value',
+          value: formatCurrency(kpis.inventory.inventoryValue.current, currencyCode),
+        },
+        {
+          category: 'Inventory',
+          metric: 'Low Stock Items',
+          value: String(Math.round(kpis.inventory.lowStockCount.current)),
+        },
+      ] as Record<string, unknown>[])
+    : [];
 
   const { handleExportCSV, handleExportPDF, handlePrint } = useReportExport({
     reportName: 'KPI Dashboard',
     filenamePrefix: 'kpi-dashboard',
     timeRange: periodLabel,
-    summaryMetrics: kpis ? [
-      { label: 'Total Revenue', value: formatCurrency(kpis.revenue.totalRevenue.current, currencyCode) },
-      { label: 'Avg Order Value', value: formatCurrency(kpis.revenue.averageOrderValue.current, currencyCode) },
-      { label: 'Repeat Purchase Rate', value: `${kpis.customer.repeatPurchaseRate.current.toFixed(1)}%` },
-      { label: 'Refund Rate', value: `${kpis.operations.refundRate.current.toFixed(1)}%` },
-    ] : [],
+    summaryMetrics: kpis
+      ? [
+          {
+            label: 'Total Revenue',
+            value: formatCurrency(kpis.revenue.totalRevenue.current, currencyCode),
+          },
+          {
+            label: 'Avg Order Value',
+            value: formatCurrency(kpis.revenue.averageOrderValue.current, currencyCode),
+          },
+          {
+            label: 'Repeat Purchase Rate',
+            value: `${kpis.customer.repeatPurchaseRate.current.toFixed(1)}%`,
+          },
+          { label: 'Refund Rate', value: `${kpis.operations.refundRate.current.toFixed(1)}%` },
+        ]
+      : [],
     columns: [
       { key: 'category', label: 'Category' },
       { key: 'metric', label: 'Metric' },
@@ -73,9 +134,12 @@ function KPIDashboardPage(): React.ReactElement {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
         <BarChart3 className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4" />
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No Data Available</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          No Data Available
+        </h2>
         <p className="text-gray-500 dark:text-gray-400 max-w-md">
-          KPIs will appear here once orders and products are cached. Navigate to Orders or Products to load data.
+          KPIs will appear here once orders and products are cached. Navigate to Orders or Products
+          to load data.
         </p>
       </div>
     );

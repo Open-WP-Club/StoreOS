@@ -14,12 +14,20 @@ describe('RefundModal', () => {
   it('disables Refund until something is selected, then submits payload', () => {
     const onSubmit = vi.fn();
     render(
-      <RefundModal order={order} refunds={[]} submitting={false} onCancel={vi.fn()} onSubmit={onSubmit} />
+      <RefundModal
+        order={order}
+        refunds={[]}
+        submitting={false}
+        onCancel={vi.fn()}
+        onSubmit={onSubmit}
+      />
     );
     const btn = screen.getByRole('button', { name: 'Refund' });
     expect(btn).toBeDisabled();
 
-    fireEvent.change(screen.getByLabelText('Quantity to refund for Widget'), { target: { value: '1' } });
+    fireEvent.change(screen.getByLabelText('Quantity to refund for Widget'), {
+      target: { value: '1' },
+    });
     fireEvent.click(screen.getByLabelText('Restock refunded items'));
     fireEvent.change(screen.getByLabelText('Refund reason'), { target: { value: 'Broken' } });
     expect(btn).toBeEnabled();
@@ -36,13 +44,21 @@ describe('RefundModal', () => {
   it('clamps quantity to remaining and blocks over-refund amount', () => {
     const onSubmit = vi.fn();
     render(
-      <RefundModal order={order} refunds={[]} submitting={false} onCancel={vi.fn()} onSubmit={onSubmit} />
+      <RefundModal
+        order={order}
+        refunds={[]}
+        submitting={false}
+        onCancel={vi.fn()}
+        onSubmit={onSubmit}
+      />
     );
     const qty = screen.getByLabelText('Quantity to refund for Widget') as HTMLInputElement;
     fireEvent.change(qty, { target: { value: '9' } });
     expect(qty.value).toBe('2');
 
-    fireEvent.change(screen.getByLabelText('Amount to refund for Widget'), { target: { value: '60' } });
+    fireEvent.change(screen.getByLabelText('Amount to refund for Widget'), {
+      target: { value: '60' },
+    });
     expect(screen.getByRole('button', { name: 'Refund' })).toBeDisabled();
     expect(onSubmit).not.toHaveBeenCalled();
   });

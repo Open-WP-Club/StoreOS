@@ -105,10 +105,12 @@ function renderWithRoute(id: string = '10') {
 
 describe('ProductEditPage', () => {
   beforeEach(() => {
-    (useStoreConfig as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
-      const state = { getCurrentStore: () => mockStore };
-      return selector ? selector(state) : state;
-    });
+    (useStoreConfig as unknown as Mock).mockImplementation(
+      (selector?: (state: unknown) => unknown) => {
+        const state = { getCurrentStore: () => mockStore };
+        return selector ? selector(state) : state;
+      }
+    );
 
     (useCache as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
       const state = { cache: { products: { data: [mockProduct] } } };
@@ -116,9 +118,11 @@ describe('ProductEditPage', () => {
     });
 
     mockGetProduct.mockResolvedValue({ success: true, data: mockProduct });
-    (WooCommerceService as Mock).mockImplementation(function () { return {
-      getProduct: mockGetProduct,
-    }; });
+    (WooCommerceService as Mock).mockImplementation(function () {
+      return {
+        getProduct: mockGetProduct,
+      };
+    });
   });
 
   it('should render the page with tabs', async () => {
@@ -142,10 +146,12 @@ describe('ProductEditPage', () => {
   });
 
   it('should redirect to setup when no store', async () => {
-    (useStoreConfig as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
-      const state = { getCurrentStore: () => undefined };
-      return selector ? selector(state) : state;
-    });
+    (useStoreConfig as unknown as Mock).mockImplementation(
+      (selector?: (state: unknown) => unknown) => {
+        const state = { getCurrentStore: () => undefined };
+        return selector ? selector(state) : state;
+      }
+    );
 
     renderWithRoute();
 

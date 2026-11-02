@@ -24,12 +24,7 @@ describe('PageHeader', () => {
   });
 
   it('should render actions when provided', () => {
-    render(
-      <PageHeader
-        title="Title"
-        actions={<button>Action Button</button>}
-      />
-    );
+    render(<PageHeader title="Title" actions={<button>Action Button</button>} />);
 
     expect(screen.getByRole('button', { name: /action button/i })).toBeInTheDocument();
   });
@@ -68,12 +63,7 @@ describe('PageHeader', () => {
     const user = userEvent.setup();
     const handleClick = vi.fn();
 
-    render(
-      <PageHeader
-        title="Title"
-        actions={<button onClick={handleClick}>Click Me</button>}
-      />
-    );
+    render(<PageHeader title="Title" actions={<button onClick={handleClick}>Click Me</button>} />);
 
     await user.click(screen.getByRole('button', { name: /click me/i }));
 
@@ -81,9 +71,7 @@ describe('PageHeader', () => {
   });
 
   it('should apply correct styling classes', () => {
-    const { container } = render(
-      <PageHeader title="Title" subtitle="Subtitle" />
-    );
+    const { container } = render(<PageHeader title="Title" subtitle="Subtitle" />);
 
     const mainContainer = container.firstChild;
     expect(mainContainer).toHaveClass('mb-6');
@@ -148,14 +136,16 @@ describe('PageHeader', () => {
   });
 
   it('should handle long titles gracefully', () => {
-    const longTitle = 'This is a very long title that might wrap to multiple lines in a real application';
+    const longTitle =
+      'This is a very long title that might wrap to multiple lines in a real application';
     render(<PageHeader title={longTitle} />);
 
     expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(longTitle);
   });
 
   it('should handle long subtitles gracefully', () => {
-    const longSubtitle = 'This is a very long subtitle that provides detailed information about the current page and its functionality';
+    const longSubtitle =
+      'This is a very long subtitle that provides detailed information about the current page and its functionality';
     render(<PageHeader title="Title" subtitle={longSubtitle} />);
 
     expect(screen.getByText(longSubtitle)).toBeInTheDocument();
@@ -163,11 +153,7 @@ describe('PageHeader', () => {
 
   it('should maintain proper structure with all props', () => {
     const { container } = render(
-      <PageHeader
-        title="Title"
-        subtitle="Subtitle"
-        actions={<button>Action</button>}
-      />
+      <PageHeader title="Title" subtitle="Subtitle" actions={<button>Action</button>} />
     );
 
     const mainContainer = container.firstChild;

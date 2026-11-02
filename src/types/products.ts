@@ -237,7 +237,8 @@ export interface ProductQueryParams {
   include?: number[];
   offset?: number;
   order?: 'asc' | 'desc';
-  orderby?: 'date' | 'id' | 'include' | 'title' | 'slug' | 'price' | 'popularity' | 'rating' | 'modified';
+  orderby?:
+    'date' | 'id' | 'include' | 'title' | 'slug' | 'price' | 'popularity' | 'rating' | 'modified';
   parent?: number[];
   parent_exclude?: number[];
   slug?: string;

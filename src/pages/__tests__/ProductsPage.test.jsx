@@ -214,12 +214,14 @@ describe('ProductsPage', () => {
     });
 
     // Mock WooCommerceService
-    WooCommerceService.mockImplementation(function () { return {
-      updateProduct: vi.fn().mockResolvedValue({ success: true, data: {} }),
-      deleteProduct: vi.fn().mockResolvedValue({ success: true }),
-      createProduct: vi.fn().mockResolvedValue({ success: true, data: {} }),
-      batchUpdateProducts: vi.fn().mockResolvedValue({ success: true, data: { update: [] } }),
-    }; });
+    WooCommerceService.mockImplementation(function () {
+      return {
+        updateProduct: vi.fn().mockResolvedValue({ success: true, data: {} }),
+        deleteProduct: vi.fn().mockResolvedValue({ success: true }),
+        createProduct: vi.fn().mockResolvedValue({ success: true, data: {} }),
+        batchUpdateProducts: vi.fn().mockResolvedValue({ success: true, data: { update: [] } }),
+      };
+    });
 
     // Mock window.confirm
     window.confirm = vi.fn(() => true);

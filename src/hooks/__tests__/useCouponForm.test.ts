@@ -118,8 +118,12 @@ describe('validateCouponForm', () => {
     expect(validateCouponForm(valid({ usage_limit: '0' })).usage_limit).toBeDefined();
     expect(validateCouponForm(valid({ usage_limit: 'x' })).usage_limit).toBeDefined();
     expect(validateCouponForm(valid({ usage_limit: '5' })).usage_limit).toBeUndefined();
-    expect(validateCouponForm(valid({ usage_limit_per_user: '-1' })).usage_limit_per_user).toBeDefined();
-    expect(validateCouponForm(valid({ usage_limit_per_user: '2' })).usage_limit_per_user).toBeUndefined();
+    expect(
+      validateCouponForm(valid({ usage_limit_per_user: '-1' })).usage_limit_per_user
+    ).toBeDefined();
+    expect(
+      validateCouponForm(valid({ usage_limit_per_user: '2' })).usage_limit_per_user
+    ).toBeUndefined();
   });
 
   it('validates min/max spend', () => {
@@ -164,7 +168,9 @@ describe('useCouponForm', () => {
 
   it('initForEdit handles null expiry and missing description', () => {
     const { result } = setup();
-    act(() => result.current.initForEdit(makeCoupon({ date_expires: null, description: undefined })));
+    act(() =>
+      result.current.initForEdit(makeCoupon({ date_expires: null, description: undefined }))
+    );
     expect(result.current.formData.date_expires).toBe('');
     expect(result.current.formData.description).toBe('');
   });
@@ -207,7 +213,10 @@ describe('useCouponForm', () => {
   it('save blocks on validation errors and flags all fields', async () => {
     const { result } = setup();
     await act(() => result.current.handleSaveCoupon());
-    expect(showToast).toHaveBeenCalledWith('Please fix the validation errors before saving', 'error');
+    expect(showToast).toHaveBeenCalledWith(
+      'Please fix the validation errors before saving',
+      'error'
+    );
     expect(result.current.formErrors.code).toBeDefined();
     expect(result.current.formErrors.amount).toBeDefined();
     expect(mockCreateCoupon).not.toHaveBeenCalled();

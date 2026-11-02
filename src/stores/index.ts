@@ -7,7 +7,12 @@
 // Re-export useShallow from zustand for convenience
 export { useShallow } from 'zustand/shallow';
 
-import type { WooCommerceStore, WooCommerceProduct, WooCommerceOrder, WooCommerceCustomer } from '../types';
+import type {
+  WooCommerceStore,
+  WooCommerceProduct,
+  WooCommerceOrder,
+  WooCommerceCustomer,
+} from '../types';
 
 // Individual stores
 import useStoreConfig from './storeConfigStore';

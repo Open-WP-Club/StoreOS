@@ -116,7 +116,8 @@ export function createMockLineItem(overrides: Partial<OrderLineItem> = {}): Orde
 export function createMockOrder(overrides: Partial<WooCommerceOrder> = {}): WooCommerceOrder {
   const id = nextId();
   const lineItems = overrides.line_items || [createMockLineItem()];
-  const total = overrides.total || lineItems.reduce((sum, li) => sum + parseFloat(li.total), 0).toFixed(2);
+  const total =
+    overrides.total || lineItems.reduce((sum, li) => sum + parseFloat(li.total), 0).toFixed(2);
 
   return {
     id,
@@ -261,7 +262,9 @@ export function createMockProduct(overrides: Partial<WooCommerceProduct> = {}): 
 // Customer
 // ============================================
 
-export function createMockCustomer(overrides: Partial<WooCommerceCustomer> = {}): WooCommerceCustomer {
+export function createMockCustomer(
+  overrides: Partial<WooCommerceCustomer> = {}
+): WooCommerceCustomer {
   const id = nextId();
   return {
     id,

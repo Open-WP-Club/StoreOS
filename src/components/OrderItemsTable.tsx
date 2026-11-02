@@ -1,7 +1,13 @@
 import { ReactElement } from 'react';
 import { ZoomIn, Package } from 'lucide-react';
 import { formatPrice } from '../utils/currency';
-import type { Order, OrderLineItem, OrderCouponLine, OrderRefund, WooCommerceMetaData } from '../types';
+import type {
+  Order,
+  OrderLineItem,
+  OrderCouponLine,
+  OrderRefund,
+  WooCommerceMetaData,
+} from '../types';
 
 interface OrderItemsTableProps {
   order: Order;
@@ -66,7 +72,10 @@ export function OrderItemsTable({
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {(order.line_items || []).map((item: OrderLineItem, itemIndex: number) => (
-              <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              <tr
+                key={item.id}
+                className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
                 <td className="px-4 py-4">
                   {item.image?.src ? (
                     <button
@@ -94,9 +103,7 @@ export function OrderItemsTable({
                     {item.name}
                   </div>
                   {item.sku && (
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      SKU: {item.sku}
-                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">SKU: {item.sku}</div>
                   )}
                   {item.meta_data && item.meta_data.length > 0 && (
                     <div className="mt-1">
@@ -111,9 +118,7 @@ export function OrderItemsTable({
                 <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
                   {formatPrice(item.price, order.currency_symbol)}
                 </td>
-                <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
-                  {item.quantity}
-                </td>
+                <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">{item.quantity}</td>
                 <td className="px-4 py-4 text-sm font-medium text-gray-900 dark:text-white">
                   {formatPrice(parseFloat(item.total), order.currency_symbol)}
                 </td>
@@ -130,7 +135,11 @@ export function OrderItemsTable({
             <span className="text-gray-600 dark:text-gray-400">Items Subtotal:</span>
             <span className="text-gray-900 dark:text-white font-medium">
               {formatPrice(
-                (order.line_items || []).reduce((sum: number, item: OrderLineItem) => sum + parseFloat(item.subtotal || item.total), 0),
+                (order.line_items || []).reduce(
+                  (sum: number, item: OrderLineItem) =>
+                    sum + parseFloat(item.subtotal || item.total),
+                  0
+                ),
                 order.currency_symbol
               )}
             </span>
@@ -142,8 +151,12 @@ export function OrderItemsTable({
                 Coupon(s): {order.coupon_lines.map((c: OrderCouponLine) => c.code).join(', ')}
               </span>
               <span className="text-green-600 dark:text-green-400 font-medium">
-                -{formatPrice(
-                  order.coupon_lines.reduce((sum: number, c: OrderCouponLine) => sum + parseFloat(c.discount), 0),
+                -
+                {formatPrice(
+                  order.coupon_lines.reduce(
+                    (sum: number, c: OrderCouponLine) => sum + parseFloat(c.discount),
+                    0
+                  ),
                   order.currency_symbol
                 )}
               </span>
@@ -153,8 +166,11 @@ export function OrderItemsTable({
           {order.shipping_total && parseFloat(order.shipping_total) > 0 && (
             <div className="flex justify-between text-sm">
               <span className="text-gray-600 dark:text-gray-400">
-                Shipping{order.shipping_lines?.[0]?.method_title ?
-                  ` (${order.shipping_lines[0].method_title})` : ''}:
+                Shipping
+                {order.shipping_lines?.[0]?.method_title
+                  ? ` (${order.shipping_lines[0].method_title})`
+                  : ''}
+                :
               </span>
               <span className="text-gray-900 dark:text-white font-medium">
                 {formatPrice(parseFloat(order.shipping_total), order.currency_symbol)}
@@ -191,8 +207,12 @@ export function OrderItemsTable({
             <div className="flex justify-between text-sm text-red-600 dark:text-red-400 pt-1">
               <span>Refunded:</span>
               <span className="font-medium">
-                -{formatPrice(
-                  order.refunds.reduce((sum: number, r: OrderRefund) => sum + Math.abs(parseFloat(r.total)), 0),
+                -
+                {formatPrice(
+                  order.refunds.reduce(
+                    (sum: number, r: OrderRefund) => sum + Math.abs(parseFloat(r.total)),
+                    0
+                  ),
                   order.currency_symbol
                 )}
               </span>

@@ -40,7 +40,8 @@ const baseFields: FormProps['editFields'] = {
   tags: '',
 };
 
-const p = (id: number): WooCommerceProduct => ({ id, name: `P${id}` }) as unknown as WooCommerceProduct;
+const p = (id: number): WooCommerceProduct =>
+  ({ id, name: `P${id}` }) as unknown as WooCommerceProduct;
 
 const makeProps = (over: Partial<FormProps> = {}): FormProps => ({
   editFields: baseFields,
@@ -141,8 +142,12 @@ describe('BulkEditForm', () => {
       const props = makeProps({ editFields: fields });
       render(<BulkEditForm {...props} />);
       fireEvent.change(screen.getByPlaceholderText('Value'), { target: { value: '5' } });
-      fireEvent.change(screen.getByLabelText(/sale start date/i), { target: { value: '2030-01-01' } });
-      fireEvent.change(screen.getByLabelText(/sale end date/i), { target: { value: '2030-02-01' } });
+      fireEvent.change(screen.getByLabelText(/sale start date/i), {
+        target: { value: '2030-01-01' },
+      });
+      fireEvent.change(screen.getByLabelText(/sale end date/i), {
+        target: { value: '2030-02-01' },
+      });
       const [action, type] = screen.getAllByRole('combobox');
       fireEvent.change(action!, { target: { value: 'increase' } });
       fireEvent.change(type!, { target: { value: 'percent' } });
@@ -254,8 +259,22 @@ describe('BulkEditForm', () => {
 describe('BulkEditPreview', () => {
   type PProps = React.ComponentProps<typeof BulkEditPreview>;
   const rows: PProps['rows'] = [
-    { id: 1, name: 'Alpha', oldRegularPrice: '10.00', newRegularPrice: '12.00', oldSalePrice: '—', newSalePrice: null },
-    { id: 2, name: 'Beta', oldRegularPrice: '20.00', newRegularPrice: null, oldSalePrice: '15.00', newSalePrice: '14.00' },
+    {
+      id: 1,
+      name: 'Alpha',
+      oldRegularPrice: '10.00',
+      newRegularPrice: '12.00',
+      oldSalePrice: '—',
+      newSalePrice: null,
+    },
+    {
+      id: 2,
+      name: 'Beta',
+      oldRegularPrice: '20.00',
+      newRegularPrice: null,
+      oldSalePrice: '15.00',
+      newSalePrice: '14.00',
+    },
   ];
   const makePProps = (over: Partial<PProps> = {}): PProps => ({
     rows,
@@ -299,7 +318,9 @@ describe('BulkEditPreview', () => {
       <BulkEditPreview {...makePProps({ changeSalePrice: true, saleDateFrom: '2030-01-01' })} />
     );
     expect(screen.getByText(/sale period/i)).toHaveTextContent('2030-01-01 → —');
-    rerender(<BulkEditPreview {...makePProps({ changeSalePrice: false, saleDateFrom: '2030-01-01' })} />);
+    rerender(
+      <BulkEditPreview {...makePProps({ changeSalePrice: false, saleDateFrom: '2030-01-01' })} />
+    );
     expect(screen.queryByText(/sale period/i)).not.toBeInTheDocument();
   });
 

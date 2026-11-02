@@ -15,33 +15,34 @@ import {
 import useNotifications from '../stores/notificationStore';
 import type { NotificationType } from '../stores/notificationStore';
 
-const TYPE_CONFIG: Record<NotificationType, { icon: typeof Bell; color: string; bgColor: string }> = {
-  new_order: {
-    icon: ShoppingCart,
-    color: 'text-blue-600 dark:text-blue-400',
-    bgColor: 'bg-blue-100 dark:bg-blue-900/30',
-  },
-  low_stock: {
-    icon: AlertTriangle,
-    color: 'text-amber-600 dark:text-amber-400',
-    bgColor: 'bg-amber-100 dark:bg-amber-900/30',
-  },
-  failed_payment: {
-    icon: CreditCard,
-    color: 'text-red-600 dark:text-red-400',
-    bgColor: 'bg-red-100 dark:bg-red-900/30',
-  },
-  order_status: {
-    icon: RefreshCw,
-    color: 'text-green-600 dark:text-green-400',
-    bgColor: 'bg-green-100 dark:bg-green-900/30',
-  },
-  info: {
-    icon: Info,
-    color: 'text-gray-600 dark:text-gray-400',
-    bgColor: 'bg-gray-100 dark:bg-gray-800',
-  },
-};
+const TYPE_CONFIG: Record<NotificationType, { icon: typeof Bell; color: string; bgColor: string }> =
+  {
+    new_order: {
+      icon: ShoppingCart,
+      color: 'text-blue-600 dark:text-blue-400',
+      bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+    },
+    low_stock: {
+      icon: AlertTriangle,
+      color: 'text-amber-600 dark:text-amber-400',
+      bgColor: 'bg-amber-100 dark:bg-amber-900/30',
+    },
+    failed_payment: {
+      icon: CreditCard,
+      color: 'text-red-600 dark:text-red-400',
+      bgColor: 'bg-red-100 dark:bg-red-900/30',
+    },
+    order_status: {
+      icon: RefreshCw,
+      color: 'text-green-600 dark:text-green-400',
+      bgColor: 'bg-green-100 dark:bg-green-900/30',
+    },
+    info: {
+      icon: Info,
+      color: 'text-gray-600 dark:text-gray-400',
+      bgColor: 'bg-gray-100 dark:bg-gray-800',
+    },
+  };
 
 function formatTimeAgo(timestamp: number): string {
   const now = Date.now();
@@ -124,9 +125,7 @@ export default function NotificationCenter(): React.ReactElement {
         <div className="absolute right-0 top-full mt-2 w-96 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-50 overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-              Notifications
-            </h3>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Notifications</h3>
             <div className="flex items-center gap-1">
               {unreadCount > 0 && (
                 <button
@@ -171,7 +170,8 @@ export default function NotificationCenter(): React.ReactElement {
                     }`}
                     onClick={() => handleNotificationClick(notification.id, notification.route)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleNotificationClick(notification.id, notification.route);
+                      if (e.key === 'Enter')
+                        handleNotificationClick(notification.id, notification.route);
                     }}
                     role="button"
                     tabIndex={0}
@@ -184,11 +184,13 @@ export default function NotificationCenter(): React.ReactElement {
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className={`text-sm font-medium truncate ${
-                          !notification.read
-                            ? 'text-gray-900 dark:text-white'
-                            : 'text-gray-600 dark:text-gray-400'
-                        }`}>
+                        <p
+                          className={`text-sm font-medium truncate ${
+                            !notification.read
+                              ? 'text-gray-900 dark:text-white'
+                              : 'text-gray-600 dark:text-gray-400'
+                          }`}
+                        >
                           {notification.title}
                         </p>
                         {!notification.read && (

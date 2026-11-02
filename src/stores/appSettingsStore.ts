@@ -60,7 +60,7 @@ export interface AppSettingsActions {
   deleteNoteTemplate: (id: string) => void;
 
   // App initialization
-  setInitialized:(initialized: boolean) => void;
+  setInitialized: (initialized: boolean) => void;
 
   // Reset
   resetAppSettings: () => void;

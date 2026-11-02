@@ -109,61 +109,65 @@ export function usePOSProducts(
   // without self-referencing the useCallback it's declared inside of.
   const loadProductsRef = useRef<(page: number, append?: boolean) => Promise<void>>(async () => {});
 
-  const loadProducts = useCallback(async (page: number, append: boolean = false): Promise<void> => {
-    if (!currentStore) {
-      setLoading(false);
-      return;
-    }
-
-    setLoadError(null);
-    if (retryTimerRef.current) {
-      clearInterval(retryTimerRef.current);
-      retryTimerRef.current = null;
-    }
-    setRetryCountdown(0);
-
-    try {
-      if (append) {
-        setLoadingMore(true);
-      } else {
-        setLoading(true);
+  const loadProducts = useCallback(
+    async (page: number, append: boolean = false): Promise<void> => {
+      if (!currentStore) {
+        setLoading(false);
+        return;
       }
 
-      const service = new WooCommerceService(currentStore);
-      const result = await service.getProducts({
-        status: 'publish',
-        per_page: PRODUCTS_PER_PAGE,
-        page,
-      });
+      setLoadError(null);
+      if (retryTimerRef.current) {
+        clearInterval(retryTimerRef.current);
+        retryTimerRef.current = null;
+      }
+      setRetryCountdown(0);
 
-      if (result.success && result.data) {
-        const total = parseInt(result.headers?.['x-wp-total'] || String(result.data.length), 10);
-        const totalPages = parseInt(result.headers?.['x-wp-totalpages'] || '1', 10);
-
-        setTotalProducts(total);
-        setHasMore(page < totalPages);
-        setCurrentPage(page);
-        setLoadError(null);
-
+      try {
         if (append) {
-          setProducts((prev) => [...prev, ...result.data!]);
+          setLoadingMore(true);
         } else {
-          setProducts(result.data);
+          setLoading(true);
         }
-      } else {
-        const errorMsg = 'error' in result && result.error ? result.error : 'Неуспешно зареждане на продукти';
+
+        const service = new WooCommerceService(currentStore);
+        const result = await service.getProducts({
+          status: 'publish',
+          per_page: PRODUCTS_PER_PAGE,
+          page,
+        });
+
+        if (result.success && result.data) {
+          const total = parseInt(result.headers?.['x-wp-total'] || String(result.data.length), 10);
+          const totalPages = parseInt(result.headers?.['x-wp-totalpages'] || '1', 10);
+
+          setTotalProducts(total);
+          setHasMore(page < totalPages);
+          setCurrentPage(page);
+          setLoadError(null);
+
+          if (append) {
+            setProducts((prev) => [...prev, ...result.data!]);
+          } else {
+            setProducts(result.data);
+          }
+        } else {
+          const errorMsg =
+            'error' in result && result.error ? result.error : 'Неуспешно зареждане на продукти';
+          setLoadError(errorMsg);
+          startRetryCountdown(retryDelaySeconds, () => loadProductsRef.current(page, append));
+        }
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : 'Грешка при зареждане';
         setLoadError(errorMsg);
         startRetryCountdown(retryDelaySeconds, () => loadProductsRef.current(page, append));
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
       }
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Грешка при зареждане';
-      setLoadError(errorMsg);
-      startRetryCountdown(retryDelaySeconds, () => loadProductsRef.current(page, append));
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, [currentStore, retryDelaySeconds, startRetryCountdown]);
+    },
+    [currentStore, retryDelaySeconds, startRetryCountdown]
+  );
 
   useEffect(() => {
     loadProductsRef.current = loadProducts;
@@ -219,7 +223,14 @@ export function usePOSProducts(
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
-        if (entry?.isIntersecting && hasMore && !loadingMore && !loading && !searchTerm && selectedCategory === 'all') {
+        if (
+          entry?.isIntersecting &&
+          hasMore &&
+          !loadingMore &&
+          !loading &&
+          !searchTerm &&
+          selectedCategory === 'all'
+        ) {
           loadMoreProducts();
         }
       },
@@ -227,8 +238,18 @@ export function usePOSProducts(
     );
 
     observer.observe(sentinel);
-    return () => { observer.disconnect(); };
-  }, [infiniteScrollEnabled, hasMore, loadingMore, loading, searchTerm, selectedCategory, loadMoreProducts]);
+    return () => {
+      observer.disconnect();
+    };
+  }, [
+    infiniteScrollEnabled,
+    hasMore,
+    loadingMore,
+    loading,
+    searchTerm,
+    selectedCategory,
+    loadMoreProducts,
+  ]);
 
   // Categories
   const categories = useMemo(() => {
@@ -266,7 +287,9 @@ export function usePOSProducts(
 
   // Filter products
   const filteredProducts = useMemo(() => {
-    let filtered = products.filter((p) => p.status === 'publish' && p.stock_status !== 'outofstock');
+    let filtered = products.filter(
+      (p) => p.status === 'publish' && p.stock_status !== 'outofstock'
+    );
 
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
@@ -289,9 +312,7 @@ export function usePOSProducts(
   const handleSearchKeyDown = useCallback(
     (e: KeyboardEvent<HTMLInputElement>): void => {
       if (e.key === 'Enter' && searchTerm) {
-        const product = products.find(
-          (p) => p.sku?.toLowerCase() === searchTerm.toLowerCase()
-        );
+        const product = products.find((p) => p.sku?.toLowerCase() === searchTerm.toLowerCase());
         if (product) {
           addToCart(product);
           setSearchTerm('');

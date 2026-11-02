@@ -1,6 +1,11 @@
 import { vi } from 'vitest';
 import WooCommerceService from '../woocommerce';
-import { createMockStore, createMockOrder, createMockProduct, createMockCustomer } from '../../__test_utils__';
+import {
+  createMockStore,
+  createMockOrder,
+  createMockProduct,
+  createMockCustomer,
+} from '../../__test_utils__';
 
 const { mockGet, mockPost, mockPut, mockDelete, MockApiConstructor } = vi.hoisted(() => ({
   mockGet: vi.fn(),
@@ -39,7 +44,9 @@ describe('WooCommerceService', () => {
 
   describe('constructor', () => {
     it('should throw error when no store config provided', () => {
-      expect(() => new WooCommerceService(null as never)).toThrow('Store configuration is required');
+      expect(() => new WooCommerceService(null as never)).toThrow(
+        'Store configuration is required'
+      );
     });
 
     it('should create service with valid store config', () => {
@@ -120,8 +127,14 @@ describe('WooCommerceService', () => {
       const orders2 = [createMockOrder()];
 
       mockGet
-        .mockResolvedValueOnce({ data: orders1, headers: { 'x-wp-totalpages': '2', 'x-wp-total': '3' } })
-        .mockResolvedValueOnce({ data: orders2, headers: { 'x-wp-totalpages': '2', 'x-wp-total': '3' } });
+        .mockResolvedValueOnce({
+          data: orders1,
+          headers: { 'x-wp-totalpages': '2', 'x-wp-total': '3' },
+        })
+        .mockResolvedValueOnce({
+          data: orders2,
+          headers: { 'x-wp-totalpages': '2', 'x-wp-total': '3' },
+        });
 
       const result = await service.getAllOrders({ per_page: 2 });
 
@@ -132,21 +145,29 @@ describe('WooCommerceService', () => {
 
     it('should call onBatchLoaded callback', async () => {
       const orders = [createMockOrder()];
-      mockGet.mockResolvedValue({ data: orders, headers: { 'x-wp-totalpages': '1', 'x-wp-total': '1' } });
+      mockGet.mockResolvedValue({
+        data: orders,
+        headers: { 'x-wp-totalpages': '1', 'x-wp-total': '1' },
+      });
 
       const onBatch = vi.fn();
       await service.getAllOrders({ per_page: 25 }, onBatch);
 
-      expect(onBatch).toHaveBeenCalledWith(expect.objectContaining({
-        currentPage: 1,
-        totalPages: 1,
-        progress: 100,
-        batchData: orders,
-      }));
+      expect(onBatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          currentPage: 1,
+          totalPages: 1,
+          progress: 100,
+          batchData: orders,
+        })
+      );
     });
 
     it('should support cancellation', async () => {
-      mockGet.mockResolvedValue({ data: [createMockOrder()], headers: { 'x-wp-totalpages': '3', 'x-wp-total': '75' } });
+      mockGet.mockResolvedValue({
+        data: [createMockOrder()],
+        headers: { 'x-wp-totalpages': '3', 'x-wp-total': '75' },
+      });
 
       let callCount = 0;
       const result = await service.getAllOrders({ per_page: 25 }, null, {
@@ -239,7 +260,10 @@ describe('WooCommerceService', () => {
 
   describe('refundOrder', () => {
     it('should create a full refund', async () => {
-      mockPost.mockResolvedValue({ data: { id: 1, amount: '50.00', reason: 'POS Refund' }, headers: {} });
+      mockPost.mockResolvedValue({
+        data: { id: 1, amount: '50.00', reason: 'POS Refund' },
+        headers: {},
+      });
 
       const result = await service.refundOrder(42);
 
@@ -248,7 +272,10 @@ describe('WooCommerceService', () => {
     });
 
     it('should create a partial refund with amount', async () => {
-      mockPost.mockResolvedValue({ data: { id: 1, amount: '25.00', reason: 'Partial' }, headers: {} });
+      mockPost.mockResolvedValue({
+        data: { id: 1, amount: '25.00', reason: 'Partial' },
+        headers: {},
+      });
 
       const result = await service.refundOrder(42, 25, 'Partial');
 
@@ -350,8 +377,14 @@ describe('WooCommerceService', () => {
       const batch2 = [createMockProduct()];
 
       mockGet
-        .mockResolvedValueOnce({ data: batch1, headers: { 'x-wp-totalpages': '2', 'x-wp-total': '2' } })
-        .mockResolvedValueOnce({ data: batch2, headers: { 'x-wp-totalpages': '2', 'x-wp-total': '2' } });
+        .mockResolvedValueOnce({
+          data: batch1,
+          headers: { 'x-wp-totalpages': '2', 'x-wp-total': '2' },
+        })
+        .mockResolvedValueOnce({
+          data: batch2,
+          headers: { 'x-wp-totalpages': '2', 'x-wp-total': '2' },
+        });
 
       const result = await service.getAllProducts({ per_page: 1 });
 
@@ -364,17 +397,23 @@ describe('WooCommerceService', () => {
   describe('getProductsSince', () => {
     it('should fetch products modified since timestamp', async () => {
       const products = [createMockProduct()];
-      mockGet.mockResolvedValue({ data: products, headers: { 'x-wp-totalpages': '1', 'x-wp-total': '1' } });
+      mockGet.mockResolvedValue({
+        data: products,
+        headers: { 'x-wp-totalpages': '1', 'x-wp-total': '1' },
+      });
 
       const result = await service.getProductsSince('2025-01-01T00:00:00.000Z');
 
       expect(result.success).toBe(true);
-      expect(mockGet).toHaveBeenCalledWith('products', expect.objectContaining({
-        modified_after: '2025-01-01T00:00:00.000Z',
-        orderby: 'modified',
-        order: 'desc',
-        page: 1,
-      }));
+      expect(mockGet).toHaveBeenCalledWith(
+        'products',
+        expect.objectContaining({
+          modified_after: '2025-01-01T00:00:00.000Z',
+          orderby: 'modified',
+          order: 'desc',
+          page: 1,
+        })
+      );
     });
   });
 
@@ -528,9 +567,12 @@ describe('WooCommerceService', () => {
       const result = await service.getOrdersMinimal();
 
       expect(result.success).toBe(true);
-      expect(mockGet).toHaveBeenCalledWith('orders', expect.objectContaining({
-        _fields: 'id,status,total,billing,date_created,line_items,currency',
-      }));
+      expect(mockGet).toHaveBeenCalledWith(
+        'orders',
+        expect.objectContaining({
+          _fields: 'id,status,total,billing,date_created,line_items,currency',
+        })
+      );
     });
   });
 
@@ -541,9 +583,12 @@ describe('WooCommerceService', () => {
       const result = await service.getProductsMinimal();
 
       expect(result.success).toBe(true);
-      expect(mockGet).toHaveBeenCalledWith('products', expect.objectContaining({
-        _fields: expect.stringContaining('id,name,sku'),
-      }));
+      expect(mockGet).toHaveBeenCalledWith(
+        'products',
+        expect.objectContaining({
+          _fields: expect.stringContaining('id,name,sku'),
+        })
+      );
     });
   });
 
@@ -791,10 +836,18 @@ describe('WooCommerceService', () => {
     it('should create a coupon', async () => {
       mockPost.mockResolvedValue({ data: { id: 1, code: 'NEW10' }, headers: {} });
 
-      const result = await service.createCoupon({ code: 'NEW10', discount_type: 'percent', amount: '10' });
+      const result = await service.createCoupon({
+        code: 'NEW10',
+        discount_type: 'percent',
+        amount: '10',
+      });
 
       expect(result.success).toBe(true);
-      expect(mockPost).toHaveBeenCalledWith('coupons', { code: 'NEW10', discount_type: 'percent', amount: '10' });
+      expect(mockPost).toHaveBeenCalledWith('coupons', {
+        code: 'NEW10',
+        discount_type: 'percent',
+        amount: '10',
+      });
     });
   });
 

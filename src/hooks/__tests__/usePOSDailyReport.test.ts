@@ -30,23 +30,25 @@ describe('usePOSDailyReport', () => {
   const mockRefundOrder = vi.fn();
 
   beforeEach(() => {
-    (useStoreConfig as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
-      const state = { getCurrentStore: () => mockStore };
-      return selector ? selector(state) : state;
-    });
+    (useStoreConfig as unknown as Mock).mockImplementation(
+      (selector?: (state: unknown) => unknown) => {
+        const state = { getCurrentStore: () => mockStore };
+        return selector ? selector(state) : state;
+      }
+    );
 
     (usePOSStore as unknown as Mock).mockReturnValue({
-      cart: [
-        { product: { id: 1, name: 'Test Product' }, quantity: 2, price: 10 },
-      ],
+      cart: [{ product: { id: 1, name: 'Test Product' }, quantity: 2, price: 10 }],
       paymentMethod: 'cash',
       getTotal: () => 20,
       getItemCount: () => 2,
     });
 
-    (WooCommerceService as Mock).mockImplementation(function () { return {
-      refundOrder: mockRefundOrder,
-    }; });
+    (WooCommerceService as Mock).mockImplementation(function () {
+      return {
+        refundOrder: mockRefundOrder,
+      };
+    });
 
     // Clear localStorage
     localStorage.clear();
@@ -91,7 +93,14 @@ describe('usePOSDailyReport', () => {
 
   it('should load transactions from localStorage', () => {
     const existingTx = [
-      { id: 50, total: 30, itemCount: 1, items: [], paymentMethod: 'Каса', timestamp: new Date().toISOString() },
+      {
+        id: 50,
+        total: 30,
+        itemCount: 1,
+        items: [],
+        paymentMethod: 'Каса',
+        timestamp: new Date().toISOString(),
+      },
     ];
     localStorage.setItem('pos_recent_transactions', JSON.stringify(existingTx));
 

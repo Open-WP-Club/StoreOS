@@ -6,7 +6,15 @@ const NOW = Date.parse('2026-06-30T00:00:00Z');
 const daysAgo = (d: number): string => new Date(NOW - d * 86_400_000).toISOString();
 
 const prod = (o: Partial<Product>): Product =>
-  ({ id: 1, name: 'P', sku: 'S', manage_stock: true, stock_quantity: 3, meta_data: [], ...o }) as Product;
+  ({
+    id: 1,
+    name: 'P',
+    sku: 'S',
+    manage_stock: true,
+    stock_quantity: 3,
+    meta_data: [],
+    ...o,
+  }) as Product;
 const order = (status: string, d: number, items: Array<[number, number, number?]>): Order =>
   ({
     status,

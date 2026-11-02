@@ -118,10 +118,12 @@ describe('CouponsPage', () => {
     mockSetCachedData.mockResolvedValue(undefined);
     mockClearCacheForType.mockResolvedValue(undefined);
 
-    (useStoreConfig as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
-      const state = { getCurrentStore: () => mockStore };
-      return selector ? selector(state) : state;
-    });
+    (useStoreConfig as unknown as Mock).mockImplementation(
+      (selector?: (state: unknown) => unknown) => {
+        const state = { getCurrentStore: () => mockStore };
+        return selector ? selector(state) : state;
+      }
+    );
 
     (useCache as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
       const state = {
@@ -133,10 +135,12 @@ describe('CouponsPage', () => {
       return selector ? selector(state) : state;
     });
 
-    (useActivityLog as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
-      const state = { logActivity: vi.fn() };
-      return selector ? selector(state) : state;
-    });
+    (useActivityLog as unknown as Mock).mockImplementation(
+      (selector?: (state: unknown) => unknown) => {
+        const state = { logActivity: vi.fn() };
+        return selector ? selector(state) : state;
+      }
+    );
   });
 
   it('should render page header', () => {

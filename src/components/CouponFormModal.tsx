@@ -53,7 +53,10 @@ function CouponFormModal({
           <div className="space-y-4">
             {/* Code */}
             <div>
-              <label htmlFor="coupon-code" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="coupon-code"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 Coupon Code *
               </label>
               <div className="flex gap-2">
@@ -76,19 +79,26 @@ function CouponFormModal({
                   <Shuffle className="w-4 h-4" />
                 </button>
               </div>
-              {formErrors.code && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{formErrors.code}</p>}
+              {formErrors.code && (
+                <p className="text-red-500 dark:text-red-400 text-sm mt-1">{formErrors.code}</p>
+              )}
             </div>
 
             {/* Type and Amount */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="discount-type" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label
+                  htmlFor="discount-type"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
                   Discount Type
                 </label>
                 <select
                   id="discount-type"
                   value={formData.discount_type}
-                  onChange={(e) => onUpdate({ discount_type: e.target.value as CouponDiscountType })}
+                  onChange={(e) =>
+                    onUpdate({ discount_type: e.target.value as CouponDiscountType })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="percent">Percentage discount</option>
@@ -97,7 +107,10 @@ function CouponFormModal({
                 </select>
               </div>
               <div>
-                <label htmlFor="amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label
+                  htmlFor="amount"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
                   Amount *
                 </label>
                 <input
@@ -110,13 +123,18 @@ function CouponFormModal({
                   placeholder={formData.discount_type === 'percent' ? 'e.g., 20' : 'e.g., 10.00'}
                   className={inputClass('amount')}
                 />
-                {formErrors.amount && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{formErrors.amount}</p>}
+                {formErrors.amount && (
+                  <p className="text-red-500 dark:text-red-400 text-sm mt-1">{formErrors.amount}</p>
+                )}
               </div>
             </div>
 
             {/* Description */}
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="description"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 Description
               </label>
               <textarea
@@ -131,7 +149,10 @@ function CouponFormModal({
 
             {/* Expiry Date */}
             <div>
-              <label htmlFor="date-expires" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="date-expires"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 Expiry Date
               </label>
               <input
@@ -142,13 +163,20 @@ function CouponFormModal({
                 onBlur={() => onBlur('date_expires')}
                 className={inputClass('date_expires')}
               />
-              {formErrors.date_expires && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{formErrors.date_expires}</p>}
+              {formErrors.date_expires && (
+                <p className="text-red-500 dark:text-red-400 text-sm mt-1">
+                  {formErrors.date_expires}
+                </p>
+              )}
             </div>
 
             {/* Usage Limits */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="usage-limit" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label
+                  htmlFor="usage-limit"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
                   Usage Limit (Total)
                 </label>
                 <input
@@ -160,10 +188,17 @@ function CouponFormModal({
                   placeholder="Unlimited"
                   className={inputClass('usage_limit')}
                 />
-                {formErrors.usage_limit && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{formErrors.usage_limit}</p>}
+                {formErrors.usage_limit && (
+                  <p className="text-red-500 dark:text-red-400 text-sm mt-1">
+                    {formErrors.usage_limit}
+                  </p>
+                )}
               </div>
               <div>
-                <label htmlFor="usage-limit-per-user" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label
+                  htmlFor="usage-limit-per-user"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
                   Usage Limit (Per User)
                 </label>
                 <input
@@ -175,14 +210,21 @@ function CouponFormModal({
                   placeholder="Unlimited"
                   className={inputClass('usage_limit_per_user')}
                 />
-                {formErrors.usage_limit_per_user && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{formErrors.usage_limit_per_user}</p>}
+                {formErrors.usage_limit_per_user && (
+                  <p className="text-red-500 dark:text-red-400 text-sm mt-1">
+                    {formErrors.usage_limit_per_user}
+                  </p>
+                )}
               </div>
             </div>
 
             {/* Min/Max Amount */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="minimum-amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label
+                  htmlFor="minimum-amount"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
                   Minimum Spend
                 </label>
                 <input
@@ -195,10 +237,17 @@ function CouponFormModal({
                   placeholder="No minimum"
                   className={inputClass('minimum_amount')}
                 />
-                {formErrors.minimum_amount && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{formErrors.minimum_amount}</p>}
+                {formErrors.minimum_amount && (
+                  <p className="text-red-500 dark:text-red-400 text-sm mt-1">
+                    {formErrors.minimum_amount}
+                  </p>
+                )}
               </div>
               <div>
-                <label htmlFor="maximum-amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label
+                  htmlFor="maximum-amount"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
                   Maximum Spend
                 </label>
                 <input
@@ -211,14 +260,21 @@ function CouponFormModal({
                   placeholder="No maximum"
                   className={inputClass('maximum_amount')}
                 />
-                {formErrors.maximum_amount && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{formErrors.maximum_amount}</p>}
+                {formErrors.maximum_amount && (
+                  <p className="text-red-500 dark:text-red-400 text-sm mt-1">
+                    {formErrors.maximum_amount}
+                  </p>
+                )}
               </div>
             </div>
 
             {/* Checkboxes */}
             <div className="space-y-3">
               {[
-                { field: 'individual_use' as const, label: 'Individual use only (cannot be combined with other coupons)' },
+                {
+                  field: 'individual_use' as const,
+                  label: 'Individual use only (cannot be combined with other coupons)',
+                },
                 { field: 'free_shipping' as const, label: 'Allow free shipping' },
                 { field: 'exclude_sale_items' as const, label: 'Exclude sale items' },
               ].map(({ field, label }) => (

@@ -31,7 +31,11 @@ vi.mock('../../utils/currency', () => ({
 // Mock KPICard component
 vi.mock('../../components/KPICard', () => ({
   default: function MockKPICard({ label, value }: { label: string; value: string }) {
-    return <div data-testid={`kpi-${label}`}>{label}: {value}</div>;
+    return (
+      <div data-testid={`kpi-${label}`}>
+        {label}: {value}
+      </div>
+    );
   },
 }));
 

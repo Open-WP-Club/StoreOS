@@ -14,17 +14,25 @@ interface StatusConfig {
 
 // Fixed per-status color mapping
 const STATUS_CONFIG: Record<string, StatusConfig> = {
-  completed:  { label: 'Completed',  bg: 'rgba(34,197,94,0.75)',   border: 'rgb(34,197,94)' },
-  processing: { label: 'Processing', bg: 'rgba(59,130,246,0.75)',  border: 'rgb(59,130,246)' },
-  'on-hold':  { label: 'On Hold',    bg: 'rgba(251,191,36,0.75)',  border: 'rgb(251,191,36)' },
-  pending:    { label: 'Pending',    bg: 'rgba(156,163,175,0.75)', border: 'rgb(156,163,175)' },
-  cancelled:  { label: 'Cancelled',  bg: 'rgba(239,68,68,0.75)',   border: 'rgb(239,68,68)' },
-  refunded:   { label: 'Refunded',   bg: 'rgba(168,85,247,0.75)',  border: 'rgb(168,85,247)' },
-  failed:     { label: 'Failed',     bg: 'rgba(220,38,38,0.75)',   border: 'rgb(220,38,38)' },
+  completed: { label: 'Completed', bg: 'rgba(34,197,94,0.75)', border: 'rgb(34,197,94)' },
+  processing: { label: 'Processing', bg: 'rgba(59,130,246,0.75)', border: 'rgb(59,130,246)' },
+  'on-hold': { label: 'On Hold', bg: 'rgba(251,191,36,0.75)', border: 'rgb(251,191,36)' },
+  pending: { label: 'Pending', bg: 'rgba(156,163,175,0.75)', border: 'rgb(156,163,175)' },
+  cancelled: { label: 'Cancelled', bg: 'rgba(239,68,68,0.75)', border: 'rgb(239,68,68)' },
+  refunded: { label: 'Refunded', bg: 'rgba(168,85,247,0.75)', border: 'rgb(168,85,247)' },
+  failed: { label: 'Failed', bg: 'rgba(220,38,38,0.75)', border: 'rgb(220,38,38)' },
 };
 
 // Preferred display order
-const STATUS_ORDER = ['completed', 'processing', 'on-hold', 'pending', 'cancelled', 'refunded', 'failed'];
+const STATUS_ORDER = [
+  'completed',
+  'processing',
+  'on-hold',
+  'pending',
+  'cancelled',
+  'refunded',
+  'failed',
+];
 
 const CHART_OPTIONS: ChartOptions<'doughnut'> = {
   responsive: true,
@@ -55,7 +63,9 @@ interface OrderStatusDonutProps {
   orders: WooCommerceOrder[];
 }
 
-export default function OrderStatusDonut({ orders }: OrderStatusDonutProps): React.ReactElement | null {
+export default function OrderStatusDonut({
+  orders,
+}: OrderStatusDonutProps): React.ReactElement | null {
   const chartData = useMemo(() => {
     // Count by status
     const counts: Record<string, number> = {};
@@ -99,7 +109,10 @@ export default function OrderStatusDonut({ orders }: OrderStatusDonutProps): Rea
     <div className="relative">
       <Doughnut data={chartData} options={CHART_OPTIONS} />
       {/* Center label */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" style={{ top: '-1.5rem' }}>
+      <div
+        className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
+        style={{ top: '-1.5rem' }}
+      >
         <span className="text-2xl font-bold text-gray-900 dark:text-white">{total}</span>
         <span className="text-xs text-gray-500 dark:text-gray-400">total</span>
       </div>

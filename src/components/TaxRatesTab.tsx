@@ -83,7 +83,10 @@ function TaxRatesTab({
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label htmlFor="tax-country" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="tax-country"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 Country Code
               </label>
               <input
@@ -99,7 +102,10 @@ function TaxRatesTab({
               />
             </div>
             <div>
-              <label htmlFor="tax-state" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="tax-state"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 State Code
               </label>
               <input
@@ -112,7 +118,10 @@ function TaxRatesTab({
               />
             </div>
             <div>
-              <label htmlFor="tax-rate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="tax-rate"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 Rate (%) *
               </label>
               <input
@@ -125,7 +134,10 @@ function TaxRatesTab({
               />
             </div>
             <div>
-              <label htmlFor="tax-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="tax-name"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 Tax Name
               </label>
               <input
@@ -138,7 +150,10 @@ function TaxRatesTab({
               />
             </div>
             <div>
-              <label htmlFor="tax-postcode" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="tax-postcode"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 Postcode
               </label>
               <input
@@ -151,7 +166,10 @@ function TaxRatesTab({
               />
             </div>
             <div>
-              <label htmlFor="tax-city" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="tax-city"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 City
               </label>
               <input
@@ -164,7 +182,10 @@ function TaxRatesTab({
               />
             </div>
             <div>
-              <label htmlFor="tax-class" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="tax-class"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 Tax Class
               </label>
               <select
@@ -181,7 +202,10 @@ function TaxRatesTab({
               </select>
             </div>
             <div>
-              <label htmlFor="tax-priority" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="tax-priority"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 Priority
               </label>
               <input
@@ -189,10 +213,15 @@ function TaxRatesTab({
                 type="number"
                 value={rateForm.priority}
                 onChange={(e) =>
-                  onRateFormChange({ ...rateForm, priority: e.target.value === '' ? '' : parseInt(e.target.value) })
+                  onRateFormChange({
+                    ...rateForm,
+                    priority: e.target.value === '' ? '' : parseInt(e.target.value),
+                  })
                 }
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500"
-                onBlur={() => rateForm.priority === '' && onRateFormChange({ ...rateForm, priority: 1 })}
+                onBlur={() =>
+                  rateForm.priority === '' && onRateFormChange({ ...rateForm, priority: 1 })
+                }
                 min={1}
               />
             </div>
@@ -292,9 +321,7 @@ function TaxRatesTab({
                   <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
                     {parseFloat(rate.rate).toFixed(4)}%
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
-                    {rate.name}
-                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{rate.name}</td>
                   <td className="px-4 py-3">
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
                       {rate.class || 'standard'}

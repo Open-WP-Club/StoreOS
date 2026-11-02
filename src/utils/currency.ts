@@ -19,7 +19,10 @@ interface CurrencyData {
  * Format a price with currency symbol
  * Only shows currency symbol if it's provided and valid
  */
-export const formatPrice = (price: string | number | null | undefined, currencySymbol: string | null = null): string => {
+export const formatPrice = (
+  price: string | number | null | undefined,
+  currencySymbol: string | null = null
+): string => {
   // Handle null, undefined, or empty price
   if (price === null || price === undefined || price === '') {
     return '';
@@ -123,5 +126,6 @@ export const getCurrencyCode = (data: CurrencyData | CurrencyData[] | null | und
 };
 
 /** Currency symbol configured for a store, or '' when none. */
-export const storeCurrencySymbol = (store: { currencySymbol?: string | null } | null | undefined): string =>
-  store?.currencySymbol || '';
+export const storeCurrencySymbol = (
+  store: { currencySymbol?: string | null } | null | undefined
+): string => store?.currencySymbol || '';

@@ -70,7 +70,9 @@ describe('POSCart', () => {
 
   it('changes quantity, opens numpad, removes items and clears cart', () => {
     const p = setup();
-    const [minus] = screen.getAllByRole('button').filter((b) => b.querySelector('svg.lucide-minus'));
+    const [minus] = screen
+      .getAllByRole('button')
+      .filter((b) => b.querySelector('svg.lucide-minus'));
     const [plus] = screen.getAllByRole('button').filter((b) => b.querySelector('svg.lucide-plus'));
     fireEvent.click(minus!);
     expect(p.updateQuantity).toHaveBeenCalledWith(1, 1);
@@ -78,7 +80,9 @@ describe('POSCart', () => {
     expect(p.updateQuantity).toHaveBeenCalledWith(1, 3);
     fireEvent.click(screen.getByText('2'));
     expect(p.onOpenQuantityNumpad).toHaveBeenCalledWith(1, 2);
-    const [trash] = screen.getAllByRole('button').filter((b) => b.querySelector('svg.lucide-trash-2'));
+    const [trash] = screen
+      .getAllByRole('button')
+      .filter((b) => b.querySelector('svg.lucide-trash-2'));
     fireEvent.click(trash!);
     expect(p.removeFromCart).toHaveBeenCalledWith(1);
     fireEvent.click(screen.getByText('Изчисти'));
@@ -113,7 +117,11 @@ describe('POSCart', () => {
   });
 
   it('shows selected customer and clears it', () => {
-    const customer = createMockCustomer({ first_name: 'Ann', last_name: 'Lee', email: 'ann@test.com' });
+    const customer = createMockCustomer({
+      first_name: 'Ann',
+      last_name: 'Lee',
+      email: 'ann@test.com',
+    });
     const p = setup({ selectedCustomer: customer });
     expect(screen.getByText('Ann Lee')).toBeInTheDocument();
     expect(screen.getByText('ann@test.com')).toBeInTheDocument();

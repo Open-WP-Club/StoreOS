@@ -83,10 +83,10 @@ function FilterPresetManager({
   const hasActiveFilters =
     !!currentSearch?.trim() ||
     (currentFilters &&
-    Object.keys(currentFilters).some((key) => {
-      const value = currentFilters[key];
-      return value !== undefined && value !== null && value !== '' && value !== 'all';
-    }));
+      Object.keys(currentFilters).some((key) => {
+        const value = currentFilters[key];
+        return value !== undefined && value !== null && value !== '' && value !== 'all';
+      }));
 
   return (
     <div className="relative">
@@ -264,7 +264,8 @@ function FilterPresetManager({
                         if (value && value !== 'all') {
                           return (
                             <li key={key}>
-                              &bull; {key}: {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                              &bull; {key}:{' '}
+                              {typeof value === 'object' ? JSON.stringify(value) : String(value)}
                             </li>
                           );
                         }

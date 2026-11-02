@@ -44,7 +44,12 @@ describe('refunds', () => {
         reason: 'dmg',
         api_restock: true,
         line_items: [
-          { id: 7, quantity: 2, refund_total: '50.00', refund_tax: [{ id: 1, refund_total: '10.00' }] },
+          {
+            id: 7,
+            quantity: 2,
+            refund_total: '50.00',
+            refund_tax: [{ id: 1, refund_total: '10.00' }],
+          },
         ],
       },
     });
@@ -59,7 +64,11 @@ describe('refunds', () => {
   it('rejects over-refund by quantity and by amount', () => {
     const rows = getRefundableItems([item], [prior]);
     expect(buildRefundRequest(rows, { 7: { quantity: 4 } }, { restock: true }).ok).toBe(false);
-    const byAmount = buildRefundRequest(rows, { 7: { quantity: 1, amount: 80 } }, { restock: true });
+    const byAmount = buildRefundRequest(
+      rows,
+      { 7: { quantity: 1, amount: 80 } },
+      { restock: true }
+    );
     expect(byAmount).toMatchObject({ ok: false });
   });
 

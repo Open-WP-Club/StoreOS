@@ -58,9 +58,7 @@ export function useKeyboardShortcut(
 
         // Handle both cmd and meta
         const cmdMatch =
-          modifiers.includes('cmd') || modifiers.includes('meta')
-            ? event.metaKey
-            : !event.metaKey;
+          modifiers.includes('cmd') || modifiers.includes('meta') ? event.metaKey : !event.metaKey;
 
         return ctrlMatch && altMatch && shiftMatch && cmdMatch;
       });

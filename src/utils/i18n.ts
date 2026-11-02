@@ -342,7 +342,8 @@ const translations: Record<Language, TranslationStrings> = {
     includeProductsDescription: 'Включи кеширани продукти в backup файла',
     restoreFromBackup: 'Възстанови от Backup',
     restoreFromBackupDescription: 'Зареди настройки от backup файл',
-    backupWarningCredentials: 'Backup файлът не съдържа API ключове, освен ако зададете парола за криптиране. Пазете го на сигурно място.',
+    backupWarningCredentials:
+      'Backup файлът не съдържа API ключове, освен ако зададете парола за криптиране. Пазете го на сигурно място.',
     backupSuccess: 'Backup файлът е създаден успешно',
     restoreSuccess: 'Настройките са възстановени успешно. Приложението ще се презареди.',
     restoreError: 'Грешка при възстановяване на backup',
@@ -489,12 +490,14 @@ const translations: Record<Language, TranslationStrings> = {
     includeProductsDescription: 'Include cached products in the backup file',
     restoreFromBackup: 'Restore from Backup',
     restoreFromBackupDescription: 'Load settings from a backup file',
-    backupWarningCredentials: 'The backup file excludes API keys unless you set an encryption passphrase. Keep it in a safe place.',
+    backupWarningCredentials:
+      'The backup file excludes API keys unless you set an encryption passphrase. Keep it in a safe place.',
     backupSuccess: 'Backup file created successfully',
     restoreSuccess: 'Settings restored successfully. The app will reload.',
     restoreError: 'Error restoring backup',
     restoreConfirmTitle: 'Confirm Restore',
-    restoreConfirmMessage: 'This will replace current settings with those from the backup file. Continue?',
+    restoreConfirmMessage:
+      'This will replace current settings with those from the backup file. Continue?',
     restorePartialSuccess: 'Partial restore: some sections were not restored',
     invalidBackupFile: 'Invalid backup file',
   },

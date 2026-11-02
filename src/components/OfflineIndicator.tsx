@@ -172,8 +172,8 @@ function OfflineIndicator(): React.ReactElement | null {
           !isOnline
             ? 'bg-red-600 text-white hover:bg-red-700'
             : hasPendingOps
-            ? 'bg-yellow-500 text-white hover:bg-yellow-600'
-            : 'bg-green-600 text-white hover:bg-green-700'
+              ? 'bg-yellow-500 text-white hover:bg-yellow-600'
+              : 'bg-green-600 text-white hover:bg-green-700'
         }`}
       >
         {!isOnline ? (

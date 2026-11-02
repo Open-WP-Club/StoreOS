@@ -1,5 +1,11 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import type { WooCommerceProduct, StockStatus, TaxStatus, CatalogVisibility, ProductCategory } from '../types';
+import type {
+  WooCommerceProduct,
+  StockStatus,
+  TaxStatus,
+  CatalogVisibility,
+  ProductCategory,
+} from '../types';
 import BulkEditPreview from './BulkEditPreview';
 import BulkEditForm from './BulkEditForm';
 
@@ -168,9 +174,7 @@ const BulkEditModal: React.FC<BulkEditModalProps> = ({
   const effectiveProducts = useMemo<WooCommerceProduct[]>(() => {
     if (filterByCategory && selectedCategoryId !== '') {
       const source = allProducts ?? selectedProducts;
-      return source.filter((p) =>
-        (p.categories ?? []).some((c) => c.id === selectedCategoryId)
-      );
+      return source.filter((p) => (p.categories ?? []).some((c) => c.id === selectedCategoryId));
     }
     return selectedProducts;
   }, [filterByCategory, selectedCategoryId, allProducts, selectedProducts]);
@@ -179,89 +183,99 @@ const BulkEditModal: React.FC<BulkEditModalProps> = ({
     setEditFields((prev) => ({ ...prev, [field]: !prev[field] }));
   }, []);
 
-  const handleFieldChange = useCallback(<K extends keyof EditFields>(field: K, value: EditFields[K]): void => {
-    setEditFields((prev) => ({ ...prev, [field]: value }));
-  }, []);
+  const handleFieldChange = useCallback(
+    <K extends keyof EditFields>(field: K, value: EditFields[K]): void => {
+      setEditFields((prev) => ({ ...prev, [field]: value }));
+    },
+    []
+  );
 
-  const calculateNewValue = useCallback((
-    currentValue: string | number,
-    action: PriceAction,
-    value: string,
-    type: PriceType
-  ): string => {
-    const current = parseFloat(String(currentValue)) || 0;
-    const changeValue = parseFloat(value) || 0;
-    if (action === 'set') return value;
-    if (action === 'increase') {
+  const calculateNewValue = useCallback(
+    (
+      currentValue: string | number,
+      action: PriceAction,
+      value: string,
+      type: PriceType
+    ): string => {
+      const current = parseFloat(String(currentValue)) || 0;
+      const changeValue = parseFloat(value) || 0;
+      if (action === 'set') return value;
+      if (action === 'increase') {
+        return type === 'percent'
+          ? (current * (1 + changeValue / 100)).toFixed(2)
+          : (current + changeValue).toFixed(2);
+      }
+      // decrease
       return type === 'percent'
-        ? (current * (1 + changeValue / 100)).toFixed(2)
-        : (current + changeValue).toFixed(2);
-    }
-    // decrease
-    return type === 'percent'
-      ? (current * (1 - changeValue / 100)).toFixed(2)
-      : Math.max(0, current - changeValue).toFixed(2);
-  }, []);
+        ? (current * (1 - changeValue / 100)).toFixed(2)
+        : Math.max(0, current - changeValue).toFixed(2);
+    },
+    []
+  );
 
-  const buildUpdates = useCallback((): ProductUpdate[] =>
-    effectiveProducts.map((product) => {
-      const update: ProductUpdate = { id: product.id };
+  const buildUpdates = useCallback(
+    (): ProductUpdate[] =>
+      effectiveProducts.map((product) => {
+        const update: ProductUpdate = { id: product.id };
 
-      if (editFields.changePrice && editFields.priceValue) {
-        update.regular_price = calculateNewValue(
-          product.regular_price,
-          editFields.priceAction,
-          editFields.priceValue,
-          editFields.priceType
-        );
-      }
-
-      if (editFields.changeSalePrice && editFields.salePriceValue) {
-        update.sale_price = calculateNewValue(
-          product.sale_price || product.regular_price,
-          editFields.salePriceAction,
-          editFields.salePriceValue,
-          editFields.salePriceType
-        );
-        if (editFields.saleDateFrom) update.date_on_sale_from = editFields.saleDateFrom;
-        if (editFields.saleDateTo) update.date_on_sale_to = editFields.saleDateTo;
-      }
-
-      if (editFields.changeStock && editFields.stockValue !== '') {
-        const currentStock = product.stock_quantity || 0;
-        if (editFields.stockAction === 'set') {
-          update.stock_quantity = parseInt(editFields.stockValue);
-        } else if (editFields.stockAction === 'increase') {
-          update.stock_quantity = currentStock + parseInt(editFields.stockValue);
-        } else {
-          update.stock_quantity = Math.max(0, currentStock - parseInt(editFields.stockValue));
+        if (editFields.changePrice && editFields.priceValue) {
+          update.regular_price = calculateNewValue(
+            product.regular_price,
+            editFields.priceAction,
+            editFields.priceValue,
+            editFields.priceType
+          );
         }
-        update.manage_stock = true;
-      }
 
-      if (editFields.changeStockStatus) update.stock_status = editFields.stockStatus;
-      if (editFields.changeManageStock) update.manage_stock = editFields.manageStock;
-      if (editFields.changeTaxStatus) update.tax_status = editFields.taxStatus;
-      if (editFields.changeCatalogVisibility) update.catalog_visibility = editFields.catalogVisibility;
-      if (editFields.changeShippingClass) update.shipping_class = editFields.shippingClass;
-      if (editFields.changeFeatured) update.featured = editFields.featured;
+        if (editFields.changeSalePrice && editFields.salePriceValue) {
+          update.sale_price = calculateNewValue(
+            product.sale_price || product.regular_price,
+            editFields.salePriceAction,
+            editFields.salePriceValue,
+            editFields.salePriceType
+          );
+          if (editFields.saleDateFrom) update.date_on_sale_from = editFields.saleDateFrom;
+          if (editFields.saleDateTo) update.date_on_sale_to = editFields.saleDateTo;
+        }
 
-      if (editFields.changeCategories && editFields.categories) {
-        update.categories = editFields.categories
-          .split(',')
-          .map((cat) => ({ id: parseInt(cat.trim()) }))
-          .filter((cat) => !isNaN(cat.id));
-      }
+        if (editFields.changeStock && editFields.stockValue !== '') {
+          const currentStock = product.stock_quantity || 0;
+          if (editFields.stockAction === 'set') {
+            update.stock_quantity = parseInt(editFields.stockValue);
+          } else if (editFields.stockAction === 'increase') {
+            update.stock_quantity = currentStock + parseInt(editFields.stockValue);
+          } else {
+            update.stock_quantity = Math.max(0, currentStock - parseInt(editFields.stockValue));
+          }
+          update.manage_stock = true;
+        }
 
-      if (editFields.changeTags && editFields.tags) {
-        update.tags = editFields.tags
-          .split(',')
-          .map((tag) => ({ id: parseInt(tag.trim()) }))
-          .filter((tag) => !isNaN(tag.id));
-      }
+        if (editFields.changeStockStatus) update.stock_status = editFields.stockStatus;
+        if (editFields.changeManageStock) update.manage_stock = editFields.manageStock;
+        if (editFields.changeTaxStatus) update.tax_status = editFields.taxStatus;
+        if (editFields.changeCatalogVisibility)
+          update.catalog_visibility = editFields.catalogVisibility;
+        if (editFields.changeShippingClass) update.shipping_class = editFields.shippingClass;
+        if (editFields.changeFeatured) update.featured = editFields.featured;
 
-      return update;
-    }), [effectiveProducts, editFields, calculateNewValue]);
+        if (editFields.changeCategories && editFields.categories) {
+          update.categories = editFields.categories
+            .split(',')
+            .map((cat) => ({ id: parseInt(cat.trim()) }))
+            .filter((cat) => !isNaN(cat.id));
+        }
+
+        if (editFields.changeTags && editFields.tags) {
+          update.tags = editFields.tags
+            .split(',')
+            .map((tag) => ({ id: parseInt(tag.trim()) }))
+            .filter((tag) => !isNaN(tag.id));
+        }
+
+        return update;
+      }),
+    [effectiveProducts, editFields, calculateNewValue]
+  );
 
   const buildPreviewRows = useCallback((): PreviewRow[] => {
     const updates = buildUpdates();

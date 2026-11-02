@@ -1,5 +1,16 @@
 import { useState, ReactElement } from 'react';
-import { ChevronDown, ChevronRight, Package, Truck, MapPin, Phone, User, CreditCard, Clock, ExternalLink } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronRight,
+  Package,
+  Truck,
+  MapPin,
+  Phone,
+  User,
+  CreditCard,
+  Clock,
+  ExternalLink,
+} from 'lucide-react';
 import { WooCommerceMetaData, OrderShippingLine } from '../types';
 
 // ============================================
@@ -77,7 +88,7 @@ function getNestedValue(obj: unknown, path: string): unknown {
 
 function detectPlugin(key: string): PluginInfo | null {
   for (const plugin of Object.values(KNOWN_PLUGINS)) {
-    if (plugin.keyPatterns.some(pattern => pattern.test(key))) {
+    if (plugin.keyPatterns.some((pattern) => pattern.test(key))) {
       return plugin;
     }
   }
@@ -109,7 +120,7 @@ function formatMetaKey(key: string): string {
   return key
     .replace(/^(woo_bg_|wpp_|_)/gi, '')
     .replace(/_/g, ' ')
-    .replace(/\b\w/g, char => char.toUpperCase());
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 function formatValue(value: unknown): string {
@@ -126,7 +137,7 @@ function formatValue(value: unknown): string {
 
 function isVisibleMeta(meta: WooCommerceMetaData): boolean {
   const key = String(meta.key);
-  if (HIDDEN_META_PREFIXES.some(prefix => key.startsWith(prefix))) return false;
+  if (HIDDEN_META_PREFIXES.some((prefix) => key.startsWith(prefix))) return false;
   if (HIDDEN_META_KEYS.includes(key)) return false;
   if (meta.value === '' || meta.value === null || meta.value === undefined) return false;
   return true;
@@ -203,17 +214,17 @@ function ShippingCard({ data, plugin, title }: ShippingCardProps): ReactElement 
 
   // Remove duplicates by label
   const uniqueData = importantData.filter(
-    (item, index, self) => index === self.findIndex(t => t.label === item.label)
+    (item, index, self) => index === self.findIndex((t) => t.label === item.label)
   );
 
   return (
-    <div className={`rounded-lg border p-4 ${plugin?.color || 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600'}`}>
+    <div
+      className={`rounded-lg border p-4 ${plugin?.color || 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600'}`}
+    >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           {plugin?.icon || <Package className="w-4 h-4" />}
-          <h4 className="font-medium text-gray-900 dark:text-white">
-            {plugin?.name || title}
-          </h4>
+          <h4 className="font-medium text-gray-900 dark:text-white">{plugin?.name || title}</h4>
         </div>
         <button
           onClick={() => setShowRaw(!showRaw)}
@@ -230,7 +241,9 @@ function ShippingCard({ data, plugin, title }: ShippingCardProps): ReactElement 
             <div key={idx} className="flex items-center gap-2 text-sm">
               <item.Icon className="w-3 h-3 text-gray-400" />
               <span className="text-gray-500 dark:text-gray-400">{item.label}:</span>
-              <span className="text-gray-900 dark:text-white font-medium truncate">{item.value}</span>
+              <span className="text-gray-900 dark:text-white font-medium truncate">
+                {item.value}
+              </span>
             </div>
           ))}
         </div>
@@ -269,7 +282,10 @@ export default function PluginMetaPanel({
   const visibleMeta = orderMeta.filter(isVisibleMeta);
 
   // Group by detected plugin
-  const groupedMeta: Record<string, Array<{ key: string; value: unknown; plugin: PluginInfo | null }>> = {};
+  const groupedMeta: Record<
+    string,
+    Array<{ key: string; value: unknown; plugin: PluginInfo | null }>
+  > = {};
 
   for (const meta of visibleMeta) {
     const key = String(meta.key);
@@ -291,7 +307,11 @@ export default function PluginMetaPanel({
   }
 
   // Also process shipping lines meta
-  const shippingMeta: Array<{ title: string; data: Record<string, unknown>; plugin: PluginInfo | null }> = [];
+  const shippingMeta: Array<{
+    title: string;
+    data: Record<string, unknown>;
+    plugin: PluginInfo | null;
+  }> = [];
 
   for (const line of shippingLines) {
     if (line.meta_data) {
@@ -320,9 +340,10 @@ export default function PluginMetaPanel({
   }
 
   // Generate WP Admin URL for order
-  const wpAdminUrl = storeUrl && orderId
-    ? `${storeUrl.replace(/\/$/, '')}/wp-admin/post.php?post=${orderId}&action=edit`
-    : null;
+  const wpAdminUrl =
+    storeUrl && orderId
+      ? `${storeUrl.replace(/\/$/, '')}/wp-admin/post.php?post=${orderId}&action=edit`
+      : null;
 
   const handleOpenWpAdmin = (): void => {
     if (wpAdminUrl) {
@@ -363,12 +384,7 @@ export default function PluginMetaPanel({
       <div className="p-6 space-y-4">
         {/* Shipping plugin data (formatted cards) */}
         {shippingMeta.map((item, idx) => (
-          <ShippingCard
-            key={idx}
-            data={item.data}
-            plugin={item.plugin}
-            title={item.title}
-          />
+          <ShippingCard key={idx} data={item.data} plugin={item.plugin} title={item.title} />
         ))}
 
         {/* Order meta grouped by plugin */}
@@ -376,7 +392,7 @@ export default function PluginMetaPanel({
           const firstPlugin = items[0]?.plugin;
 
           // Check if any item has complex JSON data
-          const hasComplexData = items.some(item => typeof item.value === 'object');
+          const hasComplexData = items.some((item) => typeof item.value === 'object');
 
           if (hasComplexData) {
             // Render as cards for complex data

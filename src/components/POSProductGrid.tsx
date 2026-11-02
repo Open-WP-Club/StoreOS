@@ -219,7 +219,8 @@ export function POSProductGrid({
             {retryCountdown > 0 ? (
               <div className="text-center">
                 <p className="text-sm mb-3">
-                  Нов опит след <span className="font-bold text-blue-600">{retryCountdown}</span> секунди
+                  Нов опит след <span className="font-bold text-blue-600">{retryCountdown}</span>{' '}
+                  секунди
                 </p>
                 <button
                   onClick={onCancelRetry}
@@ -290,9 +291,7 @@ export function POSProductGrid({
                       </p>
                     )}
                     <div className="flex items-center gap-2">
-                      <span className="text-lg font-bold text-blue-600">
-                        {formatPrice(price)}
-                      </span>
+                      <span className="text-lg font-bold text-blue-600">{formatPrice(price)}</span>
                       {onSale && (
                         <span className="text-xs text-gray-400 line-through">
                           {formatPrice(regularPrice)}

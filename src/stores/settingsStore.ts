@@ -140,7 +140,17 @@ const useSettings = create<SettingsStore>()(
     }),
     {
       name: 'woocommerce-settings',
-      partialize: (state): Pick<SettingsState, 'autoRefresh' | 'autoRefreshInterval' | 'notifyNewOrders' | 'notifyLowStock' | 'lowStockThreshold' | 'orderSplitDays'> => ({
+      partialize: (
+        state
+      ): Pick<
+        SettingsState,
+        | 'autoRefresh'
+        | 'autoRefreshInterval'
+        | 'notifyNewOrders'
+        | 'notifyLowStock'
+        | 'lowStockThreshold'
+        | 'orderSplitDays'
+      > => ({
         autoRefresh: state.autoRefresh,
         autoRefreshInterval: state.autoRefreshInterval,
         notifyNewOrders: state.notifyNewOrders,

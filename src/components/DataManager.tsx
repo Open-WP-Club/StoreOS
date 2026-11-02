@@ -8,7 +8,7 @@ import { useProgressiveLoading } from '../hooks/useProgressiveLoading';
 import { playNotificationSound } from '../utils/notificationSound';
 import { isInvalidCredentials, loadFailureMessage, openSetupAction } from '../utils/loadErrors';
 import { detectLowStockCrossings, lowStockMessage } from '../utils/lowStock';
-import type { WooCommerceOrder,WooCommerceProduct, BatchLoadProgress } from '../types';
+import type { WooCommerceOrder, WooCommerceProduct, BatchLoadProgress } from '../types';
 import type { OrdersSync } from '../stores/cache/types';
 import type { NotificationType } from '../stores/notificationStore';
 
@@ -207,7 +207,8 @@ function DataManager(): null {
           Date.now() - at < TIME.HOUR &&
           cached?.storeId === currentStore.id &&
           !cached.partial &&
-          cachedData && cachedData.length > 0
+          cachedData &&
+          cachedData.length > 0
         ) {
           try {
             const delta = await service.getOrdersSince(lastSync, { per_page: 100 });

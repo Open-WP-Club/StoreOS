@@ -12,7 +12,10 @@ interface LoadingIndicatorProps {
  * Loading indicator component that shows a spinner with progress
  * Displays in the corner of the screen during progressive loading
  */
-function LoadingIndicator({ loadingState, message }: LoadingIndicatorProps): React.ReactElement | null {
+function LoadingIndicator({
+  loadingState,
+  message,
+}: LoadingIndicatorProps): React.ReactElement | null {
   // Simple message mode
   if (!loadingState) {
     return (

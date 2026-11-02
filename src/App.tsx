@@ -258,39 +258,39 @@ function AppContent(): React.ReactElement {
                 <Route path="/pos" element={<POSPage />} />
 
                 <Route element={<Layout />}>
-                {/* Eager-loaded routes */}
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/orders" element={<OrdersPage />} />
-                <Route path="/products" element={<ProductsPage />} />
-                <Route path="/setup" element={<SetupPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
+                  {/* Eager-loaded routes */}
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/orders" element={<OrdersPage />} />
+                  <Route path="/products" element={<ProductsPage />} />
+                  <Route path="/setup" element={<SetupPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
 
-                {/* Lazy-loaded routes */}
-                <Route path="/multi-store" element={<MultiStoreView />} />
-                <Route path="/orders/:id" element={<OrderDetailPage />} />
-                <Route path="/products/:id" element={<ProductEditPage />} />
-                <Route path="/inventory" element={<InventoryPage />} />
-                <Route path="/customers" element={<CustomersPage />} />
-                <Route path="/coupons" element={<CouponsPage />} />
-                <Route path="/categories" element={<CategoriesPage />} />
-                <Route path="/attributes" element={<AttributesPage />} />
-                <Route path="/tax" element={<TaxPage />} />
-                <Route path="/store-health" element={<StoreHealthPage />} />
-                <Route path="/reviews" element={<ReviewsPage />} />
-                <Route path="/activity-log" element={<ActivityLogPage />} />
+                  {/* Lazy-loaded routes */}
+                  <Route path="/multi-store" element={<MultiStoreView />} />
+                  <Route path="/orders/:id" element={<OrderDetailPage />} />
+                  <Route path="/products/:id" element={<ProductEditPage />} />
+                  <Route path="/inventory" element={<InventoryPage />} />
+                  <Route path="/customers" element={<CustomersPage />} />
+                  <Route path="/coupons" element={<CouponsPage />} />
+                  <Route path="/categories" element={<CategoriesPage />} />
+                  <Route path="/attributes" element={<AttributesPage />} />
+                  <Route path="/tax" element={<TaxPage />} />
+                  <Route path="/store-health" element={<StoreHealthPage />} />
+                  <Route path="/reviews" element={<ReviewsPage />} />
+                  <Route path="/activity-log" element={<ActivityLogPage />} />
 
-                {/* Analytics routes (lazy-loaded with chart.js) */}
-                <Route path="/analytics" element={<AnalyticsPage />} />
-                <Route path="/analytics/sales" element={<SalesAnalyticsPage />} />
-                <Route path="/analytics/customers" element={<CustomerAnalyticsPage />} />
-                <Route path="/analytics/products" element={<ProductAnalyticsPage />} />
-                <Route path="/analytics/orders" element={<OrderAnalyticsPage />} />
-                <Route path="/analytics/financial" element={<FinancialAnalyticsPage />} />
-                <Route path="/analytics/kpis" element={<KPIDashboardPage />} />
-                <Route path="/analytics/geographic" element={<GeographicAnalyticsPage />} />
+                  {/* Analytics routes (lazy-loaded with chart.js) */}
+                  <Route path="/analytics" element={<AnalyticsPage />} />
+                  <Route path="/analytics/sales" element={<SalesAnalyticsPage />} />
+                  <Route path="/analytics/customers" element={<CustomerAnalyticsPage />} />
+                  <Route path="/analytics/products" element={<ProductAnalyticsPage />} />
+                  <Route path="/analytics/orders" element={<OrderAnalyticsPage />} />
+                  <Route path="/analytics/financial" element={<FinancialAnalyticsPage />} />
+                  <Route path="/analytics/kpis" element={<KPIDashboardPage />} />
+                  <Route path="/analytics/geographic" element={<GeographicAnalyticsPage />} />
 
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Route>
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Route>
               </>
             )}
           </Routes>

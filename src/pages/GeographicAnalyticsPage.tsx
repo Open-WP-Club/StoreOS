@@ -6,26 +6,74 @@ import type { Order } from '../types';
 
 // ISO 3166-1 alpha-2 → lat/lng for globe markers
 const COUNTRY_COORDS: Record<string, [number, number]> = {
-  US: [37.09, -95.71], GB: [55.38, -3.44], DE: [51.17, 10.45], FR: [46.23, 2.21],
-  IT: [41.87, 12.57], ES: [40.46, -3.75], NL: [52.13, 5.29], PL: [51.92, 19.15],
-  SE: [60.13, 18.64], NO: [60.47, 8.47], DK: [56.26, 9.50], FI: [61.92, 25.75],
-  BE: [50.50, 4.47], AT: [47.52, 14.55], CH: [46.82, 8.23], PT: [39.40, -8.22],
-  IE: [53.41, -8.24], CZ: [49.82, 15.47], SK: [48.67, 19.70], HU: [47.16, 19.50],
-  RO: [45.94, 24.97], BG: [42.73, 25.49], HR: [45.10, 15.20], SI: [46.15, 14.99],
-  GR: [39.07, 21.82], TR: [38.96, 35.24], RU: [61.52, 105.32], UA: [48.38, 31.17],
-  CA: [56.13, -106.35], AU: [25.27, 133.78], NZ: [-40.90, 174.89], JP: [36.20, 138.25],
-  CN: [35.86, 104.20], IN: [20.59, 78.96], BR: [-14.24, -51.93], MX: [23.63, -102.55],
-  AR: [-38.42, -63.62], ZA: [-30.56, 22.94], NG: [9.08, 8.68], EG: [26.82, 30.80],
-  SA: [23.89, 45.08], AE: [23.42, 53.85], IL: [31.05, 34.85], SG: [1.35, 103.82],
-  MY: [4.21, 101.98], TH: [15.87, 100.99], PH: [12.88, 121.77], ID: [-0.79, 113.92],
-  KR: [35.91, 127.77], TW: [23.70, 121.00], HK: [22.40, 114.11], PK: [30.38, 69.35],
-  BD: [23.68, 90.36], LK: [7.87, 80.77], KE: [-0.02, 37.91], GH: [7.95, -1.02],
-  MA: [31.79, -7.09], DZ: [28.03, 1.66], TN: [33.89, 9.54], CL: [-35.68, -71.54],
-  CO: [4.57, -74.30], PE: [-9.19, -75.02], VE: [6.42, -66.59], EC: [-1.83, -78.18],
+  US: [37.09, -95.71],
+  GB: [55.38, -3.44],
+  DE: [51.17, 10.45],
+  FR: [46.23, 2.21],
+  IT: [41.87, 12.57],
+  ES: [40.46, -3.75],
+  NL: [52.13, 5.29],
+  PL: [51.92, 19.15],
+  SE: [60.13, 18.64],
+  NO: [60.47, 8.47],
+  DK: [56.26, 9.5],
+  FI: [61.92, 25.75],
+  BE: [50.5, 4.47],
+  AT: [47.52, 14.55],
+  CH: [46.82, 8.23],
+  PT: [39.4, -8.22],
+  IE: [53.41, -8.24],
+  CZ: [49.82, 15.47],
+  SK: [48.67, 19.7],
+  HU: [47.16, 19.5],
+  RO: [45.94, 24.97],
+  BG: [42.73, 25.49],
+  HR: [45.1, 15.2],
+  SI: [46.15, 14.99],
+  GR: [39.07, 21.82],
+  TR: [38.96, 35.24],
+  RU: [61.52, 105.32],
+  UA: [48.38, 31.17],
+  CA: [56.13, -106.35],
+  AU: [25.27, 133.78],
+  NZ: [-40.9, 174.89],
+  JP: [36.2, 138.25],
+  CN: [35.86, 104.2],
+  IN: [20.59, 78.96],
+  BR: [-14.24, -51.93],
+  MX: [23.63, -102.55],
+  AR: [-38.42, -63.62],
+  ZA: [-30.56, 22.94],
+  NG: [9.08, 8.68],
+  EG: [26.82, 30.8],
+  SA: [23.89, 45.08],
+  AE: [23.42, 53.85],
+  IL: [31.05, 34.85],
+  SG: [1.35, 103.82],
+  MY: [4.21, 101.98],
+  TH: [15.87, 100.99],
+  PH: [12.88, 121.77],
+  ID: [-0.79, 113.92],
+  KR: [35.91, 127.77],
+  TW: [23.7, 121.0],
+  HK: [22.4, 114.11],
+  PK: [30.38, 69.35],
+  BD: [23.68, 90.36],
+  LK: [7.87, 80.77],
+  KE: [-0.02, 37.91],
+  GH: [7.95, -1.02],
+  MA: [31.79, -7.09],
+  DZ: [28.03, 1.66],
+  TN: [33.89, 9.54],
+  CL: [-35.68, -71.54],
+  CO: [4.57, -74.3],
+  PE: [-9.19, -75.02],
+  VE: [6.42, -66.59],
+  EC: [-1.83, -78.18],
 };
 
 function countryCodeToFlag(code: string): string {
-  const base = 0x1F1E6 - 65;
+  const base = 0x1f1e6 - 65;
   const chars = code.toUpperCase().split('');
   return chars.map((c) => String.fromCodePoint(base + c.charCodeAt(0))).join('');
 }
@@ -124,7 +172,9 @@ function GlobeCanvas({ markers, dark }: GlobeProps): React.ReactElement {
       };
       rafId = requestAnimationFrame(animate);
 
-      setTimeout(() => { canvas.style.opacity = '1'; }, 100);
+      setTimeout(() => {
+        canvas.style.opacity = '1';
+      }, 100);
     };
 
     // cobe (WebGL globe) is only needed on this page; load it on demand
@@ -144,7 +194,13 @@ function GlobeCanvas({ markers, dark }: GlobeProps): React.ReactElement {
   return (
     <canvas
       ref={canvasRef}
-      style={{ cursor: 'grab', width: '100%', aspectRatio: '1', opacity: 0, transition: 'opacity 0.6s ease' }}
+      style={{
+        cursor: 'grab',
+        width: '100%',
+        aspectRatio: '1',
+        opacity: 0,
+        transition: 'opacity 0.6s ease',
+      }}
       onPointerDown={(e) => {
         pointerInteracting.current = e.clientX - pointerInteractionMovement.current;
         if (canvasRef.current) canvasRef.current.style.cursor = 'grabbing';
@@ -235,7 +291,9 @@ const GeographicAnalyticsPage: React.FC = () => {
       setLoading(false);
     });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [getCachedData, calculateGeoData, timeRange]);
 
   // Build globe markers from top countries
@@ -273,7 +331,9 @@ const GeographicAnalyticsPage: React.FC = () => {
             className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
           >
             {TIME_RANGES.map((r) => (
-              <option key={r.value} value={r.value}>{r.label}</option>
+              <option key={r.value} value={r.value}>
+                {r.label}
+              </option>
             ))}
           </select>
         </div>
@@ -288,7 +348,9 @@ const GeographicAnalyticsPage: React.FC = () => {
             </div>
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Orders in Period</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{geoData.totalOrders}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {geoData.totalOrders}
+              </p>
             </div>
           </div>
         </div>
@@ -299,7 +361,9 @@ const GeographicAnalyticsPage: React.FC = () => {
             </div>
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Countries</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{geoData.countries.length}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {geoData.countries.length}
+              </p>
             </div>
           </div>
         </div>
@@ -310,7 +374,9 @@ const GeographicAnalyticsPage: React.FC = () => {
             </div>
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Cities</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{geoData.cities.length}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {geoData.cities.length}
+              </p>
             </div>
           </div>
         </div>
@@ -388,26 +454,45 @@ const GeographicAnalyticsPage: React.FC = () => {
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                   <thead className="bg-gray-50 dark:bg-gray-700/50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">#</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Country</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Orders</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Share</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        #
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Country
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Orders
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Share
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                     {geoData.countries.map((c, i) => (
-                      <tr key={c.code} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{i + 1}</td>
+                      <tr
+                        key={c.code}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                      >
+                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                          {i + 1}
+                        </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <span className="text-xl leading-none" aria-label={c.name}>{countryCodeToFlag(c.code)}</span>
+                            <span className="text-xl leading-none" aria-label={c.name}>
+                              {countryCodeToFlag(c.code)}
+                            </span>
                             <div>
-                              <p className="text-sm font-medium text-gray-900 dark:text-white">{c.name}</p>
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                {c.name}
+                              </p>
                               <p className="text-xs text-gray-400 dark:text-gray-500">{c.code}</p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">{c.orders}</td>
+                        <td className="px-4 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                          {c.orders}
+                        </td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <div className="w-16 bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
@@ -417,7 +502,10 @@ const GeographicAnalyticsPage: React.FC = () => {
                               />
                             </div>
                             <span className="text-xs text-gray-500 dark:text-gray-400 w-8 text-right">
-                              {geoData.totalOrders > 0 ? Math.round((c.orders / geoData.totalOrders) * 100) : 0}%
+                              {geoData.totalOrders > 0
+                                ? Math.round((c.orders / geoData.totalOrders) * 100)
+                                : 0}
+                              %
                             </span>
                           </div>
                         </td>
@@ -444,25 +532,44 @@ const GeographicAnalyticsPage: React.FC = () => {
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                   <thead className="bg-gray-50 dark:bg-gray-700/50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">#</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">City</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Orders</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        #
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        City
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Orders
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                     {geoData.cities.map((c, i) => (
-                      <tr key={`${c.city}-${c.country}`} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{i + 1}</td>
+                      <tr
+                        key={`${c.city}-${c.country}`}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                      >
+                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                          {i + 1}
+                        </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <span className="text-lg leading-none">{countryCodeToFlag(c.country)}</span>
+                            <span className="text-lg leading-none">
+                              {countryCodeToFlag(c.country)}
+                            </span>
                             <div>
-                              <p className="text-sm font-medium text-gray-900 dark:text-white">{c.city}</p>
-                              <p className="text-xs text-gray-400 dark:text-gray-500">{getCountryName(c.country)}</p>
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                {c.city}
+                              </p>
+                              <p className="text-xs text-gray-400 dark:text-gray-500">
+                                {getCountryName(c.country)}
+                              </p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">{c.orders}</td>
+                        <td className="px-4 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                          {c.orders}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

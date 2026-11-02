@@ -7,7 +7,16 @@ import { useAnalyticsBase } from '../hooks/useAnalyticsBase';
 import TimeRangeSelect from '../components/analytics/TimeRangeSelect';
 import { formatShortDate as formatDate } from '../utils/dateTime';
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
-import { ShoppingCart, CheckCircle, Clock, XCircle, RefreshCw, AlertCircle, DollarSign, TrendingUp } from 'lucide-react';
+import {
+  ShoppingCart,
+  CheckCircle,
+  Clock,
+  XCircle,
+  RefreshCw,
+  AlertCircle,
+  DollarSign,
+  TrendingUp,
+} from 'lucide-react';
 import ExportMenu from '../components/ExportMenu';
 import { useReportExport } from '../hooks/useReportExport';
 import type { Order } from '../types';
@@ -44,7 +53,13 @@ const OrderAnalyticsPage: React.FC = (): React.ReactElement => {
   const theme = useTheme((state) => state.theme);
 
   const [loading, setLoading] = useState<boolean>(true);
-  const { setCurrencyCode, selectedTimeRange, handleTimeRangeChange, timeRangeLabel, formatCurrency } = useAnalyticsBase();
+  const {
+    setCurrencyCode,
+    selectedTimeRange,
+    handleTimeRangeChange,
+    timeRangeLabel,
+    formatCurrency,
+  } = useAnalyticsBase();
   const [orderData, setOrderData] = useState<OrderData>({
     totalOrders: 0,
     completedOrders: 0,
@@ -67,138 +82,149 @@ const OrderAnalyticsPage: React.FC = (): React.ReactElement => {
     averageProcessingTime: 0,
   });
 
-  const calculateOrderMetrics = useCallback((orders: Order[], timeRangeDays: number): void => {
-    if (!orders) return;
+  const calculateOrderMetrics = useCallback(
+    (orders: Order[], timeRangeDays: number): void => {
+      if (!orders) return;
 
-    const detectedCurrency = getCurrencyCode(orders);
-    setCurrencyCode(detectedCurrency);
+      const detectedCurrency = getCurrencyCode(orders);
+      setCurrencyCode(detectedCurrency);
 
-    const dateThreshold = new Date();
-    dateThreshold.setDate(dateThreshold.getDate() - timeRangeDays);
+      const dateThreshold = new Date();
+      dateThreshold.setDate(dateThreshold.getDate() - timeRangeDays);
 
-    const filteredOrders = orders.filter(o => new Date(o.date_created) >= dateThreshold);
+      const filteredOrders = orders.filter((o) => new Date(o.date_created) >= dateThreshold);
 
-    // Count orders by status
-    const totalOrders = filteredOrders.length;
-    const completedOrders = filteredOrders.filter(o => o.status === 'completed').length;
-    const processingOrders = filteredOrders.filter(o => o.status === 'processing').length;
-    const pendingOrders = filteredOrders.filter(o => o.status === 'pending').length;
-    const cancelledOrders = filteredOrders.filter(o => o.status === 'cancelled').length;
-    const refundedOrders = filteredOrders.filter(o => o.status === 'refunded').length;
-    const failedOrders = filteredOrders.filter(o => o.status === 'failed').length;
+      // Count orders by status
+      const totalOrders = filteredOrders.length;
+      const completedOrders = filteredOrders.filter((o) => o.status === 'completed').length;
+      const processingOrders = filteredOrders.filter((o) => o.status === 'processing').length;
+      const pendingOrders = filteredOrders.filter((o) => o.status === 'pending').length;
+      const cancelledOrders = filteredOrders.filter((o) => o.status === 'cancelled').length;
+      const refundedOrders = filteredOrders.filter((o) => o.status === 'refunded').length;
+      const failedOrders = filteredOrders.filter((o) => o.status === 'failed').length;
 
-    // Calculate completion rate
-    const completionRate = totalOrders > 0 ? (completedOrders / totalOrders) * 100 : 0;
+      // Calculate completion rate
+      const completionRate = totalOrders > 0 ? (completedOrders / totalOrders) * 100 : 0;
 
-    // Calculate average order value
-    const totalRevenue = filteredOrders
-      .filter(o => o.status === 'completed')
-      .reduce((sum, order) => sum + parseFloat(order.total || '0'), 0);
-    const averageOrderValue = completedOrders > 0 ? totalRevenue / completedOrders : 0;
+      // Calculate average order value
+      const totalRevenue = filteredOrders
+        .filter((o) => o.status === 'completed')
+        .reduce((sum, order) => sum + parseFloat(order.total || '0'), 0);
+      const averageOrderValue = completedOrders > 0 ? totalRevenue / completedOrders : 0;
 
-    // Orders by day
-    const dailyData: Record<string, number> = {};
-    filteredOrders.forEach(order => {
-      const orderDate = new Date(order.date_created);
-      const dateKey = orderDate.toISOString().split('T')[0] ?? '';
-      if (dateKey && !dailyData[dateKey]) {
-        dailyData[dateKey] = 0;
-      }
-      if (dateKey && dailyData[dateKey] !== undefined) {
-        dailyData[dateKey]++;
-      }
-    });
-
-    const sortedDates = Object.keys(dailyData).sort();
-    const ordersByDay: DailyOrderData[] = sortedDates.map(date => ({
-      date,
-      count: dailyData[date] ?? 0,
-    }));
-
-    // Orders by status
-    const ordersByStatus: Record<string, number> = {
-      'Completed': completedOrders,
-      'Processing': processingOrders,
-      'Pending': pendingOrders,
-      'Cancelled': cancelledOrders,
-      'Refunded': refundedOrders,
-      'Failed': failedOrders,
-    };
-
-    // Orders by payment method
-    const paymentMethodMap: Record<string, number> = {};
-    filteredOrders.forEach(order => {
-      const method = order.payment_method_title || 'Unknown';
-      if (!paymentMethodMap[method]) {
-        paymentMethodMap[method] = 0;
-      }
-      paymentMethodMap[method]++;
-    });
-
-    // Calculate average processing time (for completed orders)
-    const processingTimes: number[] = [];
-    filteredOrders
-      .filter(o => o.status === 'completed' && o.date_completed)
-      .forEach(order => {
-        const created = new Date(order.date_created);
-        const completed = new Date(order.date_completed!);
-        const diffHours = (completed.getTime() - created.getTime()) / (1000 * 60 * 60);
-        processingTimes.push(diffHours);
+      // Orders by day
+      const dailyData: Record<string, number> = {};
+      filteredOrders.forEach((order) => {
+        const orderDate = new Date(order.date_created);
+        const dateKey = orderDate.toISOString().split('T')[0] ?? '';
+        if (dateKey && !dailyData[dateKey]) {
+          dailyData[dateKey] = 0;
+        }
+        if (dateKey && dailyData[dateKey] !== undefined) {
+          dailyData[dateKey]++;
+        }
       });
 
-    const averageProcessingTime = processingTimes.length > 0
-      ? processingTimes.reduce((sum, time) => sum + time, 0) / processingTimes.length
-      : 0;
+      const sortedDates = Object.keys(dailyData).sort();
+      const ordersByDay: DailyOrderData[] = sortedDates.map((date) => ({
+        date,
+        count: dailyData[date] ?? 0,
+      }));
 
-    // Calculate additional revenue metrics
-    const pendingOrdersList = filteredOrders.filter(o => o.status === 'pending' || o.status === 'processing');
-    const pendingValue = pendingOrdersList.reduce((sum, o) => sum + parseFloat(o.total || '0'), 0);
+      // Orders by status
+      const ordersByStatus: Record<string, number> = {
+        Completed: completedOrders,
+        Processing: processingOrders,
+        Pending: pendingOrders,
+        Cancelled: cancelledOrders,
+        Refunded: refundedOrders,
+        Failed: failedOrders,
+      };
 
-    // Today's stats
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const todayOrdersList = filteredOrders.filter(o => new Date(o.date_created) >= todayStart);
-    const todayOrders = todayOrdersList.length;
-    const todayRevenue = todayOrdersList
-      .filter(o => o.status === 'completed')
-      .reduce((sum, o) => sum + parseFloat(o.total || '0'), 0);
+      // Orders by payment method
+      const paymentMethodMap: Record<string, number> = {};
+      filteredOrders.forEach((order) => {
+        const method = order.payment_method_title || 'Unknown';
+        if (!paymentMethodMap[method]) {
+          paymentMethodMap[method] = 0;
+        }
+        paymentMethodMap[method]++;
+      });
 
-    // This week's stats
-    const weekStart = new Date(todayStart);
-    weekStart.setDate(weekStart.getDate() - 7);
-    const thisWeekOrdersList = filteredOrders.filter(o => new Date(o.date_created) >= weekStart);
-    const thisWeekOrders = thisWeekOrdersList.length;
-    const thisWeekRevenue = thisWeekOrdersList
-      .filter(o => o.status === 'completed')
-      .reduce((sum, o) => sum + parseFloat(o.total || '0'), 0);
+      // Calculate average processing time (for completed orders)
+      const processingTimes: number[] = [];
+      filteredOrders
+        .filter((o) => o.status === 'completed' && o.date_completed)
+        .forEach((order) => {
+          const created = new Date(order.date_created);
+          const completed = new Date(order.date_completed!);
+          const diffHours = (completed.getTime() - created.getTime()) / (1000 * 60 * 60);
+          processingTimes.push(diffHours);
+        });
 
-    setOrderData({
-      totalOrders,
-      completedOrders,
-      processingOrders,
-      pendingOrders,
-      cancelledOrders,
-      refundedOrders,
-      failedOrders,
-      completionRate,
-      averageOrderValue,
-      totalRevenue,
-      todayOrders,
-      todayRevenue,
-      thisWeekOrders,
-      thisWeekRevenue,
-      pendingValue,
-      ordersByDay,
-      ordersByStatus,
-      ordersByPaymentMethod: paymentMethodMap,
-      averageProcessingTime,
-    });
-  }, [setCurrencyCode]);
+      const averageProcessingTime =
+        processingTimes.length > 0
+          ? processingTimes.reduce((sum, time) => sum + time, 0) / processingTimes.length
+          : 0;
+
+      // Calculate additional revenue metrics
+      const pendingOrdersList = filteredOrders.filter(
+        (o) => o.status === 'pending' || o.status === 'processing'
+      );
+      const pendingValue = pendingOrdersList.reduce(
+        (sum, o) => sum + parseFloat(o.total || '0'),
+        0
+      );
+
+      // Today's stats
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const todayOrdersList = filteredOrders.filter((o) => new Date(o.date_created) >= todayStart);
+      const todayOrders = todayOrdersList.length;
+      const todayRevenue = todayOrdersList
+        .filter((o) => o.status === 'completed')
+        .reduce((sum, o) => sum + parseFloat(o.total || '0'), 0);
+
+      // This week's stats
+      const weekStart = new Date(todayStart);
+      weekStart.setDate(weekStart.getDate() - 7);
+      const thisWeekOrdersList = filteredOrders.filter(
+        (o) => new Date(o.date_created) >= weekStart
+      );
+      const thisWeekOrders = thisWeekOrdersList.length;
+      const thisWeekRevenue = thisWeekOrdersList
+        .filter((o) => o.status === 'completed')
+        .reduce((sum, o) => sum + parseFloat(o.total || '0'), 0);
+
+      setOrderData({
+        totalOrders,
+        completedOrders,
+        processingOrders,
+        pendingOrders,
+        cancelledOrders,
+        refundedOrders,
+        failedOrders,
+        completionRate,
+        averageOrderValue,
+        totalRevenue,
+        todayOrders,
+        todayRevenue,
+        thisWeekOrders,
+        thisWeekRevenue,
+        pendingValue,
+        ordersByDay,
+        ordersByStatus,
+        ordersByPaymentMethod: paymentMethodMap,
+        averageProcessingTime,
+      });
+    },
+    [setCurrencyCode]
+  );
 
   const loadOrderAnalytics = useCallback(async (): Promise<void> => {
     setLoading(true);
     try {
-      const orders = await getCachedData('orders') as Order[] | null;
+      const orders = (await getCachedData('orders')) as Order[] | null;
       if (orders) {
         calculateOrderMetrics(orders, selectedTimeRange);
       }
@@ -225,11 +251,11 @@ const OrderAnalyticsPage: React.FC = (): React.ReactElement => {
 
   // Chart data
   const ordersTrendData = {
-    labels: orderData.ordersByDay.map(d => formatDate(d.date)),
+    labels: orderData.ordersByDay.map((d) => formatDate(d.date)),
     datasets: [
       {
         label: 'Orders',
-        data: orderData.ordersByDay.map(d => d.count),
+        data: orderData.ordersByDay.map((d) => d.count),
         borderColor: 'rgb(59, 130, 246)',
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
         tension: 0.4,
@@ -276,34 +302,37 @@ const OrderAnalyticsPage: React.FC = (): React.ReactElement => {
     ],
   };
 
-  const chartOptions = useMemo(() => ({
-    responsive: true,
-    maintainAspectRatio: true,
-    plugins: {
-      legend: {
-        position: 'top' as const,
-        labels: {
-          color: theme === 'dark' ? '#e5e7eb' : '#374151',
+  const chartOptions = useMemo(
+    () =>
+      ({
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: {
+            position: 'top' as const,
+            labels: {
+              color: theme === 'dark' ? '#e5e7eb' : '#374151',
+            },
+          },
+          tooltip: {
+            backgroundColor: theme === 'dark' ? '#1f2937' : 'rgba(0,0,0,0.8)',
+            titleColor: theme === 'dark' ? '#f9fafb' : '#ffffff',
+            bodyColor: theme === 'dark' ? '#d1d5db' : '#ffffff',
+          },
         },
-      },
-      tooltip: {
-        backgroundColor: theme === 'dark' ? '#1f2937' : 'rgba(0,0,0,0.8)',
-        titleColor: theme === 'dark' ? '#f9fafb' : '#ffffff',
-        bodyColor: theme === 'dark' ? '#d1d5db' : '#ffffff',
-      },
-    },
-    scales: {
-      x: {
-        ticks: { color: theme === 'dark' ? '#9ca3af' : '#6b7280' },
-        grid: { color: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' },
-      },
-      y: {
-        ticks: { color: theme === 'dark' ? '#9ca3af' : '#6b7280' },
-        grid: { color: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' },
-      },
-    },
-  }) satisfies ChartOptions<'line'>, [theme]);
-
+        scales: {
+          x: {
+            ticks: { color: theme === 'dark' ? '#9ca3af' : '#6b7280' },
+            grid: { color: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' },
+          },
+          y: {
+            ticks: { color: theme === 'dark' ? '#9ca3af' : '#6b7280' },
+            grid: { color: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' },
+          },
+        },
+      }) satisfies ChartOptions<'line'>,
+    [theme]
+  );
 
   const orderStatusData = Object.entries(orderData.ordersByStatus).map(([status, count]) => ({
     status,
@@ -370,9 +399,7 @@ const OrderAnalyticsPage: React.FC = (): React.ReactElement => {
           <div className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
             {orderData.totalOrders}
           </div>
-          <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            In selected period
-          </div>
+          <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">In selected period</div>
         </div>
 
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
@@ -396,9 +423,7 @@ const OrderAnalyticsPage: React.FC = (): React.ReactElement => {
           <div className="mt-2 text-3xl font-bold text-blue-600 dark:text-blue-400">
             {orderData.processingOrders}
           </div>
-          <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            Active orders
-          </div>
+          <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">Active orders</div>
         </div>
 
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
@@ -409,9 +434,7 @@ const OrderAnalyticsPage: React.FC = (): React.ReactElement => {
           <div className="mt-2 text-3xl font-bold text-yellow-600 dark:text-yellow-400">
             {orderData.pendingOrders}
           </div>
-          <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            Awaiting action
-          </div>
+          <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">Awaiting action</div>
         </div>
       </div>
 
@@ -419,7 +442,9 @@ const OrderAnalyticsPage: React.FC = (): React.ReactElement => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Avg. Order Value</div>
+            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Avg. Order Value
+            </div>
             <ShoppingCart className="w-5 h-5 text-green-600 dark:text-green-400" />
           </div>
           <div className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
@@ -429,7 +454,9 @@ const OrderAnalyticsPage: React.FC = (): React.ReactElement => {
 
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Avg. Processing Time</div>
+            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Avg. Processing Time
+            </div>
             <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           </div>
           <div className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
@@ -446,7 +473,8 @@ const OrderAnalyticsPage: React.FC = (): React.ReactElement => {
             {orderData.cancelledOrders + orderData.refundedOrders + orderData.failedOrders}
           </div>
           <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-            Cancelled: {orderData.cancelledOrders} | Refunded: {orderData.refundedOrders} | Failed: {orderData.failedOrders}
+            Cancelled: {orderData.cancelledOrders} | Refunded: {orderData.refundedOrders} | Failed:{' '}
+            {orderData.failedOrders}
           </div>
         </div>
       </div>
@@ -455,20 +483,22 @@ const OrderAnalyticsPage: React.FC = (): React.ReactElement => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Revenue</div>
+            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Total Revenue
+            </div>
             <DollarSign className="w-5 h-5 text-green-600 dark:text-green-400" />
           </div>
           <div className="mt-2 text-2xl font-bold text-green-600 dark:text-green-400">
             {formatCurrency(orderData.totalRevenue)}
           </div>
-          <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            From completed orders
-          </div>
+          <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">From completed orders</div>
         </div>
 
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Pending Value</div>
+            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Pending Value
+            </div>
             <Clock className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
           </div>
           <div className="mt-2 text-2xl font-bold text-yellow-600 dark:text-yellow-400">
@@ -481,7 +511,9 @@ const OrderAnalyticsPage: React.FC = (): React.ReactElement => {
 
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">This Week Revenue</div>
+            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              This Week Revenue
+            </div>
             <TrendingUp className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           </div>
           <div className="mt-2 text-2xl font-bold text-blue-600 dark:text-blue-400">
@@ -503,14 +535,14 @@ const OrderAnalyticsPage: React.FC = (): React.ReactElement => {
           <div className="mt-2 text-3xl font-bold text-purple-600 dark:text-purple-400">
             {orderData.todayOrders}
           </div>
-          <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            Orders placed today
-          </div>
+          <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">Orders placed today</div>
         </div>
 
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Revenue Today</div>
+            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Revenue Today
+            </div>
             <DollarSign className="w-5 h-5 text-purple-600 dark:text-purple-400" />
           </div>
           <div className="mt-2 text-3xl font-bold text-purple-600 dark:text-purple-400">
@@ -569,32 +601,44 @@ const OrderAnalyticsPage: React.FC = (): React.ReactElement => {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <div className="text-center p-4 bg-green-50 dark:bg-green-900/30 rounded">
             <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-600 dark:text-green-400" />
-            <div className="text-2xl font-bold text-green-600 dark:text-green-400">{orderData.completedOrders}</div>
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+              {orderData.completedOrders}
+            </div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Completed</div>
           </div>
           <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/30 rounded">
             <RefreshCw className="w-8 h-8 mx-auto mb-2 text-blue-600 dark:text-blue-400" />
-            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{orderData.processingOrders}</div>
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+              {orderData.processingOrders}
+            </div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Processing</div>
           </div>
           <div className="text-center p-4 bg-yellow-50 dark:bg-yellow-900/30 rounded">
             <Clock className="w-8 h-8 mx-auto mb-2 text-yellow-600 dark:text-yellow-400" />
-            <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{orderData.pendingOrders}</div>
+            <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+              {orderData.pendingOrders}
+            </div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Pending</div>
           </div>
           <div className="text-center p-4 bg-red-50 dark:bg-red-900/30 rounded">
             <XCircle className="w-8 h-8 mx-auto mb-2 text-red-600 dark:text-red-400" />
-            <div className="text-2xl font-bold text-red-600 dark:text-red-400">{orderData.cancelledOrders}</div>
+            <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+              {orderData.cancelledOrders}
+            </div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Cancelled</div>
           </div>
           <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/30 rounded">
             <RefreshCw className="w-8 h-8 mx-auto mb-2 text-purple-600 dark:text-purple-400" />
-            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{orderData.refundedOrders}</div>
+            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+              {orderData.refundedOrders}
+            </div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Refunded</div>
           </div>
           <div className="text-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded">
             <AlertCircle className="w-8 h-8 mx-auto mb-2 text-gray-600 dark:text-gray-400" />
-            <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">{orderData.failedOrders}</div>
+            <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">
+              {orderData.failedOrders}
+            </div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Failed</div>
           </div>
         </div>

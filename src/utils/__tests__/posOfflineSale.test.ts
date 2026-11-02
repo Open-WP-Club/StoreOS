@@ -109,7 +109,13 @@ describe('decrementCachedStock', () => {
         ...useCache.getState().cache,
         products: {
           data: [
-            { id: 1, manage_stock: true, stock_quantity: 3, stock_status: 'instock', backorders: 'no' },
+            {
+              id: 1,
+              manage_stock: true,
+              stock_quantity: 3,
+              stock_status: 'instock',
+              backorders: 'no',
+            },
             { id: 2, manage_stock: false, stock_quantity: null, stock_status: 'instock' },
           ],
           timestamp: 123,

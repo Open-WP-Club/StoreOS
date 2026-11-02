@@ -82,7 +82,11 @@ export function universalSearch(
   orders: WooCommerceOrder[],
   customers: WooCommerceCustomer[],
   maxPerType: number = 5
-): { products: UniversalSearchResult[]; orders: UniversalSearchResult[]; customers: UniversalSearchResult[] } {
+): {
+  products: UniversalSearchResult[];
+  orders: UniversalSearchResult[];
+  customers: UniversalSearchResult[];
+} {
   if (!query || query.trim() === '') {
     return { products: [], orders: [], customers: [] };
   }
@@ -106,7 +110,8 @@ export function universalSearch(
       id: o.id,
       type: 'order' as const,
       title: `#${o.number || o.id}`,
-      subtitle: `${o.billing?.first_name || ''} ${o.billing?.last_name || ''} - ${o.billing?.email || ''}`.trim(),
+      subtitle:
+        `${o.billing?.first_name || ''} ${o.billing?.last_name || ''} - ${o.billing?.email || ''}`.trim(),
       score: o._searchScore,
       data: o,
     }));

@@ -40,7 +40,12 @@ function installFakeIDB(initial) {
       get: (k) => req(() => s.data.get(k)),
       delete: (k) => req(() => void s.data.delete(k)),
       clear: () => req(() => void s.data.clear()),
-      getAll: (range, n) => req(() => sorted(range).slice(0, n).map(([, v]) => v)),
+      getAll: (range, n) =>
+        req(() =>
+          sorted(range)
+            .slice(0, n)
+            .map(([, v]) => v)
+        ),
       getAllKeys: (range) => req(() => sorted(range).map(([k]) => k)),
       openCursor: () => {
         const entries = sorted();

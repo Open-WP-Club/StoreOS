@@ -50,11 +50,11 @@ export function lazyAsync<T>(initializer: () => Promise<T>): () => Promise<T> {
 export function whenIdle<T>(fn: () => T, timeout = 2000): Promise<T> {
   return new Promise((resolve) => {
     if ('requestIdleCallback' in window) {
-      (window as Window & { requestIdleCallback: (cb: () => void, opts?: { timeout: number }) => void })
-        .requestIdleCallback(
-          () => resolve(fn()),
-          { timeout }
-        );
+      (
+        window as Window & {
+          requestIdleCallback: (cb: () => void, opts?: { timeout: number }) => void;
+        }
+      ).requestIdleCallback(() => resolve(fn()), { timeout });
     } else {
       setTimeout(() => resolve(fn()), 1);
     }

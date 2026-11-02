@@ -2,7 +2,13 @@ import { useState, useCallback, useRef, ChangeEvent, RefObject } from 'react';
 import { useStoreConfig } from '../stores';
 import WooCommerceService from '../services/woocommerce';
 import { useOfflineMutation } from './useOfflineMutation';
-import type { Product, ProductUpdateData, CatalogVisibility, TaxStatus, StockStatus } from '../types';
+import type {
+  Product,
+  ProductUpdateData,
+  CatalogVisibility,
+  TaxStatus,
+  StockStatus,
+} from '../types';
 
 export type EditorMode = 'visual' | 'code';
 
@@ -68,7 +74,9 @@ interface UseProductEditFormResult {
   descriptionRef: RefObject<HTMLDivElement | null>;
   shortDescriptionRef: RefObject<HTMLDivElement | null>;
   populateFormData: (product: Product) => void;
-  handleInputChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+  handleInputChange: (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => void;
   handleVisualEditorBlur: (field: 'description' | 'short_description') => void;
   handleModeSwitch: (field: 'description' | 'short_description', newMode: EditorMode) => void;
   handleSave: (productId: number) => Promise<Product | null>;
@@ -111,7 +119,8 @@ export function useProductEditForm(): UseProductEditFormResult {
       tax_status: (productData.tax_status as ProductFormData['tax_status']) || 'taxable',
       tax_class: productData.tax_class || '',
       featured: productData.featured || false,
-      catalog_visibility: (productData.catalog_visibility as ProductFormData['catalog_visibility']) || 'visible',
+      catalog_visibility:
+        (productData.catalog_visibility as ProductFormData['catalog_visibility']) || 'visible',
       virtual: productData.virtual || false,
       downloadable: productData.downloadable || false,
       purchase_note: productData.purchase_note || '',
@@ -137,7 +146,10 @@ export function useProductEditForm(): UseProductEditFormResult {
     }
   };
 
-  const handleModeSwitch = (field: 'description' | 'short_description', newMode: EditorMode): void => {
+  const handleModeSwitch = (
+    field: 'description' | 'short_description',
+    newMode: EditorMode
+  ): void => {
     if (field === 'description') {
       if (newMode === 'code' && descriptionRef.current) {
         setFormData((prev) => ({

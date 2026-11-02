@@ -3,17 +3,25 @@ import type { ProductFormData } from '../hooks/useProductEditForm';
 
 interface ProductEditAdvancedTabProps {
   formData: ProductFormData;
-  onInputChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+  onInputChange: (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => void;
 }
 
 /**
  * Advanced tab: purchase note, menu order, tax settings, catalog visibility.
  */
-export function ProductEditAdvancedTab({ formData, onInputChange }: ProductEditAdvancedTabProps): ReactElement {
+export function ProductEditAdvancedTab({
+  formData,
+  onInputChange,
+}: ProductEditAdvancedTabProps): ReactElement {
   return (
     <div className="space-y-6">
       <div>
-        <label htmlFor="purchase-note" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label
+          htmlFor="purchase-note"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
           Purchase Note
         </label>
         <textarea
@@ -28,7 +36,10 @@ export function ProductEditAdvancedTab({ formData, onInputChange }: ProductEditA
       </div>
 
       <div>
-        <label htmlFor="menu-order" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label
+          htmlFor="menu-order"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
           Menu Order
         </label>
         <input
@@ -44,7 +55,10 @@ export function ProductEditAdvancedTab({ formData, onInputChange }: ProductEditA
       </div>
 
       <div>
-        <label htmlFor="tax-status" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label
+          htmlFor="tax-status"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
           Tax Status
         </label>
         <select
@@ -61,7 +75,10 @@ export function ProductEditAdvancedTab({ formData, onInputChange }: ProductEditA
       </div>
 
       <div>
-        <label htmlFor="tax-class" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label
+          htmlFor="tax-class"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
           Tax Class
         </label>
         <input
@@ -76,7 +93,10 @@ export function ProductEditAdvancedTab({ formData, onInputChange }: ProductEditA
       </div>
 
       <div>
-        <label htmlFor="catalog-visibility" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label
+          htmlFor="catalog-visibility"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
           Catalog Visibility
         </label>
         <select

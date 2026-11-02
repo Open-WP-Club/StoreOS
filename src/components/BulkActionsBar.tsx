@@ -48,7 +48,7 @@ export default function BulkActionsBar({
   onMarkShipped,
   onClearSelection,
   isProcessing = false,
-}:BulkActionsBarProps): ReactElement {
+}: BulkActionsBarProps): ReactElement {
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus>('processing');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
@@ -57,10 +57,7 @@ export default function BulkActionsBar({
   const noteTemplates = useAppSettings((s) => s.noteTemplates);
 
   // Calculate totals for selected orders
-  const totalValue = selectedOrders.reduce(
-    (sum, order) => sum + parseFloat(order.total || '0'),
-    0
-  );
+  const totalValue = selectedOrders.reduce((sum, order) => sum + parseFloat(order.total || '0'), 0);
 
   // Get currency symbol from first order
   const currencySymbol = selectedOrders[0]?.currency_symbol || '';

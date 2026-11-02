@@ -41,25 +41,31 @@ beforeEach(() => {
   mockActiveStore = createMockStore();
   mockCachedOrders = undefined;
 
-  (useStoreConfig as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
-    const state = { getCurrentStore: () => mockActiveStore };
-    return selector ? selector(state) : state;
-  });
+  (useStoreConfig as unknown as Mock).mockImplementation(
+    (selector?: (state: unknown) => unknown) => {
+      const state = { getCurrentStore: () => mockActiveStore };
+      return selector ? selector(state) : state;
+    }
+  );
 
   (useCache as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
     const state = { cache: { orders: { data: mockCachedOrders } } };
     return selector ? selector(state) : state;
   });
 
-  (useActivityLog as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
-    const state = { logActivity: mockLogActivity };
-    return selector ? selector(state) : state;
-  });
+  (useActivityLog as unknown as Mock).mockImplementation(
+    (selector?: (state: unknown) => unknown) => {
+      const state = { logActivity: mockLogActivity };
+      return selector ? selector(state) : state;
+    }
+  );
 
-  (WooCommerceService as Mock).mockImplementation(function () { return {
-    getOrder: mockGetOrder,
-    updateOrder: mockUpdateOrder,
-  }; });
+  (WooCommerceService as Mock).mockImplementation(function () {
+    return {
+      getOrder: mockGetOrder,
+      updateOrder: mockUpdateOrder,
+    };
+  });
 
   mockGetOrder.mockResolvedValue({ success: true, data: createMockOrder({ id: 123 }) });
 });
@@ -242,10 +248,7 @@ describe('useOrderDetail', () => {
         await result.current.handleStatusUpdate('completed');
       });
 
-      expect(mockShowToast).toHaveBeenCalledWith(
-        expect.stringContaining('Forbidden'),
-        'error'
-      );
+      expect(mockShowToast).toHaveBeenCalledWith(expect.stringContaining('Forbidden'), 'error');
     });
 
     it('shows error toast on exception', async () => {
@@ -263,10 +266,7 @@ describe('useOrderDetail', () => {
         await result.current.handleStatusUpdate('completed');
       });
 
-      expect(mockShowToast).toHaveBeenCalledWith(
-        expect.stringContaining('Server error'),
-        'error'
-      );
+      expect(mockShowToast).toHaveBeenCalledWith(expect.stringContaining('Server error'), 'error');
     });
 
     it('does not update when no order exists', async () => {

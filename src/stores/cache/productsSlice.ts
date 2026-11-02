@@ -13,7 +13,10 @@ type Mutators = [['zustand/immer', never]];
  * Products slice: split recent/old caching (see cacheStore.ts module docs
  * for the overall cache strategy).
  */
-export const createProductsSlice: StateCreator<CacheStore, Mutators, [], ProductsSlice> = (set, get) => ({
+export const createProductsSlice: StateCreator<CacheStore, Mutators, [], ProductsSlice> = (
+  set,
+  get
+) => ({
   getCachedProducts: async (currentStoreId: string): Promise<WooCommerceProduct[] | null> => {
     const state = get();
     const now = Date.now();
@@ -137,7 +140,8 @@ export const createProductsSlice: StateCreator<CacheStore, Mutators, [], Product
     }
 
     const prev = get().cache;
-    const prevRecent = prev.productsRecent.storeId === currentStoreId ? prev.productsRecent.data : null;
+    const prevRecent =
+      prev.productsRecent.storeId === currentStoreId ? prev.productsRecent.data : null;
     const prevOld = prev.productsOld.storeId === currentStoreId ? prev.productsOld.data : null;
 
     // Update memory cache
@@ -145,7 +149,11 @@ export const createProductsSlice: StateCreator<CacheStore, Mutators, [], Product
       state.cache.products.data = data;
       state.cache.products.timestamp = now;
       state.cache.products.storeId = currentStoreId;
-      state.cache.productsRecent = { data: recentProducts, timestamp: now, storeId: currentStoreId };
+      state.cache.productsRecent = {
+        data: recentProducts,
+        timestamp: now,
+        storeId: currentStoreId,
+      };
       state.cache.productsOld = { data: oldProducts, timestamp: now, storeId: currentStoreId };
     });
 

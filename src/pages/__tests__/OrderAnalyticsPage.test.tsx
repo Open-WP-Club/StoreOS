@@ -7,7 +7,9 @@ import { useCache } from '../../stores';
 vi.mock('../../stores', () => ({
   useCache: vi.fn(),
   useStoreConfig: vi.fn(),
-  useTheme: vi.fn((selector?: (state: unknown) => unknown) => selector ? selector({ theme: 'light' }) : { theme: 'light' }),
+  useTheme: vi.fn((selector?: (state: unknown) => unknown) =>
+    selector ? selector({ theme: 'light' }) : { theme: 'light' }
+  ),
 }));
 
 vi.mock('../../hooks/useReportExport', () => ({

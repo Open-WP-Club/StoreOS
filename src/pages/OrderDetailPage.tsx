@@ -44,7 +44,7 @@ function OrderDetailPage(): ReactElement {
   const [refundOpen, setRefundOpen] = useState<boolean>(false);
   const [refunding, setRefunding] = useState<boolean>(false);
   const [priorRefunds, setPriorRefunds] = useState<OrderRefundDetail[] | null>(null);
-  const [wpAdminUrl,setWpAdminUrl] = useState<string | null>(null);
+  const [wpAdminUrl, setWpAdminUrl] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState<boolean>(false);
   const [lightboxIndex, setLightboxIndex] = useState<number>(0);
 
@@ -226,11 +226,7 @@ function OrderDetailPage(): ReactElement {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          <OrderItemsTable
-            order={order}
-            onOpenLightbox={openLightbox}
-            onRefund={openRefund}
-          />
+          <OrderItemsTable order={order} onOpenLightbox={openLightbox} onRefund={openRefund} />
 
           {/* Customer Note (from checkout) */}
           {order.customer_note && (

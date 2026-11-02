@@ -7,7 +7,9 @@ import { useCache } from '../../stores';
 vi.mock('../../stores', () => ({
   useCache: vi.fn(),
   useStoreConfig: vi.fn(),
-  useTheme: vi.fn((selector?: (state: unknown) => unknown) => selector ? selector({ theme: 'light' }) : { theme: 'light' }),
+  useTheme: vi.fn((selector?: (state: unknown) => unknown) =>
+    selector ? selector({ theme: 'light' }) : { theme: 'light' }
+  ),
   useSettings: vi.fn((selector?: (state: unknown) => unknown) => {
     const state = { lowStockThreshold: 5 };
     return selector ? selector(state) : state;
@@ -34,10 +36,38 @@ describe('ProductAnalyticsPage', () => {
   const now = new Date();
 
   const products = [
-    createMockProduct({ stock_status: 'instock', stock_quantity: 50, price: '29.99', sale_price: '', sku: 'SKU-1', categories: [{ id: 1, name: 'Electronics', slug: 'electronics' }] }),
-    createMockProduct({ stock_status: 'instock', stock_quantity: 3, price: '49.99', sale_price: '39.99', sku: 'SKU-2', categories: [{ id: 2, name: 'Clothing', slug: 'clothing' }] }),
-    createMockProduct({ stock_status: 'outofstock', stock_quantity: 0, price: '19.99', sale_price: '', sku: '', categories: [] }),
-    createMockProduct({ stock_status: 'instock', stock_quantity: 100, price: '9.99', sale_price: '', sku: 'SKU-4', status: 'draft' }),
+    createMockProduct({
+      stock_status: 'instock',
+      stock_quantity: 50,
+      price: '29.99',
+      sale_price: '',
+      sku: 'SKU-1',
+      categories: [{ id: 1, name: 'Electronics', slug: 'electronics' }],
+    }),
+    createMockProduct({
+      stock_status: 'instock',
+      stock_quantity: 3,
+      price: '49.99',
+      sale_price: '39.99',
+      sku: 'SKU-2',
+      categories: [{ id: 2, name: 'Clothing', slug: 'clothing' }],
+    }),
+    createMockProduct({
+      stock_status: 'outofstock',
+      stock_quantity: 0,
+      price: '19.99',
+      sale_price: '',
+      sku: '',
+      categories: [],
+    }),
+    createMockProduct({
+      stock_status: 'instock',
+      stock_quantity: 100,
+      price: '9.99',
+      sale_price: '',
+      sku: 'SKU-4',
+      status: 'draft',
+    }),
   ];
 
   const orders = [
@@ -45,7 +75,14 @@ describe('ProductAnalyticsPage', () => {
       status: 'completed',
       total: '100.00',
       date_created: now.toISOString(),
-      line_items: [createMockLineItem({ product_id: products[0]!.id, name: products[0]!.name, quantity: 2, total: '59.98' })],
+      line_items: [
+        createMockLineItem({
+          product_id: products[0]!.id,
+          name: products[0]!.name,
+          quantity: 2,
+          total: '59.98',
+        }),
+      ],
     }),
   ];
 

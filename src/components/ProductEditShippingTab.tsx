@@ -3,17 +3,25 @@ import type { ProductFormData } from '../hooks/useProductEditForm';
 
 interface ProductEditShippingTabProps {
   formData: ProductFormData;
-  onInputChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+  onInputChange: (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => void;
 }
 
 /**
  * Shipping tab: weight, dimensions, shipping class, virtual/downloadable toggles.
  */
-export function ProductEditShippingTab({ formData, onInputChange }: ProductEditShippingTabProps): ReactElement {
+export function ProductEditShippingTab({
+  formData,
+  onInputChange,
+}: ProductEditShippingTabProps): ReactElement {
   return (
     <div className="space-y-6">
       <div>
-        <label htmlFor="product-weight" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label
+          htmlFor="product-weight"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
           Weight (kg)
         </label>
         <input
@@ -33,7 +41,12 @@ export function ProductEditShippingTab({ formData, onInputChange }: ProductEditS
         </span>
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <label htmlFor="product-length" className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Length</label>
+            <label
+              htmlFor="product-length"
+              className="block text-xs text-gray-600 dark:text-gray-400 mb-1"
+            >
+              Length
+            </label>
             <input
               id="product-length"
               type="text"
@@ -45,7 +58,12 @@ export function ProductEditShippingTab({ formData, onInputChange }: ProductEditS
             />
           </div>
           <div>
-            <label htmlFor="product-width" className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Width</label>
+            <label
+              htmlFor="product-width"
+              className="block text-xs text-gray-600 dark:text-gray-400 mb-1"
+            >
+              Width
+            </label>
             <input
               id="product-width"
               type="text"
@@ -57,7 +75,12 @@ export function ProductEditShippingTab({ formData, onInputChange }: ProductEditS
             />
           </div>
           <div>
-            <label htmlFor="product-height" className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Height</label>
+            <label
+              htmlFor="product-height"
+              className="block text-xs text-gray-600 dark:text-gray-400 mb-1"
+            >
+              Height
+            </label>
             <input
               id="product-height"
               type="text"
@@ -72,7 +95,10 @@ export function ProductEditShippingTab({ formData, onInputChange }: ProductEditS
       </div>
 
       <div>
-        <label htmlFor="shipping-class" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label
+          htmlFor="shipping-class"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
           Shipping Class
         </label>
         <input

@@ -36,19 +36,30 @@ function ProductsPage(): React.ReactElement {
   const error = '';
 
   // Provide a setProducts that updates the cache store
-  const setProducts = useCallback((updatedProducts: Product[]) => {
-    setCachedData('products', updatedProducts);
-  }, [setCachedData]);
+  const setProducts = useCallback(
+    (updatedProducts: Product[]) => {
+      setCachedData('products', updatedProducts);
+    },
+    [setCachedData]
+  );
 
   const { loadingState } = useProgressiveLoading();
   const filtersHook = useProductFilters(products);
-  const { scrollContainer, enabled: virtualized, rows: visibleRows, padTop, padBottom } = useVirtualRows(filtersHook.paginatedProducts);
+  const {
+    scrollContainer,
+    enabled: virtualized,
+    rows: visibleRows,
+    padTop,
+    padBottom,
+  } = useVirtualRows(filtersHook.paginatedProducts);
   const actions = useProductActions(showToast);
   const exportHook = useProductExport();
   const [importOpen, setImportOpen] = React.useState(false);
 
   if (!currentStore) {
-    return <EmptyState title="No store selected" message="Please select a store to view products" />;
+    return (
+      <EmptyState title="No store selected" message="Please select a store to view products" />
+    );
   }
 
   return (
@@ -84,17 +95,23 @@ function ProductsPage(): React.ReactElement {
             filtersHook.setSearchParams({});
           }
         }}
-        onSearchParamsUpdate={() => {/* handled above */}}
+        onSearchParamsUpdate={() => {
+          /* handled above */
+        }}
         filters={filtersHook.filters}
         onFiltersChange={filtersHook.setFilters}
         showAdvancedFilters={filtersHook.showAdvancedFilters}
-        onToggleAdvancedFilters={() => filtersHook.setShowAdvancedFilters(!filtersHook.showAdvancedFilters)}
+        onToggleAdvancedFilters={() =>
+          filtersHook.setShowAdvancedFilters(!filtersHook.showAdvancedFilters)
+        }
         hasActiveFilters={filtersHook.hasActiveFilters}
         filteredProductsCount={filtersHook.filteredProducts.length}
         totalProductsCount={products.length}
         onClearAllFilters={filtersHook.clearAllFilters}
         pageSize={filtersHook.pageSize}
-        onApplyPreset={(presetFilters, preset) => filtersHook.handleApplyPreset(presetFilters, showToast, preset)}
+        onApplyPreset={(presetFilters, preset) =>
+          filtersHook.handleApplyPreset(presetFilters, showToast, preset)
+        }
         onExportCSV={() => exportHook.handleExportCSV(filtersHook.filteredProducts)}
         onExportPDF={() => exportHook.handleExportPDF(filtersHook.filteredProducts)}
         onImport={() => setImportOpen(true)}
@@ -118,18 +135,26 @@ function ProductsPage(): React.ReactElement {
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-colors">
-          <div ref={scrollContainer} className={virtualized ? 'overflow-auto max-h-[70vh]' : 'overflow-x-auto'}>
+          <div
+            ref={scrollContainer}
+            className={virtualized ? 'overflow-auto max-h-[70vh]' : 'overflow-x-auto'}
+          >
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className={`bg-gray-50 dark:bg-gray-700${virtualized ? ' sticky top-0 z-10' : ''}`}>
+              <thead
+                className={`bg-gray-50 dark:bg-gray-700${virtualized ? ' sticky top-0 z-10' : ''}`}
+              >
                 <tr>
                   <th className="px-3 py-3 text-left w-10">
                     <input
                       type="checkbox"
                       checked={
-                        actions.selectedProductIds.length === filtersHook.paginatedProducts.length &&
+                        actions.selectedProductIds.length ===
+                          filtersHook.paginatedProducts.length &&
                         filtersHook.paginatedProducts.length > 0
                       }
-                      onChange={(e) => actions.handleSelectAll(filtersHook.paginatedProducts, e.target.checked)}
+                      onChange={(e) =>
+                        actions.handleSelectAll(filtersHook.paginatedProducts, e.target.checked)
+                      }
                       className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                     />
                   </th>
@@ -154,7 +179,11 @@ function ProductsPage(): React.ReactElement {
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-{padTop > 0 && (<tr aria-hidden="true" style={{ height: padTop }}><td colSpan={99} className="p-0" /></tr>)}
+                {padTop > 0 && (
+                  <tr aria-hidden="true" style={{ height: padTop }}>
+                    <td colSpan={99} className="p-0" />
+                  </tr>
+                )}
                 {filtersHook.paginatedProducts.length === 0 ? (
                   <tr>
                     <td
@@ -179,8 +208,8 @@ function ProductsPage(): React.ReactElement {
                           isOutOfStock
                             ? 'bg-red-50 dark:bg-red-900/10'
                             : isLowStock
-                            ? 'bg-yellow-50 dark:bg-yellow-900/10'
-                            : ''
+                              ? 'bg-yellow-50 dark:bg-yellow-900/10'
+                              : ''
                         }`}
                       >
                         <td className="px-3 py-4 whitespace-nowrap">
@@ -202,7 +231,8 @@ function ProductsPage(): React.ReactElement {
                                   onError={(e) => {
                                     const target = e.currentTarget;
                                     target.style.display = 'none';
-                                    const placeholder = target.nextElementSibling as HTMLElement | null;
+                                    const placeholder =
+                                      target.nextElementSibling as HTMLElement | null;
                                     if (placeholder) placeholder.style.display = 'flex';
                                   }}
                                 />
@@ -247,7 +277,9 @@ function ProductsPage(): React.ReactElement {
                                 disabled={actions.updating}
                               />
                               <button
-                                onClick={() => actions.handleQuickEditPrice(product.id, products, setProducts)}
+                                onClick={() =>
+                                  actions.handleQuickEditPrice(product.id, products, setProducts)
+                                }
                                 className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 text-xs"
                                 disabled={actions.updating}
                               >
@@ -281,8 +313,8 @@ function ProductsPage(): React.ReactElement {
                               product.stock_status === 'instock'
                                 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                                 : product.stock_status === 'outofstock'
-                                ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                                : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                  ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
                             }`}
                           >
                             {product.stock_status}
@@ -295,8 +327,8 @@ function ProductsPage(): React.ReactElement {
                                 isLowStock
                                   ? 'text-yellow-600 dark:text-yellow-400 font-semibold'
                                   : isOutOfStock
-                                  ? 'text-red-600 dark:text-red-400 font-semibold'
-                                  : ''
+                                    ? 'text-red-600 dark:text-red-400 font-semibold'
+                                    : ''
                               }
                             >
                               {product.stock_quantity}
@@ -332,8 +364,12 @@ function ProductsPage(): React.ReactElement {
                     );
                   })
                 )}
-              {padBottom > 0 && (<tr aria-hidden="true" style={{ height: padBottom }}><td colSpan={99} className="p-0" /></tr>)}
-</tbody>
+                {padBottom > 0 && (
+                  <tr aria-hidden="true" style={{ height: padBottom }}>
+                    <td colSpan={99} className="p-0" />
+                  </tr>
+                )}
+              </tbody>
             </table>
           </div>
           {filtersHook.filteredProducts.length > 0 && (
@@ -364,12 +400,7 @@ function ProductsPage(): React.ReactElement {
                   }}
                   className="text-gray-400 hover:text-gray-600"
                 >
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -383,7 +414,10 @@ function ProductsPage(): React.ReactElement {
               {actions.editMode ? (
                 <div className="space-y-4">
                   <div>
-                    <label htmlFor="modal-product-name" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      htmlFor="modal-product-name"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                       Product Name
                     </label>
                     <input
@@ -399,7 +433,10 @@ function ProductsPage(): React.ReactElement {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="modal-regular-price" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label
+                        htmlFor="modal-regular-price"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
                         Regular Price
                       </label>
                       <input
@@ -408,13 +445,19 @@ function ProductsPage(): React.ReactElement {
                         step="0.01"
                         value={actions.editData.regular_price}
                         onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                          actions.setEditData({ ...actions.editData, regular_price: e.target.value })
+                          actions.setEditData({
+                            ...actions.editData,
+                            regular_price: e.target.value,
+                          })
                         }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
                     <div>
-                      <label htmlFor="modal-sale-price" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label
+                        htmlFor="modal-sale-price"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
                         Sale Price
                       </label>
                       <input
@@ -432,7 +475,10 @@ function ProductsPage(): React.ReactElement {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="modal-stock-qty" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label
+                        htmlFor="modal-stock-qty"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
                         Stock Quantity
                       </label>
                       <input
@@ -440,20 +486,29 @@ function ProductsPage(): React.ReactElement {
                         type="number"
                         value={actions.editData.stock_quantity}
                         onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                          actions.setEditData({ ...actions.editData, stock_quantity: parseInt(e.target.value) || 0 })
+                          actions.setEditData({
+                            ...actions.editData,
+                            stock_quantity: parseInt(e.target.value) || 0,
+                          })
                         }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
                     <div>
-                      <label htmlFor="modal-stock-status" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label
+                        htmlFor="modal-stock-status"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
                         Stock Status
                       </label>
                       <select
                         id="modal-stock-status"
                         value={actions.editData.stock_status}
                         onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                          actions.setEditData({ ...actions.editData, stock_status: e.target.value as StockStatus })
+                          actions.setEditData({
+                            ...actions.editData,
+                            stock_status: e.target.value as StockStatus,
+                          })
                         }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                       >
@@ -496,7 +551,8 @@ function ProductsPage(): React.ReactElement {
                         <span className="font-medium">ID:</span> {actions.selectedProduct.id}
                       </p>
                       <p className="text-sm">
-                        <span className="font-medium">SKU:</span> {actions.selectedProduct.sku || 'N/A'}
+                        <span className="font-medium">SKU:</span>{' '}
+                        {actions.selectedProduct.sku || 'N/A'}
                       </p>
                       <p className="text-sm">
                         <span className="font-medium">Price:</span>{' '}
@@ -504,7 +560,8 @@ function ProductsPage(): React.ReactElement {
                       </p>
                       <p className="text-sm">
                         <span className="font-medium">Stock:</span>{' '}
-                        {actions.selectedProduct.stock_quantity ?? 'N/A'} ({actions.selectedProduct.stock_status})
+                        {actions.selectedProduct.stock_quantity ?? 'N/A'} (
+                        {actions.selectedProduct.stock_status})
                       </p>
                     </div>
                   </div>
@@ -529,7 +586,9 @@ function ProductsPage(): React.ReactElement {
                       Edit Product
                     </button>
                     <button
-                      onClick={() => actions.handleDelete(actions.selectedProduct!.id, products, setProducts)}
+                      onClick={() =>
+                        actions.handleDelete(actions.selectedProduct!.id, products, setProducts)
+                      }
                       className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
                     >
                       Delete
@@ -548,7 +607,9 @@ function ProductsPage(): React.ReactElement {
         onClose={() => actions.setBulkEditModalOpen(false)}
         selectedProducts={actions.getSelectedProducts(products)}
         allProducts={products}
-        onSave={(updates) => actions.handleBulkSave(updates as BatchProductUpdate[], products, setProducts)}
+        onSave={(updates) =>
+          actions.handleBulkSave(updates as BatchProductUpdate[], products, setProducts)
+        }
         onError={(msg: string) => showToast(msg, 'error')}
       />
     </div>

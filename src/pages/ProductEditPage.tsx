@@ -34,7 +34,9 @@ export default function ProductEditPage(): ReactElement {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const getCurrentStore = useStoreConfig((state) => state.getCurrentStore);
-  const productsFromCache = useCache((state) => state.cache.products?.data as WooCommerceProduct[] | undefined);
+  const productsFromCache = useCache(
+    (state) => state.cache.products?.data as WooCommerceProduct[] | undefined
+  );
   const currentStore = getCurrentStore();
 
   const [product, setProduct] = useState<Product | null>(null);
@@ -53,37 +55,40 @@ export default function ProductEditPage(): ReactElement {
   }, [productsFromCache, id]);
 
   // Fetch fresh product data from API
-  const fetchProductFromApi = useCallback(async (showLoadingState: boolean = true): Promise<void> => {
-    if (!currentStore || !id) return;
+  const fetchProductFromApi = useCallback(
+    async (showLoadingState: boolean = true): Promise<void> => {
+      if (!currentStore || !id) return;
 
-    try {
-      if (showLoadingState) {
-        setLoading(true);
-      } else {
-        setRefreshing(true);
-      }
-      setError(null);
-
-      const service = new WooCommerceService(currentStore);
-      const response = await service.getProduct(parseInt(id));
-
-      if (response.success) {
-        setProduct(response.data);
-        form.populateFormData(response.data);
-      } else {
-        if (!product) {
-          setError(response.error || 'Failed to load product');
+      try {
+        if (showLoadingState) {
+          setLoading(true);
+        } else {
+          setRefreshing(true);
         }
+        setError(null);
+
+        const service = new WooCommerceService(currentStore);
+        const response = await service.getProduct(parseInt(id));
+
+        if (response.success) {
+          setProduct(response.data);
+          form.populateFormData(response.data);
+        } else {
+          if (!product) {
+            setError(response.error || 'Failed to load product');
+          }
+        }
+      } catch (err) {
+        if (!product) {
+          setError((err as Error).message || 'Failed to load product');
+        }
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-    } catch (err) {
-      if (!product) {
-        setError((err as Error).message || 'Failed to load product');
-      }
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [currentStore, id, product, form]);
+    },
+    [currentStore, id, product, form]
+  );
 
   useEffect(() => {
     if (!currentStore) {
@@ -91,11 +96,15 @@ export default function ProductEditPage(): ReactElement {
     }
   }, [currentStore, navigate]);
 
-  const [prevSyncKey, setPrevSyncKey] = useState<typeof NOT_SYNCED | { id: string | undefined; storeId: string | undefined }>(NOT_SYNCED);
+  const [prevSyncKey, setPrevSyncKey] = useState<
+    typeof NOT_SYNCED | { id: string | undefined; storeId: string | undefined }
+  >(NOT_SYNCED);
   const syncKey = { id, storeId: currentStore?.id };
   if (
     currentStore &&
-    (prevSyncKey === NOT_SYNCED || prevSyncKey.id !== syncKey.id || prevSyncKey.storeId !== syncKey.storeId)
+    (prevSyncKey === NOT_SYNCED ||
+      prevSyncKey.id !== syncKey.id ||
+      prevSyncKey.storeId !== syncKey.storeId)
   ) {
     setPrevSyncKey(syncKey);
 
@@ -210,7 +219,9 @@ export default function ProductEditPage(): ReactElement {
                 />
               )}
               <div className="flex-1">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{product.name}</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {product.name}
+                </h2>
                 <div className="flex items-center space-x-4 mt-1 text-sm text-gray-600 dark:text-gray-400">
                   <span>ID: {product.id}</span>
                   {product.sku && <span>SKU: {product.sku}</span>}
@@ -226,7 +237,12 @@ export default function ProductEditPage(): ReactElement {
       {/* Tabs */}
       <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
         <nav className="flex space-x-8">
-          {[...TABS, ...(product?.type === 'variable' ? [{ id: 'variations' as TabId, label: 'Variations' }] : [])].map((tab) => (
+          {[
+            ...TABS,
+            ...(product?.type === 'variable'
+              ? [{ id: 'variations' as TabId, label: 'Variations' }]
+              : []),
+          ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
@@ -265,17 +281,11 @@ export default function ProductEditPage(): ReactElement {
         )}
 
         {activeTab === 'shipping' && (
-          <ProductEditShippingTab
-            formData={form.formData}
-            onInputChange={form.handleInputChange}
-          />
+          <ProductEditShippingTab formData={form.formData} onInputChange={form.handleInputChange} />
         )}
 
         {activeTab === 'advanced' && (
-          <ProductEditAdvancedTab
-            formData={form.formData}
-            onInputChange={form.handleInputChange}
-          />
+          <ProductEditAdvancedTab formData={form.formData} onInputChange={form.handleInputChange} />
         )}
 
         {activeTab === 'seo' && (
@@ -290,7 +300,9 @@ export default function ProductEditPage(): ReactElement {
       {/* Product Images Section */}
       {product?.images && product.images.length > 0 && (
         <div className="mt-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Product Images</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Product Images
+          </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {product.images.map((image: ProductImage, index: number) => (
               <div key={index} className="relative">

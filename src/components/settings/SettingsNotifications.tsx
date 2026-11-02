@@ -67,9 +67,7 @@ const SettingsNotifications = memo(function SettingsNotifications({
             }`}
             onClick={() => setNotifyNewOrders(!notifyNewOrders)}
             aria-label={
-              notifyNewOrders
-                ? 'Disable new order notifications'
-                : 'Enable new order notifications'
+              notifyNewOrders ? 'Disable new order notifications' : 'Enable new order notifications'
             }
           >
             <div

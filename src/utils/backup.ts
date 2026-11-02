@@ -77,9 +77,13 @@ async function deriveKey(
   salt: Uint8Array<ArrayBuffer>,
   iterations: number
 ): Promise<CryptoKey> {
-  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(passphrase), 'PBKDF2', false, [
-    'deriveKey',
-  ]);
+  const base = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(passphrase),
+    'PBKDF2',
+    false,
+    ['deriveKey']
+  );
   return crypto.subtle.deriveKey(
     { name: 'PBKDF2', hash: 'SHA-256', salt, iterations },
     base,
@@ -103,13 +107,22 @@ export async function encryptCredentials(
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const key = await deriveKey(passphrase, salt, PBKDF2_ITERATIONS);
   const ct = new Uint8Array(
-    await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(JSON.stringify(creds)))
+    await crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv },
+      key,
+      new TextEncoder().encode(JSON.stringify(creds))
+    )
   );
   return {
     ...backup,
     data: {
       ...backup.data,
-      encryptedCredentials: { salt: b64(salt), iv: b64(iv), ct: b64(ct), iterations: PBKDF2_ITERATIONS },
+      encryptedCredentials: {
+        salt: b64(salt),
+        iv: b64(iv),
+        ct: b64(ct),
+        iterations: PBKDF2_ITERATIONS,
+      },
     },
   };
 }
@@ -124,7 +137,11 @@ export async function decryptCredentials(
   let creds: Credentials;
   try {
     const key = await deriveKey(passphrase, unb64(enc.salt), enc.iterations);
-    const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(enc.iv) }, key, unb64(enc.ct));
+    const plain = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: unb64(enc.iv) },
+      key,
+      unb64(enc.ct)
+    );
     creds = JSON.parse(new TextDecoder().decode(plain)) as Credentials;
   } catch {
     throw new Error('Wrong passphrase or corrupted backup');
@@ -133,7 +150,10 @@ export async function decryptCredentials(
     ...st,
     ...(creds[st.id] ?? {}),
   }));
-  return { ...backup, data: { ...backup.data, storeConfig: { ...backup.data.storeConfig, stores } } };
+  return {
+    ...backup,
+    data: { ...backup.data, storeConfig: { ...backup.data.storeConfig, stores } },
+  };
 }
 
 export interface RestoreResult {
@@ -351,7 +371,9 @@ export function restoreBackup(backup: BackupData): RestoreResult {
   if (data.appSettings) {
     try {
       useAppSettings.setState({
-        language: data.appSettings.language as ReturnType<typeof useAppSettings.getState>['language'],
+        language: data.appSettings.language as ReturnType<
+          typeof useAppSettings.getState
+        >['language'],
         defaultPrinter: data.appSettings.defaultPrinter,
         pinEnabled: data.appSettings.pinEnabled,
         pinCode: data.appSettings.pinCode,
@@ -400,8 +422,12 @@ export function restoreBackup(backup: BackupData): RestoreResult {
   if (data.search) {
     try {
       useSearch.setState({
-        recentSearches: data.search.recentSearches as ReturnType<typeof useSearch.getState>['recentSearches'],
-        savedFilterPresets: data.search.savedFilterPresets as ReturnType<typeof useSearch.getState>['savedFilterPresets'],
+        recentSearches: data.search.recentSearches as ReturnType<
+          typeof useSearch.getState
+        >['recentSearches'],
+        savedFilterPresets: data.search.savedFilterPresets as ReturnType<
+          typeof useSearch.getState
+        >['savedFilterPresets'],
         maxRecentSearches: data.search.maxRecentSearches,
       });
       restored.push('search');
@@ -415,7 +441,9 @@ export function restoreBackup(backup: BackupData): RestoreResult {
   if (data.offline) {
     try {
       useOffline.setState({
-        pendingOperations: data.offline.pendingOperations as ReturnType<typeof useOffline.getState>['pendingOperations'],
+        pendingOperations: data.offline.pendingOperations as ReturnType<
+          typeof useOffline.getState
+        >['pendingOperations'],
         lastSyncAttempt: data.offline.lastSyncAttempt,
       });
       restored.push('offline');
@@ -432,11 +460,14 @@ export function restoreBackup(backup: BackupData): RestoreResult {
       for (const storeId of storeIds) {
         const products = data.products[storeId];
         if (Array.isArray(products)) {
-          useCache.getState().setCachedProducts(
-            products as ReturnType<typeof useCache.getState>['cache']['products']['data'] & unknown[],
-            storeId,
-            Date.now()
-          );
+          useCache
+            .getState()
+            .setCachedProducts(
+              products as ReturnType<typeof useCache.getState>['cache']['products']['data'] &
+                unknown[],
+              storeId,
+              Date.now()
+            );
         }
       }
       restored.push('products');

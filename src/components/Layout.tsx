@@ -92,7 +92,9 @@ function Layout(): React.ReactElement {
     const path = window.location.hash.slice(1) || '/'; // HashRouter: route lives in the hash
     return {
       sales: ['/orders', '/customers', '/coupons', '/reviews'].some((p) => path.startsWith(p)),
-      catalog: ['/products', '/inventory', '/categories', '/attributes', '/tax'].some((p) => path.startsWith(p)),
+      catalog: ['/products', '/inventory', '/categories', '/attributes', '/tax'].some((p) =>
+        path.startsWith(p)
+      ),
       analytics: path.startsWith('/analytics'),
       store: ['/multi-store', '/store-health', '/activity-log'].some((p) => path.startsWith(p)),
     };
@@ -121,9 +123,7 @@ function Layout(): React.ReactElement {
       // ? or Ctrl+/: Open keyboard shortcuts help
       const target = e.target as HTMLElement;
       const isTyping =
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.isContentEditable;
+        target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
 
       if (!isTyping && e.key === '?') {
         e.preventDefault();
@@ -149,7 +149,10 @@ function Layout(): React.ReactElement {
         if (products) {
           const lowStockCount =
             products.filter(
-              (p) => p.stock_quantity !== null && p.stock_quantity <= lowStockThreshold && p.stock_quantity > 0
+              (p) =>
+                p.stock_quantity !== null &&
+                p.stock_quantity <= lowStockThreshold &&
+                p.stock_quantity > 0
             ).length + products.filter((p) => p.stock_status === 'outofstock').length;
 
           setHealthIndicators((prev) => ({
@@ -260,15 +263,18 @@ function Layout(): React.ReactElement {
     }));
   }, []);
 
-  const handleSync = useCallback(async (type: 'orders' | 'products' | 'inventory'): Promise<void> => {
-    setSyncingType(type);
-    try {
-      await clearCacheForType(type === 'inventory' ? 'products' : type);
-      window.location.reload();
-    } catch {
-      setSyncingType(null);
-    }
-  }, [clearCacheForType]);
+  const handleSync = useCallback(
+    async (type: 'orders' | 'products' | 'inventory'): Promise<void> => {
+      setSyncingType(type);
+      try {
+        await clearCacheForType(type === 'inventory' ? 'products' : type);
+        window.location.reload();
+      } catch {
+        setSyncingType(null);
+      }
+    },
+    [clearCacheForType]
+  );
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900 transition-colors overflow-hidden">
@@ -279,13 +285,14 @@ function Layout(): React.ReactElement {
       <KeyboardShortcutsModal isOpen={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
 
       {/* Title Bar - Compact native-style */}
-      <div data-print-hide className="flex-none h-12 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-4 drag-region">
+      <div
+        data-print-hide
+        className="flex-none h-12 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-4 drag-region"
+      >
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <StoreLogo className="w-5 h-5 object-contain" />
-            <span className="text-sm font-semibold text-gray-900 dark:text-white">
-              StoreOS
-            </span>
+            <span className="text-sm font-semibold text-gray-900 dark:text-white">StoreOS</span>
           </div>
 
           {/* API Status Indicator */}
@@ -368,7 +375,10 @@ function Layout(): React.ReactElement {
       {/* Main Layout with Sidebar */}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar Navigation */}
-        <aside data-print-hide className="flex-none w-56 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+        <aside
+          data-print-hide
+          className="flex-none w-56 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col"
+        >
           {/* Navigation Items */}
           <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
             {navItems.map((item) => {

@@ -3,17 +3,25 @@ import type { ProductFormData } from '../hooks/useProductEditForm';
 
 interface ProductEditInventoryTabProps {
   formData: ProductFormData;
-  onInputChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+  onInputChange: (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => void;
 }
 
 /**
  * Inventory tab: SKU, stock management toggle, stock quantity, stock status.
  */
-export function ProductEditInventoryTab({ formData, onInputChange }: ProductEditInventoryTabProps): ReactElement {
+export function ProductEditInventoryTab({
+  formData,
+  onInputChange,
+}: ProductEditInventoryTabProps): ReactElement {
   return (
     <div className="space-y-6">
       <div>
-        <label htmlFor="product-sku" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label
+          htmlFor="product-sku"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
           SKU (Stock Keeping Unit)
         </label>
         <input
@@ -37,14 +45,21 @@ export function ProductEditInventoryTab({ formData, onInputChange }: ProductEdit
             onChange={onInputChange}
             className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-700"
           />
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Manage stock?</span>
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Manage stock?
+          </span>
         </label>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Enable stock management at product level</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Enable stock management at product level
+        </p>
       </div>
 
       {formData.manage_stock && (
         <div>
-          <label htmlFor="stock-quantity" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label
+            htmlFor="stock-quantity"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
             Stock Quantity
           </label>
           <input
@@ -60,7 +75,10 @@ export function ProductEditInventoryTab({ formData, onInputChange }: ProductEdit
       )}
 
       <div>
-        <label htmlFor="stock-status" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label
+          htmlFor="stock-status"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
           Stock Status
         </label>
         <select

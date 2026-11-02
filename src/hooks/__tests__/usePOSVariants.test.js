@@ -15,7 +15,12 @@ vi.mock('../../stores', () => ({
     }),
 }));
 
-const mockToast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn(), warning: vi.fn(), info: vi.fn() }));
+const mockToast = vi.hoisted(() => ({
+  success: vi.fn(),
+  error: vi.fn(),
+  warning: vi.fn(),
+  info: vi.fn(),
+}));
 vi.mock('../../contexts/ToastContext', () => ({ useToast: () => mockToast }));
 
 // Mock WooCommerceService
@@ -82,9 +87,11 @@ describe('usePOSVariants', () => {
       success: true,
       data: mockVariations,
     });
-    WooCommerceService.mockImplementation(function () { return {
-      getProductVariations: mockGetProductVariations,
-    }; });
+    WooCommerceService.mockImplementation(function () {
+      return {
+        getProductVariations: mockGetProductVariations,
+      };
+    });
   });
 
   it('should initialize with closed variant picker', () => {

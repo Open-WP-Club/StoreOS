@@ -1,11 +1,6 @@
 import React, { useEffect, useState, useMemo, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  TrendingUp,
-  ShoppingCart,
-  AlertCircle,
-  RefreshCw,
-} from 'lucide-react';
+import { TrendingUp, ShoppingCart, AlertCircle, RefreshCw } from 'lucide-react';
 import { useStoreConfig, useCache } from '../stores';
 import { formatCurrency as formatCurrencyUtil } from '../utils/currency';
 import { formatDate } from '../utils/dateTime';
@@ -83,7 +78,10 @@ function Dashboard(): React.ReactElement {
 
     return {
       totalRevenue: buildKPIValue(curRev, prevRev),
-      totalOrders: buildKPIValue(current.filter(isRevenue).length, previous.filter(isRevenue).length),
+      totalOrders: buildKPIValue(
+        current.filter(isRevenue).length,
+        previous.filter(isRevenue).length
+      ),
       avgOrderValue: buildKPIValue(curAOV, prevAOV),
       newCustomers: buildKPIValue(newCustomers, prevNewCustomers),
     };
@@ -138,7 +136,8 @@ function Dashboard(): React.ReactElement {
         <AlertCircle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
         <p className="text-gray-900 dark:text-white font-medium text-lg">Unable to load data</p>
         <p className="mt-2 text-gray-500 dark:text-gray-400 text-sm max-w-md mx-auto">
-          Could not connect to your WooCommerce store. Please check your API credentials in Settings.
+          Could not connect to your WooCommerce store. Please check your API credentials in
+          Settings.
         </p>
         <Link
           to="/setup"

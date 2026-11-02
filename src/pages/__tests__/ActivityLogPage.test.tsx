@@ -32,21 +32,25 @@ beforeEach(() => {
   // useShallow just passes through the selector
   (useShallow as unknown as Mock).mockImplementation((fn: (state: unknown) => unknown) => fn);
 
-  (useActivityLog as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
-    const state = {
-      entries: mockEntries,
-      clearLog: mockClearLog,
-    };
-    return selector ? selector(state) : state;
-  });
+  (useActivityLog as unknown as Mock).mockImplementation(
+    (selector?: (state: unknown) => unknown) => {
+      const state = {
+        entries: mockEntries,
+        clearLog: mockClearLog,
+      };
+      return selector ? selector(state) : state;
+    }
+  );
 
-  (useStoreConfig as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
-    const state = {
-      stores: mockStores,
-      currentStoreId: 'store-1',
-    };
-    return selector ? selector(state) : state;
-  });
+  (useStoreConfig as unknown as Mock).mockImplementation(
+    (selector?: (state: unknown) => unknown) => {
+      const state = {
+        stores: mockStores,
+        currentStoreId: 'store-1',
+      };
+      return selector ? selector(state) : state;
+    }
+  );
 });
 
 describe('ActivityLogPage', () => {
@@ -136,9 +140,24 @@ describe('ActivityLogPage', () => {
   describe('filtering', () => {
     beforeEach(() => {
       mockEntries = [
-        createEntry({ id: '1', action: 'order_status_changed', entityType: 'order', entityName: 'Order #1' }),
-        createEntry({ id: '2', action: 'product_created', entityType: 'product', entityName: 'Widget' }),
-        createEntry({ id: '3', action: 'coupon_deleted', entityType: 'coupon', entityName: 'COUPON10' }),
+        createEntry({
+          id: '1',
+          action: 'order_status_changed',
+          entityType: 'order',
+          entityName: 'Order #1',
+        }),
+        createEntry({
+          id: '2',
+          action: 'product_created',
+          entityType: 'product',
+          entityName: 'Widget',
+        }),
+        createEntry({
+          id: '3',
+          action: 'coupon_deleted',
+          entityType: 'coupon',
+          entityName: 'COUPON10',
+        }),
       ];
     });
 

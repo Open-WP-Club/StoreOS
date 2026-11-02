@@ -55,8 +55,7 @@ export default function StatCard({
     </>
   );
 
-  const baseClasses =
-    'bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 transition-colors';
+  const baseClasses = 'bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 transition-colors';
 
   if (link) {
     return (

@@ -23,7 +23,9 @@ describe('saved views (search store)', () => {
   });
 
   it('omits empty extras so legacy-shaped presets stay unchanged', () => {
-    const v = useSearch.getState().addFilterPreset({ name: 'Old', type: 'orders', filters: { a: 1 } });
+    const v = useSearch
+      .getState()
+      .addFilterPreset({ name: 'Old', type: 'orders', filters: { a: 1 } });
     expect(v).not.toHaveProperty('pageSize');
     expect(v).not.toHaveProperty('search');
   });
@@ -47,6 +49,11 @@ describe('saved views (search store)', () => {
     s.addFilterPreset({ name: 'mine', type: 'orders', storeId: 's1' });
     s.addFilterPreset({ name: 'global', type: 'customers', storeId: 'all' });
     s.addFilterPreset({ name: 'other', type: 'products', storeId: 's2' });
-    expect(useSearch.getState().getSavedViews('s1').map((p) => p.name)).toEqual(['mine', 'global']);
+    expect(
+      useSearch
+        .getState()
+        .getSavedViews('s1')
+        .map((p) => p.name)
+    ).toEqual(['mine', 'global']);
   });
 });

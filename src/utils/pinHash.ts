@@ -13,7 +13,11 @@ const b64 = (bytes: Uint8Array): string => btoa(String.fromCharCode(...bytes));
 const unb64 = (s: string): Uint8Array<ArrayBuffer> =>
   Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 
-async function derive(pin: string, salt: Uint8Array<ArrayBuffer>, iterations: number): Promise<string> {
+async function derive(
+  pin: string,
+  salt: Uint8Array<ArrayBuffer>,
+  iterations: number
+): Promise<string> {
   const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(pin), 'PBKDF2', false, [
     'deriveBits',
   ]);

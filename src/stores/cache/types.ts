@@ -17,7 +17,11 @@ export interface CacheStoreState {
 
 export interface ProductsSlice {
   getCachedProducts: (currentStoreId: string) => Promise<WooCommerceProduct[] | null>;
-  setCachedProducts: (data: WooCommerceProduct[], currentStoreId: string, now: number) => Promise<void>;
+  setCachedProducts: (
+    data: WooCommerceProduct[],
+    currentStoreId: string,
+    now: number
+  ) => Promise<void>;
   setProductsLastSync: (timestamp: string) => Promise<void>;
   getProductsLastSync: () => string | null;
 }
@@ -39,18 +43,29 @@ export interface OrdersSlice {
 
 export interface CustomersSlice {
   getCachedCustomers: (currentStoreId: string) => Promise<WooCommerceCustomer[] | null>;
-  setCachedCustomers: (data: WooCommerceCustomer[], currentStoreId: string, now: number) => Promise<void>;
+  setCachedCustomers: (
+    data: WooCommerceCustomer[],
+    currentStoreId: string,
+    now: number
+  ) => Promise<void>;
 }
 
 export interface CouponsSlice {
   getCachedCoupons: (currentStoreId: string) => Promise<WooCommerceCoupon[] | null>;
-  setCachedCoupons: (data: WooCommerceCoupon[], currentStoreId: string, now: number) => Promise<void>;
+  setCachedCoupons: (
+    data: WooCommerceCoupon[],
+    currentStoreId: string,
+    now: number
+  ) => Promise<void>;
 }
 
-export interface CacheStoreActions extends ProductsSlice, OrdersSlice, CustomersSlice, CouponsSlice {
+export interface CacheStoreActions
+  extends ProductsSlice, OrdersSlice, CustomersSlice, CouponsSlice {
   getCachedData: (
     type: CacheType
-  ) => Promise<WooCommerceProduct[] | WooCommerceOrder[] | WooCommerceCustomer[] | WooCommerceCoupon[] | null>;
+  ) => Promise<
+    WooCommerceProduct[] | WooCommerceOrder[] | WooCommerceCustomer[] | WooCommerceCoupon[] | null
+  >;
   setCachedData: (
     type: CacheType,
     data: WooCommerceProduct[] | WooCommerceOrder[] | WooCommerceCustomer[] | WooCommerceCoupon[]

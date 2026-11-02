@@ -3,7 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Clock, X, Package, ShoppingCart, Users } from 'lucide-react';
 import { useStoreConfig, useCache, useSearch } from '../stores';
 import { universalSearch, type UniversalSearchResult } from '../utils/searchService';
-import type { WooCommerceProduct, WooCommerceOrder, WooCommerceCustomer, RecentSearch } from '../types';
+import type {
+  WooCommerceProduct,
+  WooCommerceOrder,
+  WooCommerceCustomer,
+  RecentSearch,
+} from '../types';
 import { EMPTY_ARRAY } from '../constants';
 
 interface GlobalSearchProps {
@@ -106,9 +111,7 @@ function GlobalSearch({
 
   // Get recent searches for this store
   const relevantRecentSearches = useMemo(() => {
-    return recentSearches
-      .filter((s) => s.storeId === currentStore?.id)
-      .slice(0, 5);
+    return recentSearches.filter((s) => s.storeId === currentStore?.id).slice(0, 5);
   }, [recentSearches, currentStore?.id]);
 
   // Total selectable items (results or recent searches)
@@ -134,7 +137,10 @@ function GlobalSearch({
   // Reset selection when results change
   const prevResultsKeyRef = useRef({ totalItems, query });
   useEffect(() => {
-    if (prevResultsKeyRef.current.totalItems !== totalItems || prevResultsKeyRef.current.query !== query) {
+    if (
+      prevResultsKeyRef.current.totalItems !== totalItems ||
+      prevResultsKeyRef.current.query !== query
+    ) {
       prevResultsKeyRef.current = { totalItems, query };
       setSelectedIndex(0);
     }
@@ -154,53 +160,59 @@ function GlobalSearch({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const handleResultClick = useCallback((result: UniversalSearchResult): void => {
-    // Save to recent searches
-    addRecentSearch({
-      query: result.title,
-      type: 'global',
-      storeId: currentStore?.id ?? null,
-    });
+  const handleResultClick = useCallback(
+    (result: UniversalSearchResult): void => {
+      // Save to recent searches
+      addRecentSearch({
+        query: result.title,
+        type: 'global',
+        storeId: currentStore?.id ?? null,
+      });
 
-    // Navigate to the appropriate page
-    switch (result.type) {
-      case 'product':
-        navigate(`/products/${result.id}/edit`);
-        break;
-      case 'order':
-        navigate(`/orders/${result.id}`);
-        break;
-      case 'customer':
-        navigate(`/customers?search=${encodeURIComponent(result.title)}`);
-        break;
-    }
+      // Navigate to the appropriate page
+      switch (result.type) {
+        case 'product':
+          navigate(`/products/${result.id}/edit`);
+          break;
+        case 'order':
+          navigate(`/orders/${result.id}`);
+          break;
+        case 'customer':
+          navigate(`/customers?search=${encodeURIComponent(result.title)}`);
+          break;
+      }
 
-    setQuery('');
-    setIsOpen(false);
-    inputRef.current?.blur();
-  }, [addRecentSearch, currentStore?.id, navigate]);
+      setQuery('');
+      setIsOpen(false);
+      inputRef.current?.blur();
+    },
+    [addRecentSearch, currentStore?.id, navigate]
+  );
 
   const handleRecentSearchClick = useCallback((search: RecentSearch): void => {
     setQuery(search.query);
     // Don't close - let user see results
   }, []);
 
-  const handleSearch = useCallback((searchQuery: string): void => {
-    if (!searchQuery || searchQuery.trim() === '') return;
+  const handleSearch = useCallback(
+    (searchQuery: string): void => {
+      if (!searchQuery || searchQuery.trim() === '') return;
 
-    addRecentSearch({
-      query: searchQuery,
-      type: 'global',
-      storeId: currentStore?.id ?? null,
-    });
+      addRecentSearch({
+        query: searchQuery,
+        type: 'global',
+        storeId: currentStore?.id ?? null,
+      });
 
-    // Navigate to products page with search (default behavior)
-    navigate(`/products?search=${encodeURIComponent(searchQuery)}`);
+      // Navigate to products page with search (default behavior)
+      navigate(`/products?search=${encodeURIComponent(searchQuery)}`);
 
-    setQuery('');
-    setIsOpen(false);
-    inputRef.current?.blur();
-  }, [addRecentSearch, currentStore?.id, navigate]);
+      setQuery('');
+      setIsOpen(false);
+      inputRef.current?.blur();
+    },
+    [addRecentSearch, currentStore?.id, navigate]
+  );
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (!isOpen && e.key !== 'Enter') {
@@ -252,7 +264,8 @@ function GlobalSearch({
   };
 
   const hasResults = categories.length > 0;
-  const showDropdown = isOpen && (hasResults || (query.trim() === '' && relevantRecentSearches.length > 0));
+  const showDropdown =
+    isOpen && (hasResults || (query.trim() === '' && relevantRecentSearches.length > 0));
 
   // Track which index we're on as we render categories
   let currentIndex = 0;

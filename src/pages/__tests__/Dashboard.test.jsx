@@ -243,9 +243,7 @@ describe('Dashboard', () => {
 
       await waitFor(() => {
         const ordersLinks = screen.getAllByRole('link');
-        const hasOrdersLink = ordersLinks.some(
-          (link) => link.getAttribute('href') === '/orders'
-        );
+        const hasOrdersLink = ordersLinks.some((link) => link.getAttribute('href') === '/orders');
         expect(hasOrdersLink).toBe(true);
       });
     });
@@ -257,9 +255,7 @@ describe('Dashboard', () => {
 
       await waitFor(() => {
         const links = screen.getAllByRole('link');
-        const hasProductsLink = links.some(
-          (link) => link.getAttribute('href') === '/products'
-        );
+        const hasProductsLink = links.some((link) => link.getAttribute('href') === '/products');
         expect(hasProductsLink).toBe(true);
       });
     });

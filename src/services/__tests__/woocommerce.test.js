@@ -256,7 +256,10 @@ describe('WooCommerceService', () => {
       const mockResponse = { update: [{ id: 1 }, { id: 2 }] };
       mockApiInstance.post.mockResolvedValue({ data: mockResponse });
 
-      const updates = [{ id: 1, price: '10' }, { id: 2, price: '20' }];
+      const updates = [
+        { id: 1, price: '10' },
+        { id: 2, price: '20' },
+      ];
       const result = await service.batchUpdateProducts(updates);
 
       expect(mockApiInstance.post).toHaveBeenCalledWith('products/batch', { update: updates });

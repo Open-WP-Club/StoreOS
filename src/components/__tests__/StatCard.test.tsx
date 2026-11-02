@@ -60,9 +60,7 @@ describe('StatCard', () => {
   });
 
   it('should render icon when provided', () => {
-    const { container } = render(
-      <StatCard label="Cart" value="5" icon={ShoppingCart} />
-    );
+    const { container } = render(<StatCard label="Cart" value="5" icon={ShoppingCart} />);
 
     const svg = container.querySelector('svg');
     expect(svg).toBeInTheDocument();
@@ -93,9 +91,7 @@ describe('StatCard', () => {
     const colors: StatCardColor[] = ['blue', 'red', 'yellow', 'purple'];
 
     colors.forEach((color) => {
-      const { unmount } = render(
-        <StatCard label="Test" value="0" color={color} />
-      );
+      const { unmount } = render(<StatCard label="Test" value="0" color={color} />);
 
       const valueEl = screen.getByText('0');
       expect(valueEl.className).toContain(`text-${color}-600`);

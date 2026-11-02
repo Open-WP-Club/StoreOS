@@ -10,11 +10,7 @@ vi.mock('../../components/ToastContainer', () => ({
     return (
       <div data-testid="toast-container">
         {toasts.map((toast) => (
-          <div
-            key={toast.id}
-            data-testid={`toast-${toast.type}`}
-            className={`toast-${toast.type}`}
-          >
+          <div key={toast.id} data-testid={`toast-${toast.type}`} className={`toast-${toast.type}`}>
             <span>{toast.message}</span>
             <button onClick={() => removeToast(toast.id)}>Remove</button>
           </div>
@@ -31,18 +27,10 @@ function TestComponent({ onToast }) {
 
   return (
     <div>
-      <button onClick={() => onToast(toast.success('Success message'))}>
-        Show Success
-      </button>
-      <button onClick={() => onToast(toast.error('Error message'))}>
-        Show Error
-      </button>
-      <button onClick={() => onToast(toast.warning('Warning message'))}>
-        Show Warning
-      </button>
-      <button onClick={() => onToast(toast.info('Info message'))}>
-        Show Info
-      </button>
+      <button onClick={() => onToast(toast.success('Success message'))}>Show Success</button>
+      <button onClick={() => onToast(toast.error('Error message'))}>Show Error</button>
+      <button onClick={() => onToast(toast.warning('Warning message'))}>Show Warning</button>
+      <button onClick={() => onToast(toast.info('Info message'))}>Show Info</button>
       <button onClick={() => onToast(toast.success('Custom duration', 5000))}>
         Custom Duration
       </button>

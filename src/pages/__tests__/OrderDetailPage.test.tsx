@@ -6,7 +6,11 @@ import { useStoreConfig } from '../../stores';
 import { useOrderDetail } from '../../hooks/useOrderDetail';
 import { useOrderNotes } from '../../hooks/useOrderNotes';
 import { exportOrderInvoice } from '../../utils/pdfExport';
-import { createMockOrder, createMockStore, createMockLineItem } from '../../__test_utils__/mockFactories';
+import {
+  createMockOrder,
+  createMockStore,
+  createMockLineItem,
+} from '../../__test_utils__/mockFactories';
 import type { ProductImage } from '../../types';
 
 vi.mock('../../stores');
@@ -21,10 +25,26 @@ vi.mock('../../constants', () => ({
 }));
 
 // Mock child components to simplify testing
-vi.mock('../../components/ToastContainer', () => ({ default: function MockToastContainer() { return <div data-testid="toast-container" />; } }));
-vi.mock('../../components/PluginMetaPanel', () => ({ default: function MockPluginMetaPanel() { return <div data-testid="plugin-meta" />; } }));
-vi.mock('../../components/WpAdminModal', () => ({ default: function MockWpAdminModal({ isOpen }: { isOpen: boolean }) { return isOpen ? <div data-testid="wp-admin-modal" /> : null; } }));
-vi.mock('../../components/ImageLightbox', () => ({ default: function MockImageLightbox() { return <div data-testid="image-lightbox" />; } }));
+vi.mock('../../components/ToastContainer', () => ({
+  default: function MockToastContainer() {
+    return <div data-testid="toast-container" />;
+  },
+}));
+vi.mock('../../components/PluginMetaPanel', () => ({
+  default: function MockPluginMetaPanel() {
+    return <div data-testid="plugin-meta" />;
+  },
+}));
+vi.mock('../../components/WpAdminModal', () => ({
+  default: function MockWpAdminModal({ isOpen }: { isOpen: boolean }) {
+    return isOpen ? <div data-testid="wp-admin-modal" /> : null;
+  },
+}));
+vi.mock('../../components/ImageLightbox', () => ({
+  default: function MockImageLightbox() {
+    return <div data-testid="image-lightbox" />;
+  },
+}));
 
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => ({
@@ -59,10 +79,14 @@ const defaultOrderNotes = {
 };
 
 beforeEach(() => {
-  (useStoreConfig as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
-    const state = { getCurrentStore: () => createMockStore({ name: 'Test Store', currency: 'USD' }) };
-    return selector ? selector(state) : state;
-  });
+  (useStoreConfig as unknown as Mock).mockImplementation(
+    (selector?: (state: unknown) => unknown) => {
+      const state = {
+        getCurrentStore: () => createMockStore({ name: 'Test Store', currency: 'USD' }),
+      };
+      return selector ? selector(state) : state;
+    }
+  );
 
   (useOrderDetail as Mock).mockReturnValue(defaultOrderDetail);
   (useOrderNotes as Mock).mockReturnValue(defaultOrderNotes);
@@ -129,7 +153,10 @@ describe('OrderDetailPage', () => {
       currency: 'USD',
       customer_note: '',
       line_items: [
-        createMockLineItem({ name: 'Widget', image: { src: 'https://img.com/w.jpg' } as ProductImage }),
+        createMockLineItem({
+          name: 'Widget',
+          image: { src: 'https://img.com/w.jpg' } as ProductImage,
+        }),
       ],
     });
 
@@ -151,7 +178,7 @@ describe('OrderDetailPage', () => {
       const badges = screen.getAllByText('Processing');
       expect(badges.length).toBeGreaterThanOrEqual(1);
       // The status badge is the span with rounded-full class
-      const badge = badges.find(el => el.className.includes('rounded-full'));
+      const badge = badges.find((el) => el.className.includes('rounded-full'));
       expect(badge).toBeTruthy();
     });
 

@@ -12,7 +12,10 @@ const defaultProps = {
   deletingNoteId: null,
   onNewNoteChange: vi.fn(),
   onIsCustomerNoteChange: vi.fn(),
-  onAddNote: vi.fn((e) => { e.preventDefault(); return Promise.resolve(); }),
+  onAddNote: vi.fn((e) => {
+    e.preventDefault();
+    return Promise.resolve();
+  }),
   onDeleteNote: vi.fn(() => Promise.resolve()),
 };
 
@@ -98,7 +101,10 @@ describe('OrderNotesSection', () => {
   });
 
   it('calls onAddNote on form submit', () => {
-    const onAddNote = vi.fn((e) => { e.preventDefault(); return Promise.resolve(); });
+    const onAddNote = vi.fn((e) => {
+      e.preventDefault();
+      return Promise.resolve();
+    });
     renderSection({ newNote: 'Note text', onAddNote });
     fireEvent.submit(screen.getByText('Добави').closest('form')!);
     expect(onAddNote).toHaveBeenCalled();
@@ -119,10 +125,7 @@ describe('OrderNotesSection', () => {
   });
 
   it('does not disable delete button for other notes', () => {
-    const notes = [
-      createMockOrderNote({ id: 42 }),
-      createMockOrderNote({ id: 43 }),
-    ];
+    const notes = [createMockOrderNote({ id: 42 }), createMockOrderNote({ id: 43 })];
     renderSection({ notes, deletingNoteId: 42 });
     const buttons = screen.getAllByTitle('Изтрий бележката');
     expect(buttons[0]).toBeDisabled();

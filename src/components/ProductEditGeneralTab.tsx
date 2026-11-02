@@ -9,7 +9,9 @@ interface ProductEditGeneralTabProps {
   shortDescriptionMode: EditorMode;
   descriptionRef: RefObject<HTMLDivElement | null>;
   shortDescriptionRef: RefObject<HTMLDivElement | null>;
-  onInputChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+  onInputChange: (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => void;
   onVisualEditorBlur: (field: 'description' | 'short_description') => void;
   onModeSwitch: (field: 'description' | 'short_description', newMode: EditorMode) => void;
 }
@@ -30,7 +32,10 @@ export function ProductEditGeneralTab({
   return (
     <div className="space-y-6">
       <div>
-        <label htmlFor="product-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label
+          htmlFor="product-name"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
           Product Name
         </label>
         <input
@@ -47,7 +52,10 @@ export function ProductEditGeneralTab({
       {/* Description Editor */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label htmlFor="product-description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label
+            htmlFor="product-description"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
             Description
           </label>
           <div className="flex rounded-md overflow-hidden border border-gray-300 dark:border-gray-600">
@@ -96,14 +104,19 @@ export function ProductEditGeneralTab({
           />
         )}
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          {descriptionMode === 'visual' ? 'Click to edit. Formatting is preserved.' : 'Edit raw HTML code'}
+          {descriptionMode === 'visual'
+            ? 'Click to edit. Formatting is preserved.'
+            : 'Edit raw HTML code'}
         </p>
       </div>
 
       {/* Short Description Editor */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label htmlFor="product-short-desc" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label
+            htmlFor="product-short-desc"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
             Short Description
           </label>
           <div className="flex rounded-md overflow-hidden border border-gray-300 dark:border-gray-600">
@@ -152,13 +165,18 @@ export function ProductEditGeneralTab({
           />
         )}
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          {shortDescriptionMode === 'visual' ? 'Brief excerpt shown in product listings' : 'Edit raw HTML code'}
+          {shortDescriptionMode === 'visual'
+            ? 'Brief excerpt shown in product listings'
+            : 'Edit raw HTML code'}
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label htmlFor="regular-price" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label
+            htmlFor="regular-price"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
             Regular Price ($)
           </label>
           <input
@@ -174,7 +192,10 @@ export function ProductEditGeneralTab({
         </div>
 
         <div>
-          <label htmlFor="sale-price" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label
+            htmlFor="sale-price"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
             Sale Price ($)
           </label>
           <input

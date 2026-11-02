@@ -33,10 +33,12 @@ beforeEach(() => {
   mockActiveStore = createMockStore();
   window.confirm = vi.fn(() => true);
 
-  (useStoreConfig as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
-    const state = { getCurrentStore: () => mockActiveStore };
-    return selector ? selector(state) : state;
-  });
+  (useStoreConfig as unknown as Mock).mockImplementation(
+    (selector?: (state: unknown) => unknown) => {
+      const state = { getCurrentStore: () => mockActiveStore };
+      return selector ? selector(state) : state;
+    }
+  );
 
   const cacheMock = (selector?: (state: unknown) => unknown) => {
     const state = { setCachedData: mockSetCachedData };
@@ -51,18 +53,22 @@ beforeEach(() => {
     return selector ? selector(state) : state;
   });
 
-  (useActivityLog as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
-    const state = { logActivity: mockLogActivity };
-    return selector ? selector(state) : state;
-  });
+  (useActivityLog as unknown as Mock).mockImplementation(
+    (selector?: (state: unknown) => unknown) => {
+      const state = { logActivity: mockLogActivity };
+      return selector ? selector(state) : state;
+    }
+  );
 
-  (WooCommerceService as Mock).mockImplementation(function () { return {
-    updateProduct: mockUpdateProduct,
-    deleteProduct: mockDeleteProduct,
-    batchProducts: mockBatchProducts,
-    createProduct: mockCreateProduct,
-    batchUpdateProducts: mockBatchUpdateProducts,
-  }; });
+  (WooCommerceService as Mock).mockImplementation(function () {
+    return {
+      updateProduct: mockUpdateProduct,
+      deleteProduct: mockDeleteProduct,
+      batchProducts: mockBatchProducts,
+      createProduct: mockCreateProduct,
+      batchUpdateProducts: mockBatchUpdateProducts,
+    };
+  });
 });
 
 // ============================================
@@ -114,7 +120,11 @@ describe('useProductActions', () => {
   describe('handleSave', () => {
     it('updates product via API and cache', async () => {
       const product = createMockProduct({ id: 1 });
-      const updatedProduct = { ...product, name: 'Updated', date_modified_gmt: '2025-01-01T00:00:00Z' };
+      const updatedProduct = {
+        ...product,
+        name: 'Updated',
+        date_modified_gmt: '2025-01-01T00:00:00Z',
+      };
       mockUpdateProduct.mockResolvedValue({ success: true, data: updatedProduct });
 
       const products = [product];
@@ -190,10 +200,7 @@ describe('useProductActions', () => {
         await result.current.handleSave([product], vi.fn());
       });
 
-      expect(mockShowToast).toHaveBeenCalledWith(
-        expect.stringContaining('Network error'),
-        'error'
-      );
+      expect(mockShowToast).toHaveBeenCalledWith(expect.stringContaining('Network error'), 'error');
     });
   });
 
@@ -245,10 +252,7 @@ describe('useProductActions', () => {
         await result.current.handleDelete(5, [createMockProduct({ id: 5 })], vi.fn());
       });
 
-      expect(mockShowToast).toHaveBeenCalledWith(
-        expect.stringContaining('Forbidden'),
-        'error'
-      );
+      expect(mockShowToast).toHaveBeenCalledWith(expect.stringContaining('Forbidden'), 'error');
     });
   });
 
@@ -282,10 +286,7 @@ describe('useProductActions', () => {
           entityId: 99,
         })
       );
-      expect(mockShowToast).toHaveBeenCalledWith(
-        expect.stringContaining('duplicated'),
-        'success'
-      );
+      expect(mockShowToast).toHaveBeenCalledWith(expect.stringContaining('duplicated'), 'success');
     });
 
     it('does nothing when confirmation cancelled', async () => {
@@ -305,7 +306,11 @@ describe('useProductActions', () => {
   describe('handleQuickEditPrice', () => {
     it('updates price via API', async () => {
       const product = createMockProduct({ id: 7, regular_price: '10.00' });
-      const updated = { ...product, regular_price: '15.00', date_modified_gmt: '2025-01-01T00:00:00Z' };
+      const updated = {
+        ...product,
+        regular_price: '15.00',
+        date_modified_gmt: '2025-01-01T00:00:00Z',
+      };
       mockUpdateProduct.mockResolvedValue({ success: true, data: updated });
 
       const products = [product];
@@ -440,10 +445,7 @@ describe('useProductActions', () => {
         })
       );
       expect(result.current.selectedProductIds).toHaveLength(0);
-      expect(mockShowToast).toHaveBeenCalledWith(
-        expect.stringContaining('2'),
-        'success'
-      );
+      expect(mockShowToast).toHaveBeenCalledWith(expect.stringContaining('2'), 'success');
     });
   });
 
@@ -486,10 +488,7 @@ describe('useProductActions', () => {
         })
       );
       expect(result.current.selectedProductIds).toHaveLength(0);
-      expect(mockShowToast).toHaveBeenCalledWith(
-        expect.stringContaining('2'),
-        'success'
-      );
+      expect(mockShowToast).toHaveBeenCalledWith(expect.stringContaining('2'), 'success');
     });
 
     it('does nothing without store', async () => {
@@ -522,10 +521,7 @@ describe('useProductActions', () => {
 
     it('selects all products on page', () => {
       const { result } = renderHook(() => useProductActions(mockShowToast));
-      const products = [
-        createMockProduct({ id: 10 }),
-        createMockProduct({ id: 20 }),
-      ];
+      const products = [createMockProduct({ id: 10 }), createMockProduct({ id: 20 })];
 
       act(() => {
         result.current.handleSelectAll(products, true);

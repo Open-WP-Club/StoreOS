@@ -1,7 +1,18 @@
 import React, { useState } from 'react';
 import { useStoreConfig } from '../stores';
 import WooCommerceService from '../services/woocommerce';
-import { Store, Trash2, Edit2, Plus, Save, X, Settings, ExternalLink, CheckCircle, Code2 } from 'lucide-react';
+import {
+  Store,
+  Trash2,
+  Edit2,
+  Plus,
+  Save,
+  X,
+  Settings,
+  ExternalLink,
+  CheckCircle,
+  Code2,
+} from 'lucide-react';
 import type { WooCommerceStore } from '../types';
 import appIcon from '../../assets/icon.svg';
 
@@ -126,7 +137,10 @@ function SetupPage(): React.ReactElement {
       if (result.success) {
         // Get current store to preserve existing loadingSettings
         const currentStore = stores.find((s) => s.id === storeId);
-        const currentLoadingSettings = currentStore?.loadingSettings || { batchSize: 50, batchDelay: 500 };
+        const currentLoadingSettings = currentStore?.loadingSettings || {
+          batchSize: 50,
+          batchDelay: 500,
+        };
 
         updateStore(storeId, {
           ...editFormData,
@@ -239,7 +253,9 @@ function SetupPage(): React.ReactElement {
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <div>
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white">Connected Stores</h3>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+              Connected Stores
+            </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               {stores.length === 0
                 ? 'No stores connected yet'
@@ -269,7 +285,9 @@ function SetupPage(): React.ReactElement {
                     </div>
                     <div className="min-w-0">
                       <p className="font-medium text-gray-900 dark:text-white">{store.name}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{store.url}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                        {store.url}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -325,7 +343,9 @@ function SetupPage(): React.ReactElement {
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-6">
           <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${editingStoreId ? 'bg-blue-100 dark:bg-blue-900/40' : 'bg-green-100 dark:bg-green-900/40'}`}>
+              <div
+                className={`p-2 rounded-lg ${editingStoreId ? 'bg-blue-100 dark:bg-blue-900/40' : 'bg-green-100 dark:bg-green-900/40'}`}
+              >
                 {editingStoreId ? (
                   <Edit2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 ) : (
@@ -356,7 +376,10 @@ function SetupPage(): React.ReactElement {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="edit-store-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label
+                      htmlFor="edit-store-name"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                    >
                       Store Name
                     </label>
                     <input
@@ -369,7 +392,10 @@ function SetupPage(): React.ReactElement {
                     />
                   </div>
                   <div>
-                    <label htmlFor="edit-store-url" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label
+                      htmlFor="edit-store-url"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                    >
                       Store URL
                     </label>
                     <input
@@ -384,7 +410,10 @@ function SetupPage(): React.ReactElement {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="edit-consumer-key" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label
+                      htmlFor="edit-consumer-key"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                    >
                       Consumer Key
                     </label>
                     <input
@@ -397,7 +426,10 @@ function SetupPage(): React.ReactElement {
                     />
                   </div>
                   <div>
-                    <label htmlFor="edit-consumer-secret" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label
+                      htmlFor="edit-consumer-secret"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                    >
                       Consumer Secret
                     </label>
                     <input
@@ -414,11 +446,16 @@ function SetupPage(): React.ReactElement {
 
                 {/* POS Settings */}
                 <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-4">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">POS Настройки</h4>
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    POS Настройки
+                  </h4>
 
                   {/* Infinite scroll toggle */}
                   {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-                  <label htmlFor="pos-infinite-scroll" className="flex items-center gap-3 cursor-pointer">
+                  <label
+                    htmlFor="pos-infinite-scroll"
+                    className="flex items-center gap-3 cursor-pointer"
+                  >
                     <div className="relative">
                       <input
                         id="pos-infinite-scroll"
@@ -431,7 +468,9 @@ function SetupPage(): React.ReactElement {
                       <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
                     </div>
                     <div>
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">Автоматично зареждане</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        Автоматично зареждане
+                      </span>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
                         Зарежда още продукти при скрол (infinite scroll)
                       </p>
@@ -440,7 +479,10 @@ function SetupPage(): React.ReactElement {
 
                   {/* Retry delay setting */}
                   <div>
-                    <label htmlFor="retry-delay" className="block text-sm font-medium text-gray-900 dark:text-white mb-1">
+                    <label
+                      htmlFor="retry-delay"
+                      className="block text-sm font-medium text-gray-900 dark:text-white mb-1"
+                    >
                       Изчакване при грешка
                     </label>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
@@ -453,7 +495,11 @@ function SetupPage(): React.ReactElement {
                         min="15"
                         max="300"
                         value={editRetryDelaySeconds}
-                        onChange={(e) => setEditRetryDelaySeconds(Math.max(15, Math.min(300, parseInt(e.target.value) || 60)))}
+                        onChange={(e) =>
+                          setEditRetryDelaySeconds(
+                            Math.max(15, Math.min(300, parseInt(e.target.value) || 60))
+                          )
+                        }
                         className="w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                       />
                       <span className="text-sm text-gray-500 dark:text-gray-400">секунди</span>
@@ -483,7 +529,10 @@ function SetupPage(): React.ReactElement {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="store-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label
+                      htmlFor="store-name"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                    >
                       Store Name
                     </label>
                     <input
@@ -498,7 +547,10 @@ function SetupPage(): React.ReactElement {
                     />
                   </div>
                   <div>
-                    <label htmlFor="store-url" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label
+                      htmlFor="store-url"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                    >
                       Store URL
                     </label>
                     <input
@@ -515,7 +567,10 @@ function SetupPage(): React.ReactElement {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="consumer-key" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label
+                      htmlFor="consumer-key"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                    >
                       Consumer Key
                     </label>
                     <input
@@ -530,7 +585,10 @@ function SetupPage(): React.ReactElement {
                     />
                   </div>
                   <div>
-                    <label htmlFor="consumer-secret" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label
+                      htmlFor="consumer-secret"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                    >
                       Consumer Secret
                     </label>
                     <input
@@ -563,13 +621,31 @@ function SetupPage(): React.ReactElement {
                 <details className="group">
                   <summary className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-white">
                     <span>How to get API credentials</span>
-                    <span className="text-gray-400 group-open:rotate-180 transition-transform">▾</span>
+                    <span className="text-gray-400 group-open:rotate-180 transition-transform">
+                      ▾
+                    </span>
                   </summary>
                   <ol className="mt-3 list-decimal list-inside space-y-1.5 text-sm text-gray-600 dark:text-gray-400">
                     <li>Go to your WooCommerce admin panel</li>
-                    <li>Navigate to <span className="font-medium text-gray-700 dark:text-gray-300">WooCommerce → Settings → Advanced → REST API</span></li>
-                    <li>Click <span className="font-medium text-gray-700 dark:text-gray-300">&quot;Add key&quot;</span></li>
-                    <li>Give it a description and select <span className="font-medium text-gray-700 dark:text-gray-300">&quot;Read/Write&quot;</span> permissions</li>
+                    <li>
+                      Navigate to{' '}
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        WooCommerce → Settings → Advanced → REST API
+                      </span>
+                    </li>
+                    <li>
+                      Click{' '}
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        &quot;Add key&quot;
+                      </span>
+                    </li>
+                    <li>
+                      Give it a description and select{' '}
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        &quot;Read/Write&quot;
+                      </span>{' '}
+                      permissions
+                    </li>
                     <li>Copy the Consumer Key and Consumer Secret</li>
                   </ol>
                 </details>
@@ -578,7 +654,6 @@ function SetupPage(): React.ReactElement {
           </div>
         </div>
       )}
-
     </div>
   );
 }

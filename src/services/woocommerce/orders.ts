@@ -25,8 +25,9 @@ export class WooCommerceServiceOrders extends WooCommerceServiceBase {
     params: OrderQueryParams = {}
   ): Promise<ApiResponse<WooCommerceOrder[]> & { headers?: Record<string, string> }> {
     try {
-      const response: WooCommerceApiResponse<WooCommerceOrder[]> =
-        await (await this.getApi()).get('orders', params);
+      const response: WooCommerceApiResponse<WooCommerceOrder[]> = await (
+        await this.getApi()
+      ).get('orders', params);
       return { success: true, data: response.data, headers: response.headers };
     } catch (error) {
       return this.fail(error);
@@ -48,8 +49,9 @@ export class WooCommerceServiceOrders extends WooCommerceServiceBase {
 
   async getOrder(id: number): Promise<ApiResponse<WooCommerceOrder>> {
     try {
-      const response: WooCommerceApiResponse<WooCommerceOrder> =
-        await (await this.getApi()).get(`orders/${id}`);
+      const response: WooCommerceApiResponse<WooCommerceOrder> = await (
+        await this.getApi()
+      ).get(`orders/${id}`);
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -58,8 +60,9 @@ export class WooCommerceServiceOrders extends WooCommerceServiceBase {
 
   async updateOrder(id: number, data: OrderUpdateData): Promise<ApiResponse<WooCommerceOrder>> {
     try {
-      const response: WooCommerceApiResponse<WooCommerceOrder> =
-        await (await this.getApi()).put(`orders/${id}`, data);
+      const response: WooCommerceApiResponse<WooCommerceOrder> = await (
+        await this.getApi()
+      ).put(`orders/${id}`, data);
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -68,8 +71,9 @@ export class WooCommerceServiceOrders extends WooCommerceServiceBase {
 
   async deleteOrder(id: number): Promise<ApiResponse<WooCommerceOrder>> {
     try {
-      const response: WooCommerceApiResponse<WooCommerceOrder> =
-        await (await this.getApi()).delete(`orders/${id}`, { force: true });
+      const response: WooCommerceApiResponse<WooCommerceOrder> = await (
+        await this.getApi()
+      ).delete(`orders/${id}`, { force: true });
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -78,8 +82,9 @@ export class WooCommerceServiceOrders extends WooCommerceServiceBase {
 
   async createOrder(data: Record<string, unknown>): Promise<ApiResponse<WooCommerceOrder>> {
     try {
-      const response: WooCommerceApiResponse<WooCommerceOrder> =
-        await (await this.getApi()).post('orders', data);
+      const response: WooCommerceApiResponse<WooCommerceOrder> = await (
+        await this.getApi()
+      ).post('orders', data);
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -104,8 +109,9 @@ export class WooCommerceServiceOrders extends WooCommerceServiceBase {
 
   async getOrderRefunds(orderId: number): Promise<ApiResponse<OrderRefundDetail[]>> {
     try {
-      const response: WooCommerceApiResponse<OrderRefundDetail[]> =
-        await (await this.getApi()).get(`orders/${orderId}/refunds`, { per_page: 100 });
+      const response: WooCommerceApiResponse<OrderRefundDetail[]> = await (
+        await this.getApi()
+      ).get(`orders/${orderId}/refunds`, { per_page: 100 });
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -118,8 +124,9 @@ export class WooCommerceServiceOrders extends WooCommerceServiceBase {
     request: CreateRefundRequest
   ): Promise<ApiResponse<OrderRefundDetail>> {
     try {
-      const response: WooCommerceApiResponse<OrderRefundDetail> =
-        await (await this.getApi()).post(`orders/${orderId}/refunds`, request);
+      const response: WooCommerceApiResponse<OrderRefundDetail> = await (
+        await this.getApi()
+      ).post(`orders/${orderId}/refunds`, request);
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -130,8 +137,9 @@ export class WooCommerceServiceOrders extends WooCommerceServiceBase {
     updates: Array<{ id: number } & OrderUpdateData>
   ): Promise<ApiResponse<BatchOperationResponse<WooCommerceOrder>>> {
     try {
-      const response: WooCommerceApiResponse<BatchOperationResponse<WooCommerceOrder>> =
-        await (await this.getApi()).post('orders/batch', { update: updates });
+      const response: WooCommerceApiResponse<BatchOperationResponse<WooCommerceOrder>> = await (
+        await this.getApi()
+      ).post('orders/batch', { update: updates });
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -142,11 +150,12 @@ export class WooCommerceServiceOrders extends WooCommerceServiceBase {
     params: OrderQueryParams = {}
   ): Promise<ApiResponse<Partial<WooCommerceOrder>[]>> {
     try {
-      const response: WooCommerceApiResponse<Partial<WooCommerceOrder>[]> =
-        await (await this.getApi()).get('orders', {
-          ...params,
-          _fields: 'id,status,total,billing,date_created,line_items,currency',
-        });
+      const response: WooCommerceApiResponse<Partial<WooCommerceOrder>[]> = await (
+        await this.getApi()
+      ).get('orders', {
+        ...params,
+        _fields: 'id,status,total,billing,date_created,line_items,currency',
+      });
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -159,8 +168,9 @@ export class WooCommerceServiceOrders extends WooCommerceServiceBase {
 
   async getOrderNotes(orderId: number): Promise<ApiResponse<OrderNote[]>> {
     try {
-      const response: WooCommerceApiResponse<OrderNote[]> =
-        await (await this.getApi()).get(`orders/${orderId}/notes`);
+      const response: WooCommerceApiResponse<OrderNote[]> = await (
+        await this.getApi()
+      ).get(`orders/${orderId}/notes`);
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -173,11 +183,12 @@ export class WooCommerceServiceOrders extends WooCommerceServiceBase {
     customerNote: boolean = false
   ): Promise<ApiResponse<OrderNote>> {
     try {
-      const response: WooCommerceApiResponse<OrderNote> =
-        await (await this.getApi()).post(`orders/${orderId}/notes`, {
-          note,
-          customer_note: customerNote,
-        });
+      const response: WooCommerceApiResponse<OrderNote> = await (
+        await this.getApi()
+      ).post(`orders/${orderId}/notes`, {
+        note,
+        customer_note: customerNote,
+      });
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);
@@ -186,8 +197,9 @@ export class WooCommerceServiceOrders extends WooCommerceServiceBase {
 
   async deleteOrderNote(orderId: number, noteId: number): Promise<ApiResponse<{ id: number }>> {
     try {
-      const response: WooCommerceApiResponse<{ id: number }> =
-        await (await this.getApi()).delete(`orders/${orderId}/notes/${noteId}`, { force: true });
+      const response: WooCommerceApiResponse<{ id: number }> = await (
+        await this.getApi()
+      ).delete(`orders/${orderId}/notes/${noteId}`, { force: true });
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);

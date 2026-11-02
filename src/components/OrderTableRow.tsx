@@ -31,7 +31,9 @@ const OrderTableRow = memo(function OrderTableRow({
 }: OrderTableRowProps): React.ReactElement {
   const [open, setOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
-  const [optimisticStatus, setOptimisticStatus] = useState<OrderStatus>(order.status as OrderStatus);
+  const [optimisticStatus, setOptimisticStatus] = useState<OrderStatus>(
+    order.status as OrderStatus
+  );
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Sync if parent updates order
@@ -106,9 +108,7 @@ const OrderTableRow = memo(function OrderTableRow({
               disabled={updating}
               className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs leading-5 font-semibold rounded-full cursor-pointer transition-opacity ${getOrderStatusColor(optimisticStatus)} ${updating ? 'opacity-60' : 'hover:opacity-80'}`}
             >
-              {updating ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
-              ) : null}
+              {updating ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
               {optimisticStatus}
               <ChevronDown className="w-3 h-3" />
             </button>
@@ -123,7 +123,9 @@ const OrderTableRow = memo(function OrderTableRow({
                     }}
                     className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 ${s.value === optimisticStatus ? 'font-semibold' : ''}`}
                   >
-                    <span className={`inline-block w-2 h-2 rounded-full ${getOrderStatusColor(s.value).split(' ')[0]}`} />
+                    <span
+                      className={`inline-block w-2 h-2 rounded-full ${getOrderStatusColor(s.value).split(' ')[0]}`}
+                    />
                     {s.label}
                   </button>
                 ))}

@@ -5,7 +5,9 @@ import type { ProductFormData } from '../hooks/useProductEditForm';
 interface ProductEditSeoTabProps {
   formData: ProductFormData;
   storeUrl?: string;
-  onInputChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+  onInputChange: (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => void;
 }
 
 /** Converts a string to a WooCommerce-style slug */
@@ -29,16 +31,12 @@ export default function ProductEditSeoTab({
   storeUrl,
   onInputChange,
 }: ProductEditSeoTabProps): React.ReactElement {
-  const baseUrl = storeUrl
-    ? storeUrl.replace(/\/$/, '')
-    : 'https://yourstore.com';
+  const baseUrl = storeUrl ? storeUrl.replace(/\/$/, '') : 'https://yourstore.com';
 
   const effectiveSlug = formData.slug || toSlug(formData.name) || 'product-name';
 
   const productUrl = `${baseUrl}/product/${effectiveSlug}`;
-  const displayUrl = productUrl.length > 60
-    ? productUrl.slice(0, 57) + '...'
-    : productUrl;
+  const displayUrl = productUrl.length > 60 ? productUrl.slice(0, 57) + '...' : productUrl;
 
   // SERP preview values — use product name/description as fallbacks
   const serpTitle = truncate(formData.name || 'Product name', 60);
@@ -59,10 +57,13 @@ export default function ProductEditSeoTab({
   }, [formData.slug, formData.name]);
 
   const slugBarColor =
-    slugBarWidth === 0 ? 'bg-gray-200 dark:bg-gray-600' :
-    slugBarWidth <= 60 ? 'bg-green-500' :
-    slugBarWidth <= 85 ? 'bg-yellow-500' :
-    'bg-red-500';
+    slugBarWidth === 0
+      ? 'bg-gray-200 dark:bg-gray-600'
+      : slugBarWidth <= 60
+        ? 'bg-green-500'
+        : slugBarWidth <= 85
+          ? 'bg-yellow-500'
+          : 'bg-red-500';
 
   const handleSlugChange = (e: ChangeEvent<HTMLInputElement>): void => {
     // Auto-sanitize on change
@@ -136,9 +137,9 @@ export default function ProductEditSeoTab({
               Meta title &amp; description
             </p>
             <p className="mt-1 text-sm text-blue-700 dark:text-blue-400">
-              Meta title and description are managed by your SEO plugin (Yoast SEO or Rank Math).
-              If installed, edit them directly in your WordPress admin under the product editor SEO panel.
-              The SERP preview below uses the product name and description as fallbacks.
+              Meta title and description are managed by your SEO plugin (Yoast SEO or Rank Math). If
+              installed, edit them directly in your WordPress admin under the product editor SEO
+              panel. The SERP preview below uses the product name and description as fallbacks.
             </p>
           </div>
         </div>
@@ -159,9 +160,7 @@ export default function ProductEditSeoTab({
             title={formData.name}
           >
             {serpTitle.text}
-            {serpTitle.truncated && (
-              <span className="text-gray-400"> ...</span>
-            )}
+            {serpTitle.truncated && <span className="text-gray-400"> ...</span>}
           </div>
 
           {/* URL breadcrumb */}
@@ -181,7 +180,13 @@ export default function ProductEditSeoTab({
           <div>
             <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
               <span>Title length</span>
-              <span className={serpTitle.text.length > 55 ? 'text-yellow-600 dark:text-yellow-400' : 'text-green-600 dark:text-green-400'}>
+              <span
+                className={
+                  serpTitle.text.length > 55
+                    ? 'text-yellow-600 dark:text-yellow-400'
+                    : 'text-green-600 dark:text-green-400'
+                }
+              >
                 {serpTitle.text.length} / 60
               </span>
             </div>
@@ -195,7 +200,13 @@ export default function ProductEditSeoTab({
           <div>
             <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
               <span>Description length</span>
-              <span className={serpDesc.text.length > 145 ? 'text-yellow-600 dark:text-yellow-400' : 'text-green-600 dark:text-green-400'}>
+              <span
+                className={
+                  serpDesc.text.length > 145
+                    ? 'text-yellow-600 dark:text-yellow-400'
+                    : 'text-green-600 dark:text-green-400'
+                }
+              >
                 {serpDesc.text.length} / 160
               </span>
             </div>
@@ -208,7 +219,8 @@ export default function ProductEditSeoTab({
           </div>
         </div>
         <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
-          Preview uses product name and description as title/snippet. Install Yoast or Rank Math to set custom meta tags.
+          Preview uses product name and description as title/snippet. Install Yoast or Rank Math to
+          set custom meta tags.
         </p>
       </div>
     </div>

@@ -28,26 +28,29 @@ export default function LoadingScreen({
     ];
 
     let currentStage = 0;
-    const interval = setInterval(() => {
-      const stage = stages[currentStage];
-      if (currentStage < stages.length && stage) {
-        setProgress(stage.progress);
-        setMessage(stage.message);
-        currentStage++;
-      }
+    const interval = setInterval(
+      () => {
+        const stage = stages[currentStage];
+        if (currentStage < stages.length && stage) {
+          setProgress(stage.progress);
+          setMessage(stage.message);
+          currentStage++;
+        }
 
-      if (currentStage >= stages.length) {
-        clearInterval(interval);
+        if (currentStage >= stages.length) {
+          clearInterval(interval);
 
-        // Ensure minimum duration has passed
-        const elapsed = Date.now() - startTime;
-        const remainingTime = Math.max(0, minDuration - elapsed);
+          // Ensure minimum duration has passed
+          const elapsed = Date.now() - startTime;
+          const remainingTime = Math.max(0, minDuration - elapsed);
 
-        setTimeout(() => {
-          onComplete();
-        }, remainingTime + 300); // Small delay after 100% for visual feedback
-      }
-    }, minDuration / (stages.length + 1));
+          setTimeout(() => {
+            onComplete();
+          }, remainingTime + 300); // Small delay after 100% for visual feedback
+        }
+      },
+      minDuration / (stages.length + 1)
+    );
 
     return () => clearInterval(interval);
   }, [minDuration, onComplete]);
@@ -55,17 +58,19 @@ export default function LoadingScreen({
   const isDark = theme === 'dark';
 
   return (
-    <div className={`fixed inset-0 flex items-center justify-center z-[9999] ${
-      isDark ? 'bg-gray-900' : 'bg-gray-50'
-    }`}>
+    <div
+      className={`fixed inset-0 flex items-center justify-center z-[9999] ${
+        isDark ? 'bg-gray-900' : 'bg-gray-50'
+      }`}
+    >
       <div className="text-center">
         {/* Logo / Icon */}
         <div className="mb-8">
-          <div className={`w-24 h-24 mx-auto rounded-2xl flex items-center justify-center border ${
-            isDark
-              ? 'bg-gray-800 border-gray-700'
-              : 'bg-gray-100 border-gray-200'
-          }`}>
+          <div
+            className={`w-24 h-24 mx-auto rounded-2xl flex items-center justify-center border ${
+              isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-200'
+            }`}
+          >
             <img src={appIcon} alt="" aria-hidden="true" className="w-14 h-14 object-contain" />
           </div>
         </div>
@@ -78,7 +83,9 @@ export default function LoadingScreen({
 
         {/* Progress Bar */}
         <div className="w-64 mx-auto mb-4">
-          <div className={`h-2 rounded-full overflow-hidden ${isDark ? 'bg-gray-800' : 'bg-gray-200'}`}>
+          <div
+            className={`h-2 rounded-full overflow-hidden ${isDark ? 'bg-gray-800' : 'bg-gray-200'}`}
+          >
             <div
               className="h-full bg-blue-600 rounded-full transition-all duration-300 ease-out"
               style={{ width: `${progress}%` }}
@@ -92,9 +99,7 @@ export default function LoadingScreen({
         </p>
 
         {/* Progress Percentage */}
-        <p className={`text-xs mt-2 ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>
-          {progress}%
-        </p>
+        <p className={`text-xs mt-2 ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>{progress}%</p>
       </div>
     </div>
   );

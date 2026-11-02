@@ -29,12 +29,7 @@ describe('EmptyState', () => {
     });
 
     it('should render message when provided', () => {
-      render(
-        <EmptyState
-          title="No items"
-          message="Try adjusting your search or filters"
-        />
-      );
+      render(<EmptyState title="No items" message="Try adjusting your search or filters" />);
 
       expect(screen.getByText('Try adjusting your search or filters')).toBeInTheDocument();
     });
@@ -47,12 +42,7 @@ describe('EmptyState', () => {
     });
 
     it('should render action when provided', () => {
-      render(
-        <EmptyState
-          title="No items"
-          action={<button>Add Item</button>}
-        />
-      );
+      render(<EmptyState title="No items" action={<button>Add Item</button>} />);
 
       expect(screen.getByRole('button', { name: 'Add Item' })).toBeInTheDocument();
     });
@@ -109,10 +99,7 @@ describe('EmptyState', () => {
     it('should render button action', async () => {
       const handleClick = vi.fn();
       render(
-        <EmptyState
-          title="No items"
-          action={<button onClick={handleClick}>Click me</button>}
-        />
+        <EmptyState title="No items" action={<button onClick={handleClick}>Click me</button>} />
       );
 
       await userEvent.click(screen.getByText('Click me'));
@@ -121,12 +108,7 @@ describe('EmptyState', () => {
     });
 
     it('should render link action', () => {
-      render(
-        <EmptyState
-          title="No items"
-          action={<a href="/add">Add new item</a>}
-        />
-      );
+      render(<EmptyState title="No items" action={<a href="/add">Add new item</a>} />);
 
       expect(screen.getByRole('link', { name: 'Add new item' })).toHaveAttribute('href', '/add');
     });
@@ -218,7 +200,9 @@ describe('EmptyState', () => {
       );
 
       expect(screen.getByText('No orders yet')).toBeInTheDocument();
-      expect(screen.getByText('Orders will appear here once customers start purchasing')).toBeInTheDocument();
+      expect(
+        screen.getByText('Orders will appear here once customers start purchasing')
+      ).toBeInTheDocument();
     });
 
     it('should render search results empty state', () => {
@@ -227,9 +211,7 @@ describe('EmptyState', () => {
           icon={Search}
           title="No results for 'xyz'"
           message="Try different keywords or check spelling"
-          action={
-            <button>Clear Search</button>
-          }
+          action={<button>Clear Search</button>}
         />
       );
 

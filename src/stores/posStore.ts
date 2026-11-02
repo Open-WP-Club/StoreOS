@@ -61,150 +61,152 @@ const getProductPrice = (product: WooCommerceProduct): number => {
   return salePrice > 0 ? salePrice : regularPrice;
 };
 
-export const usePOSStore = create<POSState>()(immer((set, get) => ({
-  // Initial state
-  cart: [],
-  customerId: null,
-  customerName: '',
-  customerEmail: '',
-  customerPhone: '',
-  discountType: 'percent',
-  discountValue: 0,
-  paymentMethod: 'cash',
-  amountTendered: 0,
-  isCheckoutOpen: false,
+export const usePOSStore = create<POSState>()(
+  immer((set, get) => ({
+    // Initial state
+    cart: [],
+    customerId: null,
+    customerName: '',
+    customerEmail: '',
+    customerPhone: '',
+    discountType: 'percent',
+    discountValue: 0,
+    paymentMethod: 'cash',
+    amountTendered: 0,
+    isCheckoutOpen: false,
 
-  // Cart actions
-  addToCart: (product, quantity = 1) => {
-    set((state) => {
-      const existingItem = state.cart.find((item) => item.product.id === product.id);
+    // Cart actions
+    addToCart: (product, quantity = 1) => {
+      set((state) => {
+        const existingItem = state.cart.find((item) => item.product.id === product.id);
 
-      if (existingItem) {
-        existingItem.quantity += quantity;
-      } else {
-        state.cart.push({
-          product,
-          quantity,
-          price: getProductPrice(product),
-        });
+        if (existingItem) {
+          existingItem.quantity += quantity;
+        } else {
+          state.cart.push({
+            product,
+            quantity,
+            price: getProductPrice(product),
+          });
+        }
+      });
+    },
+
+    removeFromCart: (productId) => {
+      set((state) => {
+        const index = state.cart.findIndex((item) => item.product.id === productId);
+        if (index !== -1) state.cart.splice(index, 1);
+      });
+    },
+
+    updateQuantity: (productId, quantity) => {
+      if (quantity <= 0) {
+        get().removeFromCart(productId);
+        return;
       }
-    });
-  },
 
-  removeFromCart: (productId) => {
-    set((state) => {
-      const index = state.cart.findIndex((item) => item.product.id === productId);
-      if (index !== -1) state.cart.splice(index, 1);
-    });
-  },
+      set((state) => {
+        const item = state.cart.find((item) => item.product.id === productId);
+        if (item) item.quantity = quantity;
+      });
+    },
 
-  updateQuantity: (productId, quantity) => {
-    if (quantity <= 0) {
-      get().removeFromCart(productId);
-      return;
-    }
+    clearCart: () => {
+      set({
+        cart: [],
+        customerId: null,
+        customerName: '',
+        customerEmail: '',
+        customerPhone: '',
+        discountType: 'percent',
+        discountValue: 0,
+        amountTendered: 0,
+        isCheckoutOpen: false,
+      });
+    },
 
-    set((state) => {
-      const item = state.cart.find((item) => item.product.id === productId);
-      if (item) item.quantity = quantity;
-    });
-  },
+    // Customer actions
+    setCustomer: (id, name, email, phone) => {
+      set({
+        customerId: id,
+        customerName: name,
+        customerEmail: email,
+        customerPhone: phone,
+      });
+    },
 
-  clearCart: () => {
-    set({
-      cart: [],
-      customerId: null,
-      customerName: '',
-      customerEmail: '',
-      customerPhone: '',
-      discountType: 'percent',
-      discountValue: 0,
-      amountTendered: 0,
-      isCheckoutOpen: false,
-    });
-  },
+    clearCustomer: () => {
+      set({
+        customerId: null,
+        customerName: '',
+        customerEmail: '',
+        customerPhone: '',
+      });
+    },
 
-  // Customer actions
-  setCustomer: (id, name, email, phone) => {
-    set({
-      customerId: id,
-      customerName: name,
-      customerEmail: email,
-      customerPhone: phone,
-    });
-  },
+    // Discount actions
+    setDiscount: (type, value) => {
+      set({ discountType: type, discountValue: value });
+    },
 
-  clearCustomer: () => {
-    set({
-      customerId: null,
-      customerName: '',
-      customerEmail: '',
-      customerPhone: '',
-    });
-  },
+    clearDiscount: () => {
+      set({ discountType: 'percent', discountValue: 0 });
+    },
 
-  // Discount actions
-  setDiscount: (type, value) => {
-    set({ discountType: type, discountValue: value });
-  },
+    // Payment actions
+    setPaymentMethod: (method) => {
+      set({ paymentMethod: method });
+    },
 
-  clearDiscount: () => {
-    set({ discountType: 'percent', discountValue: 0 });
-  },
+    setAmountTendered: (amount) => {
+      set({ amountTendered: amount });
+    },
 
-  // Payment actions
-  setPaymentMethod: (method) => {
-    set({ paymentMethod: method });
-  },
+    setCheckoutOpen: (open) => {
+      set({ isCheckoutOpen: open });
+    },
 
-  setAmountTendered: (amount) => {
-    set({ amountTendered: amount });
-  },
+    // Computed values
+    getSubtotal: () => {
+      const { cart } = get();
+      return cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    },
 
-  setCheckoutOpen: (open) => {
-    set({ isCheckoutOpen: open });
-  },
+    getDiscountAmount: () => {
+      const { discountType, discountValue } = get();
+      const subtotal = get().getSubtotal();
 
-  // Computed values
-  getSubtotal: () => {
-    const { cart } = get();
-    return cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  },
+      if (discountValue <= 0) return 0;
 
-  getDiscountAmount: () => {
-    const { discountType, discountValue } = get();
-    const subtotal = get().getSubtotal();
+      if (discountType === 'percent') {
+        return (subtotal * discountValue) / 100;
+      }
+      return Math.min(discountValue, subtotal);
+    },
 
-    if (discountValue <= 0) return 0;
+    getTax: (rate = 20) => {
+      const subtotal = get().getSubtotal();
+      const discount = get().getDiscountAmount();
+      return ((subtotal - discount) * rate) / 100;
+    },
 
-    if (discountType === 'percent') {
-      return (subtotal * discountValue) / 100;
-    }
-    return Math.min(discountValue, subtotal);
-  },
+    getTotal: () => {
+      const subtotal = get().getSubtotal();
+      const discount = get().getDiscountAmount();
+      // Note: Tax is usually included in Bulgarian prices
+      return subtotal - discount;
+    },
 
-  getTax: (rate = 20) => {
-    const subtotal = get().getSubtotal();
-    const discount = get().getDiscountAmount();
-    return ((subtotal - discount) * rate) / 100;
-  },
+    getChange: () => {
+      const { amountTendered, paymentMethod } = get();
+      if (paymentMethod !== 'cash') return 0;
+      const total = get().getTotal();
+      return Math.max(0, amountTendered - total);
+    },
 
-  getTotal: () => {
-    const subtotal = get().getSubtotal();
-    const discount = get().getDiscountAmount();
-    // Note: Tax is usually included in Bulgarian prices
-    return subtotal - discount;
-  },
-
-  getChange: () => {
-    const { amountTendered, paymentMethod } = get();
-    if (paymentMethod !== 'cash') return 0;
-    const total = get().getTotal();
-    return Math.max(0, amountTendered - total);
-  },
-
-  getItemCount: () => {
-    const { cart } = get();
-    return cart.reduce((sum, item) => sum + item.quantity, 0);
-  },
-})));
+    getItemCount: () => {
+      const { cart } = get();
+      return cart.reduce((sum, item) => sum + item.quantity, 0);
+    },
+  }))
+);
