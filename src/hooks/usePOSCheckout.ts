@@ -1,5 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useStoreConfig } from '../stores';
+import useAppSettings from '../stores/appSettingsStore';
+import { buildReceipt } from '../utils/receipt';
+import { printReceipt } from '../utils/printReceipt';
+import { storeCurrencySymbol } from '../utils/currency';
 import { useToast } from '../contexts/ToastContext';
 import { usePOSStore } from '../stores/posStore';
 import useOffline from '../stores/offlineStore';
@@ -40,8 +44,17 @@ export function usePOSCheckout(
   const currentStore = getCurrentStore();
   const toast = useToast();
 
-  const { cart, clearCart, paymentMethod, discountType, discountValue, getDiscountAmount } =
-    usePOSStore();
+  const {
+    cart,
+    clearCart,
+    paymentMethod,
+    discountType,
+    discountValue,
+    getDiscountAmount,
+    getTotal,
+    getChange,
+    amountTendered,
+  } = usePOSStore();
 
   const checkoutInFlight = useRef(false);
   const [showCheckout, setShowCheckout] = useState(false);
@@ -133,6 +146,29 @@ export function usePOSCheckout(
         }),
       };
 
+      // Auto-print (fire and forget); built before the cart is cleared.
+      const printSale = (orderId: number): void => {
+        const app = useAppSettings.getState();
+        if (!app.autoPrintReceipt) return;
+        const receipt = buildReceipt({
+          storeName: currentStore.name,
+          items: cart.map((i) => ({ name: i.product.name, quantity: i.quantity, price: i.price })),
+          discount: getDiscountAmount(),
+          total: getTotal(),
+          paymentMethod: orderData.payment_method_title,
+          tendered: paymentMethod === 'cash' ? amountTendered : undefined,
+          change: getChange(),
+          orderId,
+        });
+        void printReceipt(receipt, {
+          printer: app.defaultPrinter,
+          openDrawer: app.openCashDrawer && paymentMethod === 'cash',
+          currencySymbol: storeCurrencySymbol(currentStore),
+        }).then((ok) => {
+          if (!ok) toast.warning('Касовата бележка не можа да се отпечата.');
+        });
+      };
+
       const soldItems = cart.map((i) => ({ productId: i.product.id, quantity: i.quantity }));
       const result = useOffline.getState().isOnline
         ? await service.createOrder(orderData)
@@ -143,6 +179,7 @@ export function usePOSCheckout(
         const op: PosSaleOpData = { clientId, order: orderData };
         useOffline.getState().addPendingOperation('create_order', op, currentStore.id);
         saveRecentTransaction(0, clientId);
+        printSale(0);
         void decrementCachedStock(soldItems);
         clearCart();
         setSelectedCustomer(null);
@@ -152,6 +189,7 @@ export function usePOSCheckout(
       } else if (result.success) {
         if (result.data?.id) {
           saveRecentTransaction(result.data.id);
+          printSale(result.data.id);
         }
         clearCart();
         setSelectedCustomer(null);

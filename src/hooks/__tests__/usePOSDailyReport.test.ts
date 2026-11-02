@@ -42,6 +42,9 @@ describe('usePOSDailyReport', () => {
       paymentMethod: 'cash',
       getTotal: () => 20,
       getItemCount: () => 2,
+      amountTendered: 0,
+      getDiscountAmount: () => 0,
+      getChange: () => 0,
     });
 
     (WooCommerceService as Mock).mockImplementation(function () {
@@ -247,6 +250,9 @@ describe('usePOSDailyReport', () => {
       paymentMethod: 'card',
       getTotal: () => 15,
       getItemCount: () => 1,
+      amountTendered: 0,
+      getDiscountAmount: () => 0,
+      getChange: () => 0,
     });
 
     const { result } = renderHook(() => usePOSDailyReport());

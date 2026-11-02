@@ -19,6 +19,10 @@ export default function SettingsPage(): ReactElement {
     setLanguage,
     defaultPrinter,
     setDefaultPrinter,
+    autoPrintReceipt,
+    setAutoPrintReceipt,
+    openCashDrawer,
+    setOpenCashDrawer,
     pinEnabled,
     pinCode,
     pinTimeout,
@@ -81,6 +85,10 @@ export default function SettingsPage(): ReactElement {
           language={language}
           defaultPrinter={defaultPrinter}
           setDefaultPrinter={setDefaultPrinter}
+          autoPrintReceipt={autoPrintReceipt}
+          setAutoPrintReceipt={setAutoPrintReceipt}
+          openCashDrawer={openCashDrawer}
+          setOpenCashDrawer={setOpenCashDrawer}
         />
 
         <SettingsNotifications

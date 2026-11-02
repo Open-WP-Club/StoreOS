@@ -7,12 +7,20 @@ interface SettingsPrinterProps {
   language: Language;
   defaultPrinter: string | null;
   setDefaultPrinter: (p: string | null) => void;
+  autoPrintReceipt: boolean;
+  setAutoPrintReceipt: (v: boolean) => void;
+  openCashDrawer: boolean;
+  setOpenCashDrawer: (v: boolean) => void;
 }
 
 const SettingsPrinter = memo(function SettingsPrinter({
   language,
   defaultPrinter,
   setDefaultPrinter,
+  autoPrintReceipt,
+  setAutoPrintReceipt,
+  openCashDrawer,
+  setOpenCashDrawer,
 }: SettingsPrinterProps) {
   const [printers, setPrinters] = useState<string[]>([]);
   const [loadingPrinters, setLoadingPrinters] = useState(false);
@@ -70,6 +78,35 @@ const SettingsPrinter = memo(function SettingsPrinter({
         >
           <RefreshCw className={`w-5 h-5 text-gray-500 ${loadingPrinters ? 'animate-spin' : ''}`} />
         </button>
+      </div>
+
+      <div className="mt-4 space-y-3 text-sm text-gray-700 dark:text-gray-300">
+        <label className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            checked={autoPrintReceipt}
+            onChange={(e) => setAutoPrintReceipt(e.target.checked)}
+          />
+          {language === 'bg'
+            ? 'Автоматичен печат на бележка (80мм) при продажба'
+            : 'Auto-print 80mm receipt on POS checkout'}
+        </label>
+        <label className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            checked={openCashDrawer}
+            disabled={!defaultPrinter}
+            onChange={(e) => setOpenCashDrawer(e.target.checked)}
+          />
+          {language === 'bg'
+            ? 'Отваряне на касовото чекмедже (ESC/POS) при плащане в брой'
+            : 'Open cash drawer (ESC/POS) on cash payments'}
+        </label>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          {language === 'bg'
+            ? 'Чекмеджето изисква избран принтер и е нетествано с реален хардуер (macOS/Linux).'
+            : 'The drawer needs a selected printer and is untested with real hardware (macOS/Linux only).'}
+        </p>
       </div>
     </section>
   );

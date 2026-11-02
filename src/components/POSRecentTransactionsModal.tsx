@@ -1,6 +1,10 @@
 import React, { ReactElement } from 'react';
-import { History, X, User, RotateCcw } from 'lucide-react';
-import { formatPrice } from '../utils/currency';
+import { History, X, User, RotateCcw, Printer } from 'lucide-react';
+import { useStoreConfig, useAppSettings } from '../stores';
+import { buildReceipt } from '../utils/receipt';
+import { printReceipt } from '../utils/printReceipt';
+import { useToast } from '../contexts/ToastContext';
+import { formatPrice, storeCurrencySymbol } from '../utils/currency';
 import type { RecentTransaction } from '../hooks/usePOSDailyReport';
 import Modal from './Modal';
 
@@ -18,6 +22,30 @@ export function POSRecentTransactionsModal({
   onClose,
   onRefund,
 }: POSRecentTransactionsModalProps): ReactElement {
+  const currentStore = useStoreConfig((state) => state.getCurrentStore());
+  const defaultPrinter = useAppSettings((s) => s.defaultPrinter);
+  const toast = useToast();
+
+  // Reprints never kick the drawer.
+  const handlePrint = async (tx: RecentTransaction): Promise<void> => {
+    const receipt = buildReceipt({
+      storeName: currentStore?.name ?? '',
+      items: tx.items,
+      discount: tx.discount,
+      total: tx.total,
+      paymentMethod: tx.paymentMethod,
+      tendered: tx.tendered,
+      change: tx.change,
+      orderId: tx.id,
+      date: tx.timestamp,
+    });
+    const ok = await printReceipt(receipt, {
+      printer: defaultPrinter,
+      openDrawer: false,
+      currencySymbol: storeCurrencySymbol(currentStore),
+    });
+    if (!ok) toast.warning('Касовата бележка не можа да се отпечата.');
+  };
   return (
     <Modal
       onClose={onClose}
@@ -108,6 +136,13 @@ export function POSRecentTransactionsModal({
                     <p className="text-xs text-gray-400 dark:text-gray-500">
                       {dateStr}, {timeStr}
                     </p>
+                    <button
+                      onClick={() => void handlePrint(tx)}
+                      className="mt-2 text-xs text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white flex items-center gap-1 ml-auto"
+                    >
+                      <Printer className="w-3 h-3" />
+                      Печат на бележка
+                    </button>
                     {!tx.refunded && !tx.pending && (
                       <button
                         onClick={() => onRefund(tx)}

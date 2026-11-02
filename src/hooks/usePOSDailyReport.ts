@@ -21,6 +21,10 @@ export interface RecentTransaction {
   items: TransactionItem[];
   paymentMethod: string;
   customerName?: string;
+  /** Kept for receipt reprints. */
+  discount?: number;
+  tendered?: number;
+  change?: number;
   timestamp: string;
   refunded?: boolean;
   /** Sale recorded offline, order not yet created on the server (id is 0 until synced). */
@@ -61,7 +65,15 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
   const toast = useToast();
   const currencySymbol = storeCurrencySymbol(currentStore);
 
-  const { cart, paymentMethod, getTotal, getItemCount } = usePOSStore();
+  const {
+    cart,
+    paymentMethod,
+    amountTendered,
+    getTotal,
+    getItemCount,
+    getDiscountAmount,
+    getChange,
+  } = usePOSStore();
 
   const [showRecentTransactions, setShowRecentTransactions] = useState(false);
   // Lazy-initialized from localStorage on mount (avoids a redundant effect).
@@ -103,6 +115,8 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
         items,
         paymentMethod:
           paymentMethod === 'cash' ? 'Каса' : paymentMethod === 'card' ? 'Карта' : 'Друго',
+        discount: getDiscountAmount(),
+        ...(paymentMethod === 'cash' && { tendered: amountTendered, change: getChange() }),
         timestamp: new Date().toISOString(),
         refunded: false,
         ...(pendingClientId && { pending: true, clientId: pendingClientId }),
@@ -119,7 +133,7 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
         return updated;
       });
     },
-    [cart, paymentMethod, getTotal, getItemCount]
+    [cart, paymentMethod, getTotal, getItemCount, getDiscountAmount, getChange, amountTendered]
   );
 
   const getTodayTransactions = useCallback((): RecentTransaction[] => {

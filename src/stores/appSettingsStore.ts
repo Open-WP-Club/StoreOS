@@ -21,6 +21,8 @@ export interface AppSettingsState {
 
   // Printer
   defaultPrinter: string | null;
+  autoPrintReceipt: boolean; // POS: print on checkout
+  openCashDrawer: boolean; // POS: ESC/POS kick with the receipt (needs a named printer)
 
   // PIN Lock
   pinEnabled: boolean;
@@ -42,6 +44,8 @@ export interface AppSettingsActions {
 
   // Printer
   setDefaultPrinter: (printer: string | null) => void;
+  setAutoPrintReceipt: (v: boolean) => void;
+  setOpenCashDrawer: (v: boolean) => void;
 
   // PIN Lock
   setPinEnabled: (enabled: boolean) => void;
@@ -92,6 +96,8 @@ const useAppSettings = create<AppSettingsStore>()(
       // Initial state
       language: 'bg',
       defaultPrinter: null,
+      autoPrintReceipt: false,
+      openCashDrawer: false,
       pinEnabled: false,
       pinCode: null,
       pinLength: 4,
@@ -128,6 +134,8 @@ const useAppSettings = create<AppSettingsStore>()(
       setDefaultPrinter: (printer: string | null) => {
         set({ defaultPrinter: printer });
       },
+      setAutoPrintReceipt: (v: boolean) => set({ autoPrintReceipt: v }),
+      setOpenCashDrawer: (v: boolean) => set({ openCashDrawer: v }),
 
       // PIN Lock
       setPinEnabled: (enabled: boolean) => {
@@ -207,6 +215,8 @@ const useAppSettings = create<AppSettingsStore>()(
         set({
           language: 'bg',
           defaultPrinter: null,
+          autoPrintReceipt: false,
+          openCashDrawer: false,
           pinEnabled: false,
           pinCode: null,
           pinLength: 4,
@@ -224,6 +234,8 @@ const useAppSettings = create<AppSettingsStore>()(
       partialize: (state): Omit<AppSettingsState, 'isInitialized' | 'isLocked'> => ({
         language: state.language,
         defaultPrinter: state.defaultPrinter,
+        autoPrintReceipt: state.autoPrintReceipt,
+        openCashDrawer: state.openCashDrawer,
         pinEnabled: state.pinEnabled,
         pinCode: state.pinCode,
         pinLength: state.pinLength,
