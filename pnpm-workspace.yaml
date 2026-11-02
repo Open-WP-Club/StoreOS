@@ -2,5 +2,3 @@ allowBuilds:
   core-js: true
   electron-winstaller: true
   esbuild: true
-minimumReleaseAgeExclude:
-  - electron@43.1.1

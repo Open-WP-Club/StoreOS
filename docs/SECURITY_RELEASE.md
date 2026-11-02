@@ -15,3 +15,8 @@ Not enabled: `EmbeddedAsarIntegrityValidation` (verify with electron-updater + s
 ## Verify manually
 - `npx @electron/fuses read --app <packaged app>` shows the expected fuse states.
 - Packaged app starts with the production CSP (DevTools console shows no CSP violations).
+
+## Ad-hoc re-signing (macOS, unsigned builds)
+`scripts/adhocSign.cjs` (`build.afterSign`) runs `codesign --verify` after the fuse flip and ad-hoc re-signs
+(`codesign --force --deep -s -`) only if verification fails; without it unsigned arm64 builds are SIGKILLed on launch.
+A properly signed (real identity) bundle verifies and is left untouched.
