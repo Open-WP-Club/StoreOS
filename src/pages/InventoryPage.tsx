@@ -9,13 +9,14 @@ import { useVirtualRows } from '../hooks/useVirtualRows';
 import ExportMenu from '../components/ExportMenu';
 import Pagination from '../components/Pagination';
 import BulkEditModal from '../components/BulkEditModal';
+import ReorderReportModal from '../components/ReorderReportModal';
 import ToastContainer from '../components/ToastContainer';
 import LoadingIndicator from '../components/LoadingIndicator';
 import { useToast } from '../hooks/useToast';
 import { useOfflineMutation } from '../hooks/useOfflineMutation';
 import { useProgressiveLoading } from '../hooks/useProgressiveLoading';
-import { Trash2, Edit, RefreshCw, ImageOff } from 'lucide-react';
-import type { Product, StockStatus } from '../types';
+import { Trash2, Edit, RefreshCw, ImageOff, ClipboardList } from 'lucide-react';
+import type { Order, Product, StockStatus } from '../types';
 import { EMPTY_PRODUCTS } from '../constants';
 import StatCard from '../components/StatCard';
 import PageHeader from '../components/PageHeader';
@@ -29,12 +30,14 @@ interface InventoryStats {
 }
 
 const NOT_SYNCED = Symbol('not-synced');
+const NO_ORDERS: Order[] = [];
 
 const InventoryPage: React.FC = (): React.ReactElement => {
   const getCurrentStore = useStoreConfig((state) => state.getCurrentStore);
   const clearCacheForType = useCache((state) => state.clearCacheForType);
   const setCachedData = useCache((state) => state.setCachedData);
   const productsFromCache = useCache((state) => state.cache.products?.data || EMPTY_PRODUCTS);
+  const ordersFromCache = useCache((state) => state.cache.orders?.data || NO_ORDERS);
   const logActivity = useActivityLog((state) => state.logActivity);
   const lowStockThreshold = useSettings((state) => state.lowStockThreshold);
   const currentStore = getCurrentStore();
@@ -52,6 +55,7 @@ const InventoryPage: React.FC = (): React.ReactElement => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(25);
   const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
+  const [reorderOpen, setReorderOpen] = useState<boolean>(false);
   const [bulkEditModalOpen, setBulkEditModalOpen] = useState<boolean>(false);
 
   // Sync products state with cache
@@ -452,6 +456,13 @@ const InventoryPage: React.FC = (): React.ReactElement => {
           </div>
           <ExportMenu onExportCSV={handleExportCSV} onExportPDF={handleExportPDF} />
           <button
+            onClick={() => setReorderOpen(true)}
+            className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+          >
+            <ClipboardList className="w-4 h-4" />
+            Reorder report
+          </button>
+          <button
             onClick={() => clearCacheForType('products')}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             title="Refresh inventory"
@@ -704,6 +715,15 @@ const InventoryPage: React.FC = (): React.ReactElement => {
           )}
         </div>
       )}
+
+      <ReorderReportModal
+        isOpen={reorderOpen}
+        onClose={() => setReorderOpen(false)}
+        products={products}
+        orders={ordersFromCache}
+        lowStockThreshold={lowStockThreshold}
+        storeName={currentStore.name}
+      />
 
       {/* Bulk Edit Modal */}
       <BulkEditModal
