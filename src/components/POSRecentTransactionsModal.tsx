@@ -7,6 +7,7 @@ import { useToast } from '../contexts/ToastContext';
 import { formatPrice, storeCurrencySymbol } from '../utils/currency';
 import type { RecentTransaction } from '../hooks/usePOSDailyReport';
 import Modal from './Modal';
+import { getAppLocale } from '../utils/dateTime';
 
 interface POSRecentTransactionsModalProps {
   recentTransactions: RecentTransaction[];
@@ -73,13 +74,13 @@ export function POSRecentTransactionsModal({
           recentTransactions.map((tx) => {
             const date = new Date(tx.timestamp);
             const isToday = new Date().toDateString() === date.toDateString();
-            const timeStr = date.toLocaleTimeString('bg-BG', {
+            const timeStr = date.toLocaleTimeString(getAppLocale(), {
               hour: '2-digit',
               minute: '2-digit',
             });
             const dateStr = isToday
               ? 'Днес'
-              : date.toLocaleDateString('bg-BG', { day: 'numeric', month: 'short' });
+              : date.toLocaleDateString(getAppLocale(), { day: 'numeric', month: 'short' });
 
             return (
               <div

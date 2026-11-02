@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Pencil, Save, Star, Trash2, X } from 'lucide-react';
 import { useStoreConfig, useSearch } from '../stores';
+import Modal from './Modal';
 import type { FilterPreset } from '../types';
 
 type FilterType = 'products' | 'orders' | 'customers';
@@ -28,6 +29,7 @@ function FilterPresetManager({
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [showSaveModal, setShowSaveModal] = useState<boolean>(false);
   const [presetName, setPresetName] = useState<string>('');
+  const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
   const [saveAsGlobal, setSaveAsGlobal] = useState<boolean>(false);
 
   const getCurrentStore = useStoreConfig((state) => state.getCurrentStore);
@@ -75,8 +77,13 @@ function FilterPresetManager({
   };
 
   const handleRenamePreset = (preset: FilterPreset): void => {
-    const name = window.prompt('Rename view', preset.name);
-    if (name) renameFilterPreset(preset.id, name);
+    setRenaming({ id: preset.id, name: preset.name });
+    setIsOpen(false);
+  };
+
+  const submitRename = (): void => {
+    if (renaming?.name.trim()) renameFilterPreset(renaming.id, renaming.name.trim());
+    setRenaming(null);
   };
 
   // Check if there are any active filters (a search term counts)
@@ -201,6 +208,41 @@ function FilterPresetManager({
             </div>
           </div>
         </>
+      )}
+
+      {renaming && (
+        <Modal title="Rename view" onClose={() => setRenaming(null)}>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              submitRename();
+            }}
+          >
+            <input
+              // eslint-disable-next-line jsx-a11y/no-autofocus -- dialog's only field
+              autoFocus
+              aria-label="View name"
+              value={renaming.name}
+              onChange={(e) => setRenaming({ ...renaming, name: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md"
+            />
+            <div className="flex gap-3 mt-4">
+              <button
+                type="submit"
+                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+              >
+                Rename
+              </button>
+              <button
+                type="button"
+                onClick={() => setRenaming(null)}
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </Modal>
       )}
 
       {/* Save Modal */}

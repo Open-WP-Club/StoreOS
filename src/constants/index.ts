@@ -44,20 +44,3 @@ export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
  */
 export const getOrderStatusColor = (status: OrderStatus): string =>
   ORDER_STATUS_COLORS[status] || 'bg-gray-100 text-gray-800';
-
-/**
- * Product stock status to Tailwind CSS color class mapping
- */
-export const STOCK_STATUS_COLORS: Record<string, string> = {
-  instock: 'bg-green-100 text-green-800',
-  outofstock: 'bg-red-100 text-red-800',
-  onbackorder: 'bg-yellow-100 text-yellow-800',
-};
-
-/**
- * Get the color class for a stock status
- * @param status - The stock status
- * @returns Tailwind CSS classes for the status badge
- */
-export const getStockStatusColor = (status: string): string =>
-  STOCK_STATUS_COLORS[status] || 'bg-gray-100 text-gray-800';

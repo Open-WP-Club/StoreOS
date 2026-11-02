@@ -4,6 +4,8 @@ import { useToast } from '../contexts/ToastContext';
 import { usePOSStore } from '../stores/posStore';
 import WooCommerceService from '../services/woocommerce';
 import { downloadCSV } from '../utils/csvExport';
+import { posTransactionsInRange } from '../utils/reportRows';
+import { getAppLocale } from '../utils/dateTime';
 import { storeCurrencySymbol } from '../utils/currency';
 import { RECENT_TRANSACTIONS_KEY, POS_TX_EVENT } from '../utils/posOfflineSale';
 
@@ -137,11 +139,9 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
   );
 
   const getTodayTransactions = useCallback((): RecentTransaction[] => {
-    const today = new Date().toDateString();
-    return recentTransactions.filter((tx) => {
-      const txDate = new Date(tx.timestamp).toDateString();
-      return txDate === today && !tx.refunded;
-    });
+    const start = new Date().setHours(0, 0, 0, 0);
+    const end = new Date(start).setDate(new Date(start).getDate() + 1);
+    return posTransactionsInRange(recentTransactions, start, end);
   }, [recentTransactions]);
 
   const getDailyReportStats = useCallback((): DailyReportStats => {
@@ -186,7 +186,7 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
   const exportDailyReportCSV = useCallback(() => {
     const stats = getDailyReportStats();
     const todayTx = getTodayTransactions();
-    const today = new Date().toLocaleDateString('bg-BG');
+    const today = new Date().toLocaleDateString(getAppLocale());
 
     let csv = `Дневен отчет - ${today}\n\n`;
     csv += `Общо продажби,${stats.totalSales.toFixed(2)} ${currencySymbol}\n`;
@@ -208,7 +208,7 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
     csv += `\nДетайли на транзакциите\n`;
     csv += `Поръчка #,Час,Артикули,Метод,Сума\n`;
     todayTx.forEach((tx) => {
-      const time = new Date(tx.timestamp).toLocaleTimeString('bg-BG', {
+      const time = new Date(tx.timestamp).toLocaleTimeString(getAppLocale(), {
         hour: '2-digit',
         minute: '2-digit',
       });

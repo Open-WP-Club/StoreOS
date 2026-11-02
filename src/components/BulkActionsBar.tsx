@@ -11,7 +11,7 @@ import {
   AlertTriangle,
   Truck,
 } from 'lucide-react';
-import Modal from './TitledModal';
+import Modal from './Modal';
 import useAppSettings from '../stores/appSettingsStore';
 import type { Order, OrderStatus } from '../types';
 

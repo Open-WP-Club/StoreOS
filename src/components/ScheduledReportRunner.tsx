@@ -4,24 +4,12 @@ import useScheduledReports from '../stores/scheduledReportsStore';
 import { convertToCSV, type CSVColumn } from '../utils/csvExport';
 import { exportReportToPDF, type PDFColumn } from '../utils/pdfExport';
 import { isDue, lastSlot, reportPeriod } from '../utils/reportSchedule';
+import { orderReportRows, posReportRows, type ReportRow } from '../utils/reportRows';
 import type { RecentTransaction } from '../hooks/usePOSDailyReport';
-
-interface Row extends Record<string, unknown> {
-  ref: string;
-  time: string;
-  detail: string;
-  total: number;
-}
 
 const CHECK_MS = 60_000;
 const POS_KEY = 'pos_recent_transactions'; // same storage usePOSDailyReport reads
-const EXCLUDED = new Set(['cancelled', 'failed', 'refunded', 'trash']);
-
-function collectRows(type: string, start: number, end: number): Row[] {
-  const inRange = (iso: string): boolean => {
-    const t = new Date(iso).getTime();
-    return t >= start && t < end;
-  };
+function collectRows(type: string, start: number, end: number): ReportRow[] {
   if (type === 'pos-daily') {
     let txs: RecentTransaction[] = [];
     try {
@@ -29,27 +17,12 @@ function collectRows(type: string, start: number, end: number): Row[] {
     } catch {
       // corrupt history: report is simply empty
     }
-    return txs
-      .filter((tx) => !tx.refunded && inRange(tx.timestamp))
-      .map((tx) => ({
-        ref: `#${tx.id}`,
-        time: tx.timestamp,
-        detail: tx.paymentMethod,
-        total: tx.total,
-      }));
+    return posReportRows(txs, start, end);
   }
-  const orders = useCache.getState().cache.orders?.data ?? [];
-  return orders
-    .filter((o) => !EXCLUDED.has(o.status) && inRange(o.date_created_gmt || o.date_created))
-    .map((o) => ({
-      ref: `#${o.id}`,
-      time: o.date_created,
-      detail: o.status,
-      total: parseFloat(o.total) || 0,
-    }));
+  return orderReportRows(useCache.getState().cache.orders?.data ?? [], start, end);
 }
 
-const COLUMNS: PDFColumn<Row>[] = [
+const COLUMNS: PDFColumn<ReportRow>[] = [
   { key: 'ref', label: 'Order' },
   { key: 'time', label: 'Time' },
   { key: 'detail', label: 'Status / Payment' },
@@ -75,7 +48,9 @@ async function runOnce(now: Date): Promise<void> {
 
   let data: string | Uint8Array;
   if (cfg.format === 'csv') {
-    data = convertToCSV(rows, COLUMNS as CSVColumn<Row>[]) || COLUMNS.map((c) => c.label).join(',');
+    data =
+      convertToCSV(rows, COLUMNS as CSVColumn<ReportRow>[]) ||
+      COLUMNS.map((c) => c.label).join(',');
   } else {
     const revenue = rows.reduce((s, r) => s + r.total, 0);
     const bytes = await exportReportToPDF(

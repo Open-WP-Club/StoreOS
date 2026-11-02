@@ -32,6 +32,7 @@ export function RefundModal({
   );
   const [selections, setSelections] = useState<Record<number, RefundSelection>>({});
   const [restock, setRestock] = useState(true);
+  const [apiRefund, setApiRefund] = useState(true);
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -43,7 +44,7 @@ export function RefundModal({
     return () => document.removeEventListener('keydown', onKey);
   }, [submitting, onCancel]);
 
-  const result = buildRefundRequest(rows, selections, { restock, reason });
+  const result = buildRefundRequest(rows, selections, { restock, reason, apiRefund });
   const symbol = order.currency_symbol;
 
   const setQty = (id: number, raw: string): void => {
@@ -147,6 +148,14 @@ export function RefundModal({
         <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 mb-3">
           <input type="checkbox" checked={restock} onChange={(e) => setRestock(e.target.checked)} />
           Restock refunded items
+        </label>
+        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 mb-3">
+          <input
+            type="checkbox"
+            checked={apiRefund}
+            onChange={(e) => setApiRefund(e.target.checked)}
+          />
+          Refund via payment gateway
         </label>
         <input
           type="text"

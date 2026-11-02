@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import Modal from '../components/Modal';
 import {
   Clock,
   Filter,
@@ -320,31 +321,32 @@ function ActivityLogPage(): React.ReactElement {
 
       {/* Clear Confirm Modal */}
       {showClearConfirm && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-sm w-full">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              Clear Activity Log?
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              This will permanently delete all {entries.length} activity entries. This action cannot
-              be undone.
-            </p>
-            <div className="flex items-center gap-3 justify-end">
-              <button
-                onClick={() => setShowClearConfirm(false)}
-                className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleClearLog}
-                className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-              >
-                Clear All
-              </button>
-            </div>
+        <Modal
+          onClose={() => setShowClearConfirm(false)}
+          className="mx-4 bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-sm w-full"
+        >
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            Clear Activity Log?
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            This will permanently delete all {entries.length} activity entries. This action cannot
+            be undone.
+          </p>
+          <div className="flex items-center gap-3 justify-end">
+            <button
+              onClick={() => setShowClearConfirm(false)}
+              className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleClearLog}
+              className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Clear All
+            </button>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

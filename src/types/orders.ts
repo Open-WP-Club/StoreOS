@@ -140,6 +140,8 @@ export interface CreateRefundRequest {
   line_items: RefundLineItemInput[];
   /** WooCommerce: put refunded quantities back into stock. */
   api_restock: boolean;
+  /** WooCommerce: refund the money via the payment gateway (default true server-side). */
+  api_refund?: boolean;
 }
 
 export interface OrderNote {

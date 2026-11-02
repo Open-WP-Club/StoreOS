@@ -7,12 +7,7 @@
 // Re-export useShallow from zustand for convenience
 export { useShallow } from 'zustand/shallow';
 
-import type {
-  WooCommerceStore,
-  WooCommerceProduct,
-  WooCommerceOrder,
-  WooCommerceCustomer,
-} from '../types';
+import type { WooCommerceProduct, WooCommerceOrder } from '../types';
 
 // Individual stores
 import useStoreConfig from './storeConfigStore';
@@ -43,22 +38,6 @@ export type { ActivityLogStore } from './activityLogStore';
 // ============================================
 
 /**
- * Hook to get the current store configuration
- * @returns Current store or undefined
- */
-export const useCurrentStore = (): WooCommerceStore | undefined => {
-  return useStoreConfig((state) => state.getCurrentStore());
-};
-
-/**
- * Hook to check if dark mode is active
- * @returns boolean
- */
-export const useIsDarkMode = (): boolean => {
-  return useTheme((state) => state.theme === 'dark');
-};
-
-/**
  * Hook to get cached products
  * @returns Products from cache
  */
@@ -72,12 +51,4 @@ export const useCachedProducts = (): WooCommerceProduct[] => {
  */
 export const useCachedOrders = (): WooCommerceOrder[] => {
   return useCache((state) => state.cache.orders.data || []);
-};
-
-/**
- * Hook to get cached customers
- * @returns Customers from cache
- */
-export const useCachedCustomers = (): WooCommerceCustomer[] => {
-  return useCache((state) => state.cache.customers.data || []);
 };

@@ -13,6 +13,7 @@ import {
 import { formatPrice } from '../utils/currency';
 import type { DailyReportStats } from '../hooks/usePOSDailyReport';
 import Modal from './Modal';
+import { getAppLocale } from '../utils/dateTime';
 
 interface POSDailyReportModalProps {
   stats: DailyReportStats;
@@ -48,7 +49,7 @@ export function POSDailyReportModal({
       <div className="max-h-[60vh] overflow-y-auto p-4 space-y-4">
         {/* Date */}
         <div className="text-center text-sm text-gray-500 dark:text-gray-400">
-          {new Date().toLocaleDateString('bg-BG', {
+          {new Date().toLocaleDateString(getAppLocale(), {
             weekday: 'long',
             year: 'numeric',
             month: 'long',

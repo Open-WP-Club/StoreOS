@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import Modal from './Modal';
 import { X, Zap } from 'lucide-react';
 import type { CouponDiscountType, CouponUpdateData, Coupon } from '../types';
 import WooCommerceService from '../services/woocommerce';
@@ -285,365 +286,360 @@ function BulkGenerateCouponsModal({
   }, [formData, service, onGenerated]);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex justify-between items-start mb-6">
-            <div className="flex items-center gap-2">
-              <Zap className="w-5 h-5 text-yellow-500" />
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                Bulk Generate Coupons
-              </h3>
+    <Modal
+      onClose={onClose}
+      className="mx-4 bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+    >
+      <div className="p-6">
+        <div className="flex justify-between items-start mb-6">
+          <div className="flex items-center gap-2">
+            <Zap className="w-5 h-5 text-yellow-500" />
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+              Bulk Generate Coupons
+            </h3>
+          </div>
+          <button
+            onClick={onClose}
+            disabled={generating}
+            aria-label="Close"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        {result ? (
+          <div className="space-y-4">
+            <div className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+              <p className="text-lg font-semibold text-green-800 dark:text-green-300">
+                Generation Complete
+              </p>
+              <p className="text-sm text-green-700 dark:text-green-400 mt-1">
+                Successfully created: <strong>{result.success}</strong> coupons
+              </p>
+              {result.failed > 0 && (
+                <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                  Failed: <strong>{result.failed}</strong> coupons
+                </p>
+              )}
             </div>
             <button
               onClick={onClose}
-              disabled={generating}
-              aria-label="Close"
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50"
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             >
-              <X className="w-6 h-6" />
+              Close
             </button>
           </div>
-
-          {result ? (
-            <div className="space-y-4">
-              <div className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-                <p className="text-lg font-semibold text-green-800 dark:text-green-300">
-                  Generation Complete
-                </p>
-                <p className="text-sm text-green-700 dark:text-green-400 mt-1">
-                  Successfully created: <strong>{result.success}</strong> coupons
-                </p>
-                {result.failed > 0 && (
-                  <p className="text-sm text-red-600 dark:text-red-400 mt-1">
-                    Failed: <strong>{result.failed}</strong> coupons
-                  </p>
-                )}
-              </div>
-              <button
-                onClick={onClose}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {/* Count and Prefix */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="bulk-count"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                  >
-                    Number of Coupons *
-                  </label>
-                  <input
-                    id="bulk-count"
-                    type="number"
-                    min={1}
-                    max={100}
-                    value={formData.count}
-                    onChange={(e) =>
-                      updateFormData({
-                        count: Math.min(100, Math.max(1, parseInt(e.target.value) || 1)),
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="bulk-prefix"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                  >
-                    Code Prefix
-                  </label>
-                  <input
-                    id="bulk-prefix"
-                    type="text"
-                    value={formData.prefix}
-                    onChange={(e) => updateFormData({ prefix: e.target.value.toUpperCase() })}
-                    onBlur={() => handleFieldBlur('prefix')}
-                    placeholder="e.g., SUMMER"
-                    className={`w-full px-3 py-2 border ${formErrors.prefix ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500 font-mono uppercase`}
-                  />
-                  {formErrors.prefix ? (
-                    <p className="text-red-500 dark:text-red-400 text-sm mt-1">
-                      {formErrors.prefix}
-                    </p>
-                  ) : (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Codes will be: {formData.prefix ? `${formData.prefix}-` : ''}XXXXXX
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Type and Amount */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="bulk-discount-type"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                  >
-                    Discount Type
-                  </label>
-                  <select
-                    id="bulk-discount-type"
-                    value={formData.discount_type}
-                    onChange={(e) =>
-                      updateFormData({
-                        discount_type: e.target.value as CouponDiscountType,
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="percent">Percentage discount</option>
-                    <option value="fixed_cart">Fixed cart discount</option>
-                    <option value="fixed_product">Fixed product discount</option>
-                  </select>
-                </div>
-                <div>
-                  <label
-                    htmlFor="bulk-amount"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                  >
-                    Amount *
-                  </label>
-                  <input
-                    id="bulk-amount"
-                    type="number"
-                    step="0.01"
-                    value={formData.amount}
-                    onChange={(e) => updateFormData({ amount: e.target.value })}
-                    onBlur={() => handleFieldBlur('amount')}
-                    placeholder={formData.discount_type === 'percent' ? 'e.g., 20' : 'e.g., 10.00'}
-                    className={`w-full px-3 py-2 border ${formErrors.amount ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500`}
-                  />
-                  {formErrors.amount && (
-                    <p className="text-red-500 dark:text-red-400 text-sm mt-1">
-                      {formErrors.amount}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Description */}
+        ) : (
+          <div className="space-y-4">
+            {/* Count and Prefix */}
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <label
-                  htmlFor="bulk-description"
+                  htmlFor="bulk-count"
                   className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
-                  Description
+                  Number of Coupons *
                 </label>
                 <input
-                  id="bulk-description"
-                  type="text"
-                  value={formData.description}
-                  onChange={(e) => updateFormData({ description: e.target.value })}
-                  placeholder="Internal description for these coupons"
+                  id="bulk-count"
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={formData.count}
+                  onChange={(e) =>
+                    updateFormData({
+                      count: Math.min(100, Math.max(1, parseInt(e.target.value) || 1)),
+                    })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
-
-              {/* Expiry Date */}
               <div>
                 <label
-                  htmlFor="bulk-date-expires"
+                  htmlFor="bulk-prefix"
                   className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
-                  Expiry Date
+                  Code Prefix
                 </label>
                 <input
-                  id="bulk-date-expires"
-                  type="date"
-                  value={formData.date_expires}
-                  onChange={(e) => updateFormData({ date_expires: e.target.value })}
-                  onBlur={() => handleFieldBlur('date_expires')}
-                  className={`w-full px-3 py-2 border ${formErrors.date_expires ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                  id="bulk-prefix"
+                  type="text"
+                  value={formData.prefix}
+                  onChange={(e) => updateFormData({ prefix: e.target.value.toUpperCase() })}
+                  onBlur={() => handleFieldBlur('prefix')}
+                  placeholder="e.g., SUMMER"
+                  className={`w-full px-3 py-2 border ${formErrors.prefix ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500 font-mono uppercase`}
                 />
-                {formErrors.date_expires && (
-                  <p className="text-red-500 dark:text-red-400 text-sm mt-1">
-                    {formErrors.date_expires}
+                {formErrors.prefix ? (
+                  <p className="text-red-500 dark:text-red-400 text-sm mt-1">{formErrors.prefix}</p>
+                ) : (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Codes will be: {formData.prefix ? `${formData.prefix}-` : ''}XXXXXX
                   </p>
                 )}
               </div>
+            </div>
 
-              {/* Usage Limits */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="bulk-usage-limit"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                  >
-                    Usage Limit (Total)
-                  </label>
-                  <input
-                    id="bulk-usage-limit"
-                    type="number"
-                    value={formData.usage_limit}
-                    onChange={(e) => updateFormData({ usage_limit: e.target.value })}
-                    onBlur={() => handleFieldBlur('usage_limit')}
-                    placeholder="Unlimited"
-                    className={`w-full px-3 py-2 border ${formErrors.usage_limit ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500`}
-                  />
-                  {formErrors.usage_limit && (
-                    <p className="text-red-500 dark:text-red-400 text-sm mt-1">
-                      {formErrors.usage_limit}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label
-                    htmlFor="bulk-usage-limit-per-user"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                  >
-                    Usage Limit (Per User)
-                  </label>
-                  <input
-                    id="bulk-usage-limit-per-user"
-                    type="number"
-                    value={formData.usage_limit_per_user}
-                    onChange={(e) => updateFormData({ usage_limit_per_user: e.target.value })}
-                    onBlur={() => handleFieldBlur('usage_limit_per_user')}
-                    placeholder="Unlimited"
-                    className={`w-full px-3 py-2 border ${formErrors.usage_limit_per_user ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500`}
-                  />
-                  {formErrors.usage_limit_per_user && (
-                    <p className="text-red-500 dark:text-red-400 text-sm mt-1">
-                      {formErrors.usage_limit_per_user}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Min/Max Amount */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="bulk-minimum-amount"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                  >
-                    Minimum Spend
-                  </label>
-                  <input
-                    id="bulk-minimum-amount"
-                    type="number"
-                    step="0.01"
-                    value={formData.minimum_amount}
-                    onChange={(e) => updateFormData({ minimum_amount: e.target.value })}
-                    onBlur={() => handleFieldBlur('minimum_amount')}
-                    placeholder="No minimum"
-                    className={`w-full px-3 py-2 border ${formErrors.minimum_amount ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500`}
-                  />
-                  {formErrors.minimum_amount && (
-                    <p className="text-red-500 dark:text-red-400 text-sm mt-1">
-                      {formErrors.minimum_amount}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label
-                    htmlFor="bulk-maximum-amount"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                  >
-                    Maximum Spend
-                  </label>
-                  <input
-                    id="bulk-maximum-amount"
-                    type="number"
-                    step="0.01"
-                    value={formData.maximum_amount}
-                    onChange={(e) => updateFormData({ maximum_amount: e.target.value })}
-                    onBlur={() => handleFieldBlur('maximum_amount')}
-                    placeholder="No maximum"
-                    className={`w-full px-3 py-2 border ${formErrors.maximum_amount ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500`}
-                  />
-                  {formErrors.maximum_amount && (
-                    <p className="text-red-500 dark:text-red-400 text-sm mt-1">
-                      {formErrors.maximum_amount}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Checkboxes */}
-              <div className="space-y-3">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.individual_use}
-                    onChange={(e) => updateFormData({ individual_use: e.target.checked })}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
-                    Individual use only
-                  </span>
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.free_shipping}
-                    onChange={(e) => updateFormData({ free_shipping: e.target.checked })}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
-                    Allow free shipping
-                  </span>
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.exclude_sale_items}
-                    onChange={(e) => updateFormData({ exclude_sale_items: e.target.checked })}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
-                    Exclude sale items
-                  </span>
-                </label>
-              </div>
-
-              {/* Progress Bar */}
-              {generating && (
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-                    <span>Generating coupons...</span>
-                    <span>{progress}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-                    <div
-                      className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Actions */}
-              <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <button
-                  onClick={handleGenerate}
-                  disabled={generating || formData.count < 1 || Object.keys(formErrors).length > 0}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors disabled:opacity-50"
+            {/* Type and Amount */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="bulk-discount-type"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
-                  <Zap className="w-4 h-4" />
-                  {generating ? 'Generating...' : `Generate ${formData.count} Coupons`}
-                </button>
-                <button
-                  onClick={onClose}
-                  disabled={generating}
-                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+                  Discount Type
+                </label>
+                <select
+                  id="bulk-discount-type"
+                  value={formData.discount_type}
+                  onChange={(e) =>
+                    updateFormData({
+                      discount_type: e.target.value as CouponDiscountType,
+                    })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500"
                 >
-                  Cancel
-                </button>
+                  <option value="percent">Percentage discount</option>
+                  <option value="fixed_cart">Fixed cart discount</option>
+                  <option value="fixed_product">Fixed product discount</option>
+                </select>
+              </div>
+              <div>
+                <label
+                  htmlFor="bulk-amount"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                  Amount *
+                </label>
+                <input
+                  id="bulk-amount"
+                  type="number"
+                  step="0.01"
+                  value={formData.amount}
+                  onChange={(e) => updateFormData({ amount: e.target.value })}
+                  onBlur={() => handleFieldBlur('amount')}
+                  placeholder={formData.discount_type === 'percent' ? 'e.g., 20' : 'e.g., 10.00'}
+                  className={`w-full px-3 py-2 border ${formErrors.amount ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                />
+                {formErrors.amount && (
+                  <p className="text-red-500 dark:text-red-400 text-sm mt-1">{formErrors.amount}</p>
+                )}
               </div>
             </div>
-          )}
-        </div>
+
+            {/* Description */}
+            <div>
+              <label
+                htmlFor="bulk-description"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
+                Description
+              </label>
+              <input
+                id="bulk-description"
+                type="text"
+                value={formData.description}
+                onChange={(e) => updateFormData({ description: e.target.value })}
+                placeholder="Internal description for these coupons"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            {/* Expiry Date */}
+            <div>
+              <label
+                htmlFor="bulk-date-expires"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
+                Expiry Date
+              </label>
+              <input
+                id="bulk-date-expires"
+                type="date"
+                value={formData.date_expires}
+                onChange={(e) => updateFormData({ date_expires: e.target.value })}
+                onBlur={() => handleFieldBlur('date_expires')}
+                className={`w-full px-3 py-2 border ${formErrors.date_expires ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500`}
+              />
+              {formErrors.date_expires && (
+                <p className="text-red-500 dark:text-red-400 text-sm mt-1">
+                  {formErrors.date_expires}
+                </p>
+              )}
+            </div>
+
+            {/* Usage Limits */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="bulk-usage-limit"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                  Usage Limit (Total)
+                </label>
+                <input
+                  id="bulk-usage-limit"
+                  type="number"
+                  value={formData.usage_limit}
+                  onChange={(e) => updateFormData({ usage_limit: e.target.value })}
+                  onBlur={() => handleFieldBlur('usage_limit')}
+                  placeholder="Unlimited"
+                  className={`w-full px-3 py-2 border ${formErrors.usage_limit ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                />
+                {formErrors.usage_limit && (
+                  <p className="text-red-500 dark:text-red-400 text-sm mt-1">
+                    {formErrors.usage_limit}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label
+                  htmlFor="bulk-usage-limit-per-user"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                  Usage Limit (Per User)
+                </label>
+                <input
+                  id="bulk-usage-limit-per-user"
+                  type="number"
+                  value={formData.usage_limit_per_user}
+                  onChange={(e) => updateFormData({ usage_limit_per_user: e.target.value })}
+                  onBlur={() => handleFieldBlur('usage_limit_per_user')}
+                  placeholder="Unlimited"
+                  className={`w-full px-3 py-2 border ${formErrors.usage_limit_per_user ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                />
+                {formErrors.usage_limit_per_user && (
+                  <p className="text-red-500 dark:text-red-400 text-sm mt-1">
+                    {formErrors.usage_limit_per_user}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Min/Max Amount */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="bulk-minimum-amount"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                  Minimum Spend
+                </label>
+                <input
+                  id="bulk-minimum-amount"
+                  type="number"
+                  step="0.01"
+                  value={formData.minimum_amount}
+                  onChange={(e) => updateFormData({ minimum_amount: e.target.value })}
+                  onBlur={() => handleFieldBlur('minimum_amount')}
+                  placeholder="No minimum"
+                  className={`w-full px-3 py-2 border ${formErrors.minimum_amount ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                />
+                {formErrors.minimum_amount && (
+                  <p className="text-red-500 dark:text-red-400 text-sm mt-1">
+                    {formErrors.minimum_amount}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label
+                  htmlFor="bulk-maximum-amount"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                  Maximum Spend
+                </label>
+                <input
+                  id="bulk-maximum-amount"
+                  type="number"
+                  step="0.01"
+                  value={formData.maximum_amount}
+                  onChange={(e) => updateFormData({ maximum_amount: e.target.value })}
+                  onBlur={() => handleFieldBlur('maximum_amount')}
+                  placeholder="No maximum"
+                  className={`w-full px-3 py-2 border ${formErrors.maximum_amount ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500`}
+                />
+                {formErrors.maximum_amount && (
+                  <p className="text-red-500 dark:text-red-400 text-sm mt-1">
+                    {formErrors.maximum_amount}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Checkboxes */}
+            <div className="space-y-3">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={formData.individual_use}
+                  onChange={(e) => updateFormData({ individual_use: e.target.checked })}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  Individual use only
+                </span>
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={formData.free_shipping}
+                  onChange={(e) => updateFormData({ free_shipping: e.target.checked })}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  Allow free shipping
+                </span>
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={formData.exclude_sale_items}
+                  onChange={(e) => updateFormData({ exclude_sale_items: e.target.checked })}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Exclude sale items</span>
+              </label>
+            </div>
+
+            {/* Progress Bar */}
+            {generating && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                  <span>Generating coupons...</span>
+                  <span>{progress}%</span>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                  <div
+                    className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={handleGenerate}
+                disabled={generating || formData.count < 1 || Object.keys(formErrors).length > 0}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors disabled:opacity-50"
+              >
+                <Zap className="w-4 h-4" />
+                {generating ? 'Generating...' : `Generate ${formData.count} Coupons`}
+              </button>
+              <button
+                onClick={onClose}
+                disabled={generating}
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
-    </div>
+    </Modal>
   );
 }
 
