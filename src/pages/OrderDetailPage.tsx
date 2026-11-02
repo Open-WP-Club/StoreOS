@@ -1,7 +1,10 @@
 import { useState, useCallback, ReactElement } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FileText, ClipboardList } from 'lucide-react';
-import { useStoreConfig } from '../stores';
+import { useStoreConfig, useActivityLog } from '../stores';
+import WooCommerceService from '../services/woocommerce';
+import RefundModal from '../components/RefundModal';
+import type { CreateRefundRequest, OrderRefundDetail } from '../types';
 import { getOrderStatusColor } from '../constants';
 import { exportOrderInvoice, exportPackingSlip } from '../utils/pdfExport';
 import { useOrderDetail } from '../hooks/useOrderDetail';
@@ -36,7 +39,11 @@ function OrderDetailPage(): ReactElement {
 
   const notesHook = useOrderNotes(order, showToast);
 
-  const [wpAdminUrl, setWpAdminUrl] = useState<string | null>(null);
+  const logActivity = useActivityLog((state) => state.logActivity);
+  const [refundOpen, setRefundOpen] = useState<boolean>(false);
+  const [refunding, setRefunding] = useState<boolean>(false);
+  const [priorRefunds, setPriorRefunds] = useState<OrderRefundDetail[] | null>(null);
+  const [wpAdminUrl,setWpAdminUrl] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState<boolean>(false);
   const [lightboxIndex, setLightboxIndex] = useState<number>(0);
 
@@ -66,6 +73,51 @@ function OrderDetailPage(): ReactElement {
     setWpAdminUrl(null);
     fetchOrderFromApi(false);
   }, [fetchOrderFromApi]);
+
+  // Refunds bypass useOfflineMutation: it has no refund operation type and a replayed
+  // refund could double-refund, so we call the service directly and require connectivity.
+  const openRefund = (): void => {
+    if (!activeStore || !order) return;
+    setPriorRefunds(null);
+    setRefundOpen(true);
+    void new WooCommerceService(activeStore).getOrderRefunds(order.id).then((res) => {
+      if (res.success) setPriorRefunds(res.data);
+      else {
+        showToast('Failed to load refunds: ' + res.error, 'error');
+        setRefundOpen(false);
+      }
+    });
+  };
+
+  const handleRefund = async (request: CreateRefundRequest): Promise<void> => {
+    if (!activeStore || !order || refunding) return;
+    setRefunding(true);
+    try {
+      const res = await new WooCommerceService(activeStore).createRefund(order.id, request);
+      if (res.success) {
+        logActivity({
+          action: 'order_refunded',
+          entityType: 'order',
+          entityId: order.id,
+          entityName: `Order #${order.number}`,
+          storeId: activeStore.id ?? null,
+          storeName: activeStore.name,
+          details: `Refunded ${request.amount}${request.api_restock ? ' (restocked)' : ''}${
+            request.reason ? ` - ${request.reason}` : ''
+          }`,
+        });
+        showToast('Refund created', 'success');
+        setRefundOpen(false);
+        await fetchOrderFromApi(false);
+      } else {
+        showToast('Refund failed: ' + res.error, 'error');
+      }
+    } catch (err) {
+      showToast('Refund failed: ' + (err as Error).message, 'error');
+    } finally {
+      setRefunding(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -173,7 +225,11 @@ function OrderDetailPage(): ReactElement {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          <OrderItemsTable order={order} onOpenLightbox={openLightbox} />
+          <OrderItemsTable
+            order={order}
+            onOpenLightbox={openLightbox}
+            onRefund={openRefund}
+          />
 
           {/* Customer Note (from checkout) */}
           {order.customer_note && (
@@ -227,6 +283,16 @@ function OrderDetailPage(): ReactElement {
         title={`Поръчка #${order.id} - WP Admin`}
         onClose={handleCloseWpAdmin}
       />
+
+      {refundOpen && (
+        <RefundModal
+          order={order}
+          refunds={priorRefunds}
+          submitting={refunding}
+          onCancel={() => setRefundOpen(false)}
+          onSubmit={handleRefund}
+        />
+      )}
 
       {lightboxOpen && itemImages.length > 0 && (
         <ImageLightbox

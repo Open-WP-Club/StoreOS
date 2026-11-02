@@ -113,6 +113,35 @@ export interface OrderRefund {
   total: string;
 }
 
+/** Full refund record from GET orders/{id}/refunds (amounts are negative for line items). */
+export interface OrderRefundDetail {
+  id: number;
+  reason: string;
+  total: string;
+  line_items: Array<{
+    id: number;
+    quantity: number;
+    total: string;
+    total_tax: string;
+    meta_data: WooCommerceMetaData[];
+  }>;
+}
+
+export interface RefundLineItemInput {
+  id: number;
+  quantity: number;
+  refund_total: string;
+  refund_tax: Array<{ id: number; refund_total: string }>;
+}
+
+export interface CreateRefundRequest {
+  amount: string;
+  reason?: string;
+  line_items: RefundLineItemInput[];
+  /** WooCommerce: put refunded quantities back into stock. */
+  api_restock: boolean;
+}
+
 export interface OrderNote {
   id: number;
   author: string;

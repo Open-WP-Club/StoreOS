@@ -6,16 +6,42 @@ import type { Order, OrderLineItem, OrderCouponLine, OrderRefund, WooCommerceMet
 interface OrderItemsTableProps {
   order: Order;
   onOpenLightbox: (itemIndex: number) => void;
+  /** When provided, shows a "Refund" button in the header. */
+  onRefund?: () => void;
 }
 
 /**
  * Order line items table with product images, meta, and order totals summary.
  */
-export function OrderItemsTable({ order, onOpenLightbox }: OrderItemsTableProps): ReactElement {
+export function OrderItemsTable({
+  order,
+  onOpenLightbox,
+  onRefund,
+}: OrderItemsTableProps): ReactElement {
+  const refunded = (order.refunds || []).reduce(
+    (sum: number, r: OrderRefund) => sum + Math.abs(parseFloat(r.total)),
+    0
+  );
+  const fullyRefunded = refunded > 0 && refunded >= parseFloat(order.total) - 0.005;
   return (
     <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden transition-colors">
-      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Order Items</h2>
+        <div className="flex items-center gap-3">
+          {refunded > 0 && (
+            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
+              {fullyRefunded ? 'Fully refunded' : 'Partially refunded'}
+            </span>
+          )}
+          {onRefund && !fullyRefunded && (
+            <button
+              onClick={onRefund}
+              className="px-3 py-1.5 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-500"
+            >
+              Refund
+            </button>
+          )}
+        </div>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
