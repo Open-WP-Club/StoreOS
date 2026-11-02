@@ -5,6 +5,7 @@ import { useStoreConfig, useCache, useSettings } from '../stores';
 import { formatPrice } from '../utils/currency';
 import Pagination from '../components/Pagination';
 import BulkEditModal from '../components/BulkEditModal';
+import ImportModal from '../components/ImportModal';
 import ToastContainer from '../components/ToastContainer';
 import LoadingIndicator from '../components/LoadingIndicator';
 import ProductsFilterBar from '../components/ProductsFilterBar';
@@ -44,6 +45,7 @@ function ProductsPage(): React.ReactElement {
   const { scrollContainer, enabled: virtualized, rows: visibleRows, padTop, padBottom } = useVirtualRows(filtersHook.paginatedProducts);
   const actions = useProductActions(showToast);
   const exportHook = useProductExport();
+  const [importOpen, setImportOpen] = React.useState(false);
 
   if (!currentStore) {
     return <EmptyState title="No store selected" message="Please select a store to view products" />;
@@ -55,6 +57,14 @@ function ProductsPage(): React.ReactElement {
       <ToastContainer toasts={toasts} removeToast={removeToast} />
 
       <PageHeader title="Products" subtitle="Manage your store products" />
+      {importOpen && (
+        <ImportModal
+          products={products}
+          onClose={() => setImportOpen(false)}
+          onImported={() => refreshProducts?.()}
+          showToast={showToast}
+        />
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -86,6 +96,7 @@ function ProductsPage(): React.ReactElement {
         onApplyPreset={(presetFilters) => filtersHook.handleApplyPreset(presetFilters, showToast)}
         onExportCSV={() => exportHook.handleExportCSV(filtersHook.filteredProducts)}
         onExportPDF={() => exportHook.handleExportPDF(filtersHook.filteredProducts)}
+        onImport={() => setImportOpen(true)}
         onRefresh={() => refreshProducts?.()}
         isLoading={loadingState.isLoading}
         selectedProductIds={actions.selectedProductIds}

@@ -5,10 +5,11 @@ interface ExportMenuProps {
   onExportCSV: () => void;
   onExportPDF: () => void;
   onPrint?: () => void;
+  onImport?: () => void;
   disabled?: boolean;
 }
 
-export default function ExportMenu({ onExportCSV, onExportPDF, onPrint, disabled }: ExportMenuProps): ReactElement {
+export default function ExportMenu({ onExportCSV, onExportPDF, onPrint, onImport, disabled }: ExportMenuProps): ReactElement {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -56,6 +57,17 @@ export default function ExportMenu({ onExportCSV, onExportPDF, onPrint, disabled
           >
             Export PDF
           </button>
+          {onImport && (
+            <button
+              onClick={() => {
+                onImport();
+                setOpen(false);
+              }}
+              className="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border-t border-gray-200 dark:border-gray-700"
+            >
+              Import CSV
+            </button>
+          )}
           {onPrint && (
             <>
               <div className="border-t border-gray-200 dark:border-gray-700" />
