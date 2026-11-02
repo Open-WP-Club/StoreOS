@@ -10,6 +10,7 @@ import SettingsLanguage from '../components/settings/SettingsLanguage';
 import SettingsPrinter from '../components/settings/SettingsPrinter';
 import SettingsNotifications from '../components/settings/SettingsNotifications';
 import SettingsSecurity from '../components/settings/SettingsSecurity';
+import SettingsAutoBackup from '../components/settings/SettingsAutoBackup';
 import SettingsScheduledReports from '../components/settings/SettingsScheduledReports';
 import SettingsBackup from '../components/settings/SettingsBackup';
 
@@ -115,6 +116,8 @@ export default function SettingsPage(): ReactElement {
         <SettingsScheduledReports language={language} />
 
         <SettingsBackup language={language} showToast={showToast} />
+
+        <SettingsAutoBackup language={language} showToast={showToast} />
       </div>
 
       <ToastContainer toasts={toasts} removeToast={removeToast} />

@@ -10,6 +10,7 @@ import {
 } from 'electron';
 import fs from 'fs';
 import { resolveReportPath } from './reportFiles';
+import { resolveBackupPath, listBackupNames, selectPrune } from './backupFiles';
 import electronUpdater from 'electron-updater';
 import path from 'path';
 import { sanitizeNotificationPayload } from './ipcValidation';
@@ -265,6 +266,59 @@ ipcMain.handle('reports:save', async (event, filename, data) => {
   try {
     await fs.promises.writeFile(target, data instanceof ArrayBuffer ? Buffer.from(data) : data);
     return { success: true, path: target };
+  } catch (e) {
+    return { success: false, error: String(e && e.message) };
+  }
+});
+
+// IPC: automatic backups. Separate folder from reports (own persisted setting); same rules: the
+// folder comes only from a native dialog, the renderer supplies just a strictly patterned filename.
+const backupDirFile = () => path.join(app.getPath('userData'), 'backup-dir.json');
+function getBackupDir() {
+  try {
+    const dir = JSON.parse(fs.readFileSync(backupDirFile(), 'utf8')).dir;
+    return typeof dir === 'string' && path.isAbsolute(dir) ? dir : null;
+  } catch {
+    return null;
+  }
+}
+ipcMain.handle('backups:get-dir', (event) => (isTrustedSender(event) ? getBackupDir() : null));
+ipcMain.handle('backups:choose-dir', async (event) => {
+  if (!isTrustedSender(event)) return null;
+  const res = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openDirectory', 'createDirectory'],
+  });
+  if (res.canceled || !res.filePaths[0]) return getBackupDir();
+  fs.writeFileSync(backupDirFile(), JSON.stringify({ dir: res.filePaths[0] }));
+  return res.filePaths[0];
+});
+ipcMain.handle('backups:save', async (event, filename, data, keep) => {
+  if (!isTrustedSender(event)) return { success: false, error: 'untrusted' };
+  const dir = getBackupDir();
+  const target = dir && resolveBackupPath(dir, filename);
+  if (!target || typeof data !== 'string') return { success: false, error: 'invalid target' };
+  try {
+    await fs.promises.writeFile(target, data, { mode: 0o600 });
+    // Prune only after a successful write, so a failed run never deletes the last good backup.
+    const names = await fs.promises.readdir(dir);
+    for (const n of selectPrune(names, keep)) {
+      const p = resolveBackupPath(dir, n);
+      if (p) await fs.promises.unlink(p).catch(() => {});
+    }
+    return { success: true, path: target };
+  } catch (e) {
+    return { success: false, error: String(e && e.message) };
+  }
+});
+ipcMain.handle('backups:read-latest', async (event) => {
+  if (!isTrustedSender(event)) return { success: false, error: 'untrusted' };
+  const dir = getBackupDir();
+  if (!dir) return { success: false, error: 'no folder' };
+  try {
+    const name = listBackupNames(await fs.promises.readdir(dir)).pop();
+    const target = name && resolveBackupPath(dir, name);
+    if (!target) return { success: false, error: 'no backups found' };
+    return { success: true, name, data: await fs.promises.readFile(target, 'utf8') };
   } catch (e) {
     return { success: false, error: String(e && e.message) };
   }

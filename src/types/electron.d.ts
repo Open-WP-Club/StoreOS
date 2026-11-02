@@ -19,6 +19,22 @@ declare global {
           data: string | Uint8Array
         ) => Promise<{ success: boolean; path?: string; error?: string }>;
       };
+      /** Auto-backup output (separate folder; names are patterned and validated in main). */
+      backups: {
+        getDir: () => Promise<string | null>;
+        chooseDir: () => Promise<string | null>;
+        save: (
+          filename: string,
+          data: string,
+          keep: number
+        ) => Promise<{ success: boolean; path?: string; error?: string }>;
+        readLatest: () => Promise<{
+          success: boolean;
+          name?: string;
+          data?: string;
+          error?: string;
+        }>;
+      };
       /** OS-keychain encryption via Electron safeStorage; both return null when unavailable. */
       secureStorage: {
         encrypt: (text: string) => string | null;

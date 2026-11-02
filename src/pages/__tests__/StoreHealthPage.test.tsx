@@ -74,7 +74,8 @@ describe('StoreHealthPage', () => {
   it('shows the Integrations section with data on success', async () => {
     renderPage();
     expect(await screen.findByText('Integrations')).toBeInTheDocument();
-    expect(screen.getByText('Cash on delivery')).toBeInTheDocument();
+    // shown in the summary row and in the gateway toggle list
+    expect(screen.getAllByText('Cash on delivery').length).toBeGreaterThan(0);
     expect(screen.queryByText(/Bank transfer/)).not.toBeInTheDocument();
     expect(screen.getByText('1 active / 2 total')).toBeInTheDocument();
   });

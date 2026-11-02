@@ -81,6 +81,45 @@ export class WooCommerceServiceAdmin extends WooCommerceServiceTaxReviews {
     return this.getResource<WooCommerceWebhook[]>('webhooks', params);
   }
 
+  private async writeResource<T>(
+    method: 'post' | 'put' | 'delete',
+    endpoint: string,
+    data?: object
+  ): Promise<ApiResponse<T>> {
+    try {
+      const api = await this.getApi();
+      const response: WooCommerceApiResponse<T> =
+        method === 'delete' ? await api.delete(endpoint, data) : await api[method](endpoint, data);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return this.fail(error);
+    }
+  }
+
+  /** `secret` is sent to WooCommerce only; it is never returned to or retained by the UI. */
+  createWebhook(input: { name: string; topic: string; delivery_url: string; secret?: string }) {
+    return this.writeResource<WooCommerceWebhook>('post', 'webhooks', {
+      ...input,
+      status: 'active',
+    });
+  }
+
+  setWebhookStatus(id: number, status: 'active' | 'paused' | 'disabled') {
+    return this.writeResource<WooCommerceWebhook>('put', `webhooks/${id}`, { status });
+  }
+
+  deleteWebhook(id: number) {
+    return this.writeResource<WooCommerceWebhook>('delete', `webhooks/${id}`, { force: true });
+  }
+
+  setPaymentGatewayEnabled(id: string, enabled: boolean) {
+    return this.writeResource<WooCommercePaymentGateway>(
+      'put',
+      `payment_gateways/${encodeURIComponent(id)}`,
+      { enabled }
+    );
+  }
+
   getSettingGroups() {
     return this.getResource<WooCommerceSettingGroup[]>('settings');
   }

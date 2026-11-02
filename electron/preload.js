@@ -21,6 +21,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     chooseDir: () => ipcRenderer.invoke('reports:choose-dir'),
     save: (filename, data) => ipcRenderer.invoke('reports:save', filename, data),
   },
+  backups: {
+    getDir: () => ipcRenderer.invoke('backups:get-dir'),
+    chooseDir: () => ipcRenderer.invoke('backups:choose-dir'),
+    save: (filename, data, keep) => ipcRenderer.invoke('backups:save', filename, data, keep),
+    readLatest: () => ipcRenderer.invoke('backups:read-latest'),
+  },
   // OS-keychain backed encryption (returns null when unavailable)
   secureStorage: {
     encrypt: (text) => ipcRenderer.sendSync('secure-storage:encrypt', text),

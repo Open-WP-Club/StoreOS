@@ -16,6 +16,7 @@ import {
 import { useStoreConfig } from '../stores';
 import WooCommerceService from '../services/woocommerce';
 import { useToast } from '../contexts/ToastContext';
+import IntegrationsManager from '../components/IntegrationsManager';
 import { isInvalidCredentials, loadFailureMessage, openSetupAction } from '../utils/loadErrors';
 import type { SystemStatus } from '../types';
 import type {
@@ -429,6 +430,14 @@ function StoreHealthPage(): ReactElement | null {
                 }
               />
             </div>
+            <IntegrationsManager
+              service={new WooCommerceService(activeStore)}
+              storeId={activeStore.id}
+              storeName={activeStore.name}
+              gateways={integrations.gateways}
+              webhooks={integrations.webhooks}
+              onChanged={() => void fetchHealth()}
+            />
           </div>
         )}
 

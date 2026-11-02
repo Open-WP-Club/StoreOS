@@ -324,6 +324,36 @@ export function validateBackup(data: unknown): BackupData {
   return data as BackupData;
 }
 
+/**
+ * Restore-verify: parse + validate backup text and, if it holds encrypted credentials, decrypt
+ * them with the passphrase (proving the file is restorable). Nothing is applied to app state.
+ * Throws on invalid JSON/structure or wrong passphrase.
+ */
+export async function verifyBackupText(
+  text: string,
+  passphrase: string
+): Promise<{ createdAt: string; storesCount: number; encrypted: boolean }> {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new Error('Invalid backup: not valid JSON');
+  }
+  let backup = validateBackup(parsed);
+  const encrypted = !!backup.data.encryptedCredentials;
+  if (encrypted) {
+    if (!passphrase) throw new Error('Passphrase required to verify encrypted backup');
+    backup = await decryptCredentials(backup, passphrase);
+  }
+  return { createdAt: backup.createdAt, storesCount: backup.storesCount, encrypted };
+}
+
+/** `storeos-backup-YYYYMMDD-HHMM.json` in local time; must match electron/backupFiles.js. */
+export function backupFilename(d: Date): string {
+  const p = (n: number): string => String(n).padStart(2, '0');
+  return `storeos-backup-${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}.json`;
+}
+
 // ============================================
 // Backup Restore
 // ============================================
