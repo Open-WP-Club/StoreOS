@@ -78,8 +78,13 @@ export function POSRecentTransactionsModal({
                             ? 'text-gray-400 dark:text-gray-500 line-through'
                             : 'text-gray-900 dark:text-white'
                         }`}>
-                          Поръчка #{tx.id}
+                          {tx.pending ? 'Поръчка (офлайн)' : `Поръчка #${tx.id}`}
                         </p>
+                        {tx.pending && (
+                          <span className="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs rounded-full font-medium">
+                            Чака синхронизация
+                          </span>
+                        )}
                         {tx.refunded && (
                           <span className="px-2 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs rounded-full font-medium">
                             Възстановена
@@ -107,7 +112,7 @@ export function POSRecentTransactionsModal({
                       <p className="text-xs text-gray-400 dark:text-gray-500">
                         {dateStr}, {timeStr}
                       </p>
-                      {!tx.refunded && (
+                      {!tx.refunded && !tx.pending && (
                         <button
                           onClick={() => onRefund(tx)}
                           className="mt-2 text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 flex items-center gap-1 ml-auto"
