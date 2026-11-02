@@ -13,6 +13,10 @@ export type ActivityAction =
   | 'coupon_deleted'
   | 'store_added'
   | 'store_removed'
+  | 'webhook_created'
+  | 'webhook_updated'
+  | 'webhook_deleted'
+  | 'gateway_toggled'
   | 'cache_cleared'
   | 'settings_changed';
 

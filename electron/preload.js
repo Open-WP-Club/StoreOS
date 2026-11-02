@@ -25,6 +25,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   receipt: {
     print: (payload) => ipcRenderer.invoke('receipt:print', payload),
   },
+  backups: {
+    getDir: () => ipcRenderer.invoke('backups:get-dir'),
+    chooseDir: () => ipcRenderer.invoke('backups:choose-dir'),
+    save: (filename, data, keep) => ipcRenderer.invoke('backups:save', filename, data, keep),
+    readLatest: () => ipcRenderer.invoke('backups:read-latest'),
+  },
   // OS-keychain backed encryption (returns null when unavailable)
   secureStorage: {
     encrypt: (text) => ipcRenderer.sendSync('secure-storage:encrypt', text),
