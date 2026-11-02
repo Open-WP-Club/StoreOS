@@ -14,56 +14,21 @@ This document provides comprehensive information about the testing infrastructur
 
 ## Overview
 
-The project uses **Jest** as the testing framework with **React Testing Library** for component testing. The test suite includes:
-
-- **Unit tests** for utility functions
-- **Integration tests** for hooks and state management
-- **Component tests** for React components
-- **Service tests** for API interactions
+The project uses **Vitest** (jsdom environment) with **React Testing Library**. As of this writing: 108 test files, ~1,734 tests, plus a Playwright e2e suite (`e2e/`, `pnpm run test:e2e`, macOS arm64, runs against a packaged build from `pnpm run e2e:build`; not part of `pnpm test`).
 
 ## Test Framework
 
 ### Dependencies
 
-- **jest**: Testing framework (v29.7.0)
-- **@testing-library/react**: React component testing utilities
-- **@testing-library/jest-dom**: Custom Jest matchers for DOM
-- **@testing-library/user-event**: User interaction simulation
-- **babel-jest**: Babel transformer for Jest
-- **jest-environment-jsdom**: DOM environment for testing
+- **vitest** (5.x) and **@vitest/coverage-v8**
+- **jsdom**: DOM environment
+- **@testing-library/react**, **@testing-library/jest-dom**, **@testing-library/user-event**
+- **fake-indexeddb**: IndexedDB in tests
+- **@playwright/test**: e2e only
 
 ### Configuration
 
-Test configuration is defined in `jest.config.js`:
-
-```javascript
-{
-  testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
-  moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
-    '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
-  },
-  collectCoverageFrom: [
-    'src/**/*.{js,jsx}',
-    '!src/main.jsx',
-    '!src/**/*.test.{js,jsx}',
-    '!src/**/__tests__/**',
-  ],
-  coverageThreshold: {
-    global: {
-      branches: 50,
-      functions: 50,
-      lines: 50,
-      statements: 50,
-    },
-  },
-}
-```
-
-### Setup File
-
-The `jest.setup.js` file configures the test environment with necessary mocks for localStorage and IndexedDB.
+See `vitest.config.ts` (path aliases, `clearMocks: true`, Chart.js mocks from `__mocks__/`, coverage thresholds: branches 25, functions 30, lines 35, statements 35) and `vitest.setup.ts` (localStorage/IndexedDB mocks). Shared fixtures live in `src/__test_utils__/`.
 
 ## Running Tests
 
@@ -83,7 +48,7 @@ pnpm run test:coverage
 pnpm test -- path/to/test.js
 
 # Run tests matching a pattern
-pnpm test -- --testNamePattern="should render"
+pnpm test -- -t "should render"
 ```
 
 ### Watch Mode
@@ -200,7 +165,7 @@ describe('MyComponent', () => {
 
   it('should handle user interactions', async () => {
     const user = userEvent.setup();
-    const handleClick = jest.fn();
+    const handleClick = vi.fn();
 
     render(<MyComponent onClick={handleClick} />);
     await user.click(screen.getByRole('button'));
@@ -266,31 +231,31 @@ it('should load data', async () => {
 
 ```javascript
 // Mock functions
-const mockFn = jest.fn();
+const mockFn = vi.fn();
 mockFn.mockReturnValue('value');
 mockFn.mockResolvedValue('async value');
 
 // Mock modules
-jest.mock('../utils/api', () => ({
-  fetchData: jest.fn().mockResolvedValue({ data: [] }),
+vi.mock('../utils/api', () => ({
+  fetchData: vi.fn().mockResolvedValue({ data: [] }),
 }));
 
 // Mock timers
-jest.useFakeTimers();
-jest.advanceTimersByTime(1000);
-jest.useRealTimers();
+vi.useFakeTimers();
+vi.advanceTimersByTime(1000);
+vi.useRealTimers();
 ```
 
 ## Resources
 
-- [Jest Documentation](https://jestjs.io/docs/getting-started)
+- [Vitest Documentation](https://vitest.dev/)
 - [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
 - [Testing Library Queries](https://testing-library.com/docs/queries/about)
 
 ---
 
 **Last Updated**: 2025-11-17
-**Test Framework**: Jest 29.7.0
+**Test Framework**: Vitest 5.x
 **Coverage Target**: 50% minimum
 
 ## Coverage Thresholds
@@ -302,7 +267,7 @@ The project maintains the following coverage thresholds:
 - **Lines**: 50%
 - **Statements**: 50%
 
-These thresholds are configured in `jest.config.js` and can be adjusted as the test suite matures.
+These thresholds are configured in `vitest.config.ts` and can be adjusted as the test suite matures.
 
 ## Writing Tests
 
@@ -344,13 +309,13 @@ Example test for a service with mocked dependencies:
 import axios from 'axios';
 import WooCommerceService from '../woocommerce';
 
-jest.mock('axios');
+vi.mock('axios');
 
 describe('WooCommerceService', () => {
   it('should fetch orders', async () => {
     const mockOrders = [{ id: 1 }];
     axios.create.mockReturnValue({
-      get: jest.fn().mockResolvedValue({ data: mockOrders }),
+      get: vi.fn().mockResolvedValue({ data: mockOrders }),
     });
 
     const service = new WooCommerceService({ url: 'https://test.com' });
@@ -426,11 +391,11 @@ Make sure your dependencies are up to date:
 pnpm install --frozen-lockfile  # Clean install based on pnpm-lock.yaml
 ```
 
-### Jest can't find modules
+### Vitest can't find modules
 
 Check that:
 1. The module path in the import is correct
-2. The module is not a CSS/asset file (should be mocked in `jest.config.js`)
+2. The module is not a CSS/asset file (should be mocked in `vitest.config.ts`)
 
 ### Component tests failing with "not wrapped in act(...)"
 
@@ -455,7 +420,7 @@ await waitFor(() => {
 
 ## Resources
 
-- [Jest Documentation](https://jestjs.io/docs/getting-started)
+- [Vitest Documentation](https://vitest.dev/)
 - [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
 - [Testing Library Queries](https://testing-library.com/docs/queries/about)
 - [Common Mistakes](https://kentcdodds.com/blog/common-mistakes-with-react-testing-library)

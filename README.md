@@ -63,8 +63,8 @@ The application includes:
 ## Prerequisites
 
 Before you begin, ensure you have the following installed:
-- [Node.js](https://nodejs.org/) (version 16 or higher)
-- [npm](https://www.npmjs.com/) (comes with Node.js)
+- [Node.js](https://nodejs.org/) (version 24 recommended; matches CI)
+- [pnpm](https://pnpm.io/) (see `packageManager` in package.json)
 
 ## Installation
 
@@ -88,7 +88,7 @@ pnpm run dev
 ```
 
 This will:
-1. Start the Vite development server on port 5173
+1. Start the Vite development server (port 5173)
 2. Launch the Electron application
 3. Open developer tools automatically
 
@@ -102,7 +102,7 @@ To build the application for production:
 pnpm run build:electron
 ```
 
-This will create distributable packages in the `dist` folder.
+This will create distributable packages in the `release` folder.
 
 ## Setting Up WooCommerce API Access
 
@@ -164,8 +164,9 @@ Before you can connect your WooCommerce store, you need to generate API credenti
 ## Technology Stack
 
 - **Electron** - Desktop application framework
-- **React** - UI framework
-- **Vite** - Build tool and development server
+- **React** (with React Compiler) + **TypeScript** - UI framework
+- **electron-vite** - Build tool and development server
+- **Vitest** / **Playwright** - Unit and e2e tests
 - **Tailwind CSS** - Styling
 - **Zustand** - State management
 - **WooCommerce REST API** - Backend integration
@@ -175,33 +176,24 @@ Before you can connect your WooCommerce store, you need to generate API credenti
 
 ```
 StoreOS/
-├── electron/           # Electron main process
-│   └── main.js
+├── electron/           # Electron main process + preload (main.js, preload.js)
 ├── src/
-│   ├── components/    # React components
-│   │   ├── Layout.jsx
-│   │   └── StoreSelector.jsx
-│   ├── pages/         # Page components
-│   │   ├── Dashboard.jsx
-│   │   ├── OrdersPage.jsx
-│   │   ├── ProductsPage.jsx
-│   │   ├── InventoryPage.jsx
-│   │   └── SetupPage.jsx
-│   ├── services/      # API services
-│   │   └── woocommerce.js
-│   ├── stores/        # State management
-│   │   └── useStore.js
-│   ├── App.jsx        # Main app component
-│   ├── main.jsx       # React entry point
-│   └── index.css      # Global styles
-├── package.json
-├── vite.config.js
-└── tailwind.config.js
+│   ├── components/    # Reusable components (.tsx)
+│   ├── pages/         # Route-level pages (.tsx)
+│   ├── services/woocommerce/  # WooCommerce REST service, split by resource
+│   ├── stores/        # Zustand domain stores
+│   ├── hooks/ utils/ types/ constants/ contexts/
+│   ├── App.tsx, main.tsx, index.css
+├── e2e/               # Playwright tests against the packaged Electron app
+├── docs/              # TESTING.md, SECURITY_RELEASE.md
+├── scripts/           # Packaging helpers (adhocSign.cjs)
+├── electron.vite.config.ts, vitest.config.ts, eslint.config.js, tsconfig.json
+└── package.json
 ```
 
 ## Security Notes
 
-- Store credentials are saved locally in your browser's localStorage
+- Store credentials are saved locally, encrypted with the OS keychain via Electron safeStorage
 - All API communications use HTTPS
 - Consumer keys and secrets are never exposed in the UI
 - The application runs locally on your machine

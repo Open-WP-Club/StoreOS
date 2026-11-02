@@ -20,10 +20,10 @@ StoreOS - Built for WooCommerce is an Electron-based desktop application for man
 ## Technology Stack
 
 ### Core Technologies
-- **Electron 44.x** - Desktop application framework
+- **Electron 45.x** - Desktop application framework
 - **React 19.x** - UI library with hooks (React Compiler enabled via `babel-plugin-react-compiler`)
 - **TypeScript 6.x** - Strict mode (see `tsconfig.json` gotchas below)
-- **electron-vite 6.x (beta)** - Build tool/dev server for main, preload, and renderer processes
+- **electron-vite 6.x** (Vite 8) - Build tool/dev server for main, preload, and renderer processes
 - **Zustand 5.x** - Lightweight state management with persistence, split into domain stores
 - **Tailwind CSS 4.x** - Utility-first styling framework
 - **React Router 7.x** - Client-side routing
@@ -39,7 +39,7 @@ StoreOS - Built for WooCommerce is an Electron-based desktop application for man
 - **IndexedDB** - Browser-based persistent storage
 
 ### Development & Testing Tools
-- **Vitest 4.x** - Test runner (`jsdom` environment), **not Jest** — 108 test files, ~1,734 tests
+- **Vitest 5.x** - Test runner (`jsdom` environment), **not Jest** — 108 test files, ~1,734 tests
 - **@testing-library/react** + **jest-dom** matchers + **user-event**
 - **ESLint 9.x** - Flat config (`eslint.config.js`, not `.eslintrc.json`), includes `eslint-plugin-react-compiler`
 - **Prettier** - Code formatting
@@ -62,17 +62,17 @@ StoreOS/
 │   │   ├── QuickSwitcher.tsx / CommandPalette.tsx  # Keyboard-driven navigation
 │   │   ├── POSCart.tsx, POSProductGrid.tsx, POSDailyReportModal.tsx, ...  # POS mode
 │   │   └── __tests__/        # Component tests
-│   ├── pages/                 # 25 route-level page components (.tsx)
+│   ├── pages/                 # 26 route-level page components (.tsx)
 │   │   ├── Dashboard.tsx, OrdersPage.tsx, ProductsPage.tsx, InventoryPage.tsx, POSPage.tsx
 │   │   ├── CouponsPage.tsx, TaxPage.tsx, ReviewsPage.tsx, CustomersPage.tsx
 │   │   ├── AttributesPage.tsx, CategoriesPage.tsx, ActivityLogPage.tsx, StoreHealthPage.tsx
 │   │   ├── AnalyticsPage.tsx, SalesAnalyticsPage.tsx, OrderAnalyticsPage.tsx,
 │   │   │   ProductAnalyticsPage.tsx, CustomerAnalyticsPage.tsx, FinancialAnalyticsPage.tsx,
 │   │   │   GeographicAnalyticsPage.tsx, KPIDashboardPage.tsx
-│   │   └── SetupPage.tsx, MultiStoreView.tsx, OrderDetailPage.tsx, ProductEditPage.tsx
+│   │   └── SetupPage.tsx, SettingsPage.tsx, MultiStoreView.tsx, OrderDetailPage.tsx, ProductEditPage.tsx
 │   ├── services/woocommerce/  # WooCommerceService — split by resource (see Service Layer below)
 │   │   ├── base.ts, orders.ts, products.ts, customers.ts, coupons.ts, tax-reviews.ts, admin.ts, index.ts
-│   ├── stores/                 # Zustand — split into 9 domain stores (see State Management below)
+│   ├── stores/                 # Zustand — split into 9 domain stores + posStore; cache/ holds per-resource slices (ordersSlice, productsSlice, ..., persist.ts) (see State Management below)
 │   │   ├── storeConfigStore.ts, themeStore.ts, settingsStore.ts, searchStore.ts, cacheStore.ts,
 │   │   │   appSettingsStore.ts, offlineStore.ts, notificationStore.ts, activityLogStore.ts, posStore.ts
 │   │   ├── storeUtils.ts     # Shared helpers: prependAndTrim<T>(), nowMs(), nowISO()
@@ -84,12 +84,15 @@ StoreOS/
 │   │   ├── secureStorage.ts, pinHash.ts   # see Security Considerations
 │   │   ├── kpiCalculator.ts, memoryMonitor.ts, backup.ts, startupMetrics.ts
 │   │   └── search/            # searchService.ts re-exports from here: fuzzy, orders, products, customers, utils
-│   ├── types/                  # Domain-split TS types (11 files): orders, products, customers, coupons, tax,
+│   ├── types/                  # Domain-split TS types: orders, products, customers, coupons, tax, reviews, electron.d.ts,
 │   │   │                        cache, activity, analytics, offline, store, ui, common, api, global.d.ts
 │   │   └── index.ts            # Barrel re-export
 │   ├── constants/config.js    # TIME, CACHE_EXPIRY, INVENTORY, PAGINATION, SEARCH, API, UI thresholds
 │   ├── App.tsx, main.tsx, index.css
 │   └── __test_utils__/        # Shared test fixtures/mock factories
+├── e2e/                       # Playwright e2e (packaged Electron app) + mock Woo server
+├── docs/                      # TESTING.md, SECURITY_RELEASE.md
+├── scripts/adhocSign.cjs      # electron-builder afterSign hook
 ├── electron.vite.config.ts    # Main/preload/renderer build config + path aliases + manualChunks
 ├── vitest.config.ts / vitest.setup.ts
 ├── eslint.config.js           # Flat config
