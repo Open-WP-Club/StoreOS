@@ -1,5 +1,6 @@
 import { memo, useState, useRef } from 'react';
 import { HardDrive, AlertTriangle, Download, Upload, X } from 'lucide-react';
+import Modal from '../Modal';
 import { t } from '../../utils/i18n';
 import type { Language } from '../../utils/i18n';
 import {
@@ -151,7 +152,10 @@ const SettingsBackup = memo(function SettingsBackup({ language, showToast }: Set
             />
           </label>
 
-          <label htmlFor="settings-include-products" className="flex items-center gap-3 ml-4 cursor-pointer">
+          <label
+            htmlFor="settings-include-products"
+            className="flex items-center gap-3 ml-4 cursor-pointer"
+          >
             <input
               id="settings-include-products"
               type="checkbox"
@@ -202,109 +206,94 @@ const SettingsBackup = memo(function SettingsBackup({ language, showToast }: Set
 
       {/* Restore Confirmation Modal */}
       {showRestoreConfirm && pendingRestore && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-          role="presentation"
-          onClick={() => {
+        <Modal
+          onClose={() => {
             setShowRestoreConfirm(false);
             setPendingRestore(null);
           }}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') {
-              setShowRestoreConfirm(false);
-              setPendingRestore(null);
-            }
-          }}
+          className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md shadow-2xl"
         >
-          {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events */}
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-md shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-amber-500" />
-                {t('restoreConfirmTitle', language)}
-              </h3>
-              <button
-                onClick={() => {
-                  setShowRestoreConfirm(false);
-                  setPendingRestore(null);
-                }}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-              >
-                <X className="w-5 h-5 text-gray-400" />
-              </button>
-            </div>
-
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              {t('restoreConfirmMessage', language)}
-            </p>
-
-            {pendingRestore.data.encryptedCredentials && (
-              <label htmlFor="settings-restore-passphrase" className="flex flex-col gap-1 mb-4">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {language === 'bg' ? 'Парола на backup-а' : 'Backup passphrase'}
-                </span>
-                <input
-                  id="settings-restore-passphrase"
-                  type="password"
-                  autoComplete="off"
-                  value={restorePassphrase}
-                  onChange={(e) => setRestorePassphrase(e.target.value)}
-                  className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-              </label>
-            )}
-
-            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-4 text-sm space-y-1">
-              <p className="text-gray-600 dark:text-gray-400">
-                <span className="font-medium text-gray-900 dark:text-white">
-                  {language === 'bg' ? 'Дата' : 'Date'}:
-                </span>{' '}
-                {new Date(pendingRestore.createdAt).toLocaleString()}
-              </p>
-              <p className="text-gray-600 dark:text-gray-400">
-                <span className="font-medium text-gray-900 dark:text-white">
-                  {language === 'bg' ? 'Магазини' : 'Stores'}:
-                </span>{' '}
-                {pendingRestore.storesCount}
-              </p>
-              <p className="text-gray-600 dark:text-gray-400">
-                <span className="font-medium text-gray-900 dark:text-white">
-                  {language === 'bg' ? 'Включва продукти' : 'Includes products'}:
-                </span>{' '}
-                {pendingRestore.includesProducts
-                  ? language === 'bg'
-                    ? 'Да'
-                    : 'Yes'
-                  : language === 'bg'
-                    ? 'Не'
-                    : 'No'}
-              </p>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowRestoreConfirm(false);
-                  setPendingRestore(null);
-                }}
-                className="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-              >
-                {t('cancel', language)}
-              </button>
-              <button
-                onClick={handleConfirmRestore}
-                className="flex-1 px-4 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium transition-colors"
-              >
-                {t('confirm', language)}
-              </button>
-            </div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              {t('restoreConfirmTitle', language)}
+            </h3>
+            <button
+              onClick={() => {
+                setShowRestoreConfirm(false);
+                setPendingRestore(null);
+              }}
+              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+            >
+              <X className="w-5 h-5 text-gray-400" />
+            </button>
           </div>
-        </div>
+
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            {t('restoreConfirmMessage', language)}
+          </p>
+
+          {pendingRestore.data.encryptedCredentials && (
+            <label htmlFor="settings-restore-passphrase" className="flex flex-col gap-1 mb-4">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {language === 'bg' ? 'Парола на backup-а' : 'Backup passphrase'}
+              </span>
+              <input
+                id="settings-restore-passphrase"
+                type="password"
+                autoComplete="off"
+                value={restorePassphrase}
+                onChange={(e) => setRestorePassphrase(e.target.value)}
+                className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
+            </label>
+          )}
+
+          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-4 text-sm space-y-1">
+            <p className="text-gray-600 dark:text-gray-400">
+              <span className="font-medium text-gray-900 dark:text-white">
+                {language === 'bg' ? 'Дата' : 'Date'}:
+              </span>{' '}
+              {new Date(pendingRestore.createdAt).toLocaleString()}
+            </p>
+            <p className="text-gray-600 dark:text-gray-400">
+              <span className="font-medium text-gray-900 dark:text-white">
+                {language === 'bg' ? 'Магазини' : 'Stores'}:
+              </span>{' '}
+              {pendingRestore.storesCount}
+            </p>
+            <p className="text-gray-600 dark:text-gray-400">
+              <span className="font-medium text-gray-900 dark:text-white">
+                {language === 'bg' ? 'Включва продукти' : 'Includes products'}:
+              </span>{' '}
+              {pendingRestore.includesProducts
+                ? language === 'bg'
+                  ? 'Да'
+                  : 'Yes'
+                : language === 'bg'
+                  ? 'Не'
+                  : 'No'}
+            </p>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                setShowRestoreConfirm(false);
+                setPendingRestore(null);
+              }}
+              className="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            >
+              {t('cancel', language)}
+            </button>
+            <button
+              onClick={handleConfirmRestore}
+              className="flex-1 px-4 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium transition-colors"
+            >
+              {t('confirm', language)}
+            </button>
+          </div>
+        </Modal>
       )}
     </>
   );
