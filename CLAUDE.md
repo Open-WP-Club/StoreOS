@@ -39,7 +39,7 @@ StoreOS - Built for WooCommerce is an Electron-based desktop application for man
 - **IndexedDB** - Browser-based persistent storage
 
 ### Development & Testing Tools
-- **Vitest 5.x** - Test runner (`jsdom` environment), **not Jest** — 108 test files, ~1,734 tests
+- **Vitest 5.x** - Test runner (`jsdom` environment), **not Jest** — 131 test files, ~1,973 tests
 - **@testing-library/react** + **jest-dom** matchers + **user-event**
 - **ESLint 9.x** - Flat config (`eslint.config.js`, not `.eslintrc.json`), includes `eslint-plugin-react-compiler`
 - **Prettier** - Code formatting
@@ -60,6 +60,8 @@ StoreOS/
 │   │   ├── DataManager.tsx   # Headless global data-fetch manager (mounted once at App root)
 │   │   ├── Layout.tsx        # Main layout with navigation + ErrorBoundary per route
 │   │   ├── QuickSwitcher.tsx / CommandPalette.tsx  # Keyboard-driven navigation
+│   │   ├── Modal.tsx         # Shared modal shell (backdrop/Escape/aria); new modals should use it
+│   │   ├── ScheduledReportRunner.tsx, ReorderReportModal.tsx, OfflineIndicator.tsx
 │   │   ├── POSCart.tsx, POSProductGrid.tsx, POSDailyReportModal.tsx, ...  # POS mode
 │   │   └── __tests__/        # Component tests
 │   ├── pages/                 # 26 route-level page components (.tsx)
@@ -72,15 +74,16 @@ StoreOS/
 │   │   └── SetupPage.tsx, SettingsPage.tsx, MultiStoreView.tsx, OrderDetailPage.tsx, ProductEditPage.tsx
 │   ├── services/woocommerce/  # WooCommerceService — split by resource (see Service Layer below)
 │   │   ├── base.ts, orders.ts, products.ts, customers.ts, coupons.ts, tax-reviews.ts, admin.ts, index.ts
-│   ├── stores/                 # Zustand — split into 9 domain stores + posStore; cache/ holds per-resource slices (ordersSlice, productsSlice, ..., persist.ts) (see State Management below)
+│   ├── stores/                 # Zustand — split into 10 domain stores + posStore; cache/ holds per-resource slices (ordersSlice, productsSlice, ..., persist.ts) (see State Management below)
 │   │   ├── storeConfigStore.ts, themeStore.ts, settingsStore.ts, searchStore.ts, cacheStore.ts,
 │   │   │   appSettingsStore.ts, offlineStore.ts, notificationStore.ts, activityLogStore.ts, posStore.ts
 │   │   ├── storeUtils.ts     # Shared helpers: prependAndTrim<T>(), nowMs(), nowISO()
 │   │   └── index.ts          # Barrel export + convenience hooks
-│   ├── hooks/                 # useProgressiveLoading, useOfflineMutation, useCouponForm, usePOS*, ...
+│   ├── hooks/                 # useProgressiveLoading, useOfflineMutation, useCouponForm, useAnalyticsBase, usePOS*, ...
 │   ├── contexts/ToastContext.tsx
 │   ├── utils/
-│   │   ├── indexedDBCache.ts, csvExport.ts, pdfExport.ts, currency.ts, dateTime.ts, i18n.ts
+│   │   ├── indexedDBCache.ts, csvExport.ts (+downloadBlob), pdfExport.ts, currency.ts (+storeCurrencySymbol), dateTime.ts, i18n.ts
+│   │   ├── chartSetup.ts, lowStock.ts, reorderReport.ts, reportSchedule.ts, posOfflineSale.ts
 │   │   ├── secureStorage.ts, pinHash.ts   # see Security Considerations
 │   │   ├── kpiCalculator.ts, memoryMonitor.ts, backup.ts, startupMetrics.ts
 │   │   └── search/            # searchService.ts re-exports from here: fuzzy, orders, products, customers, utils
@@ -107,7 +110,7 @@ StoreOS/
 
 ### 1. State Management Architecture
 
-Zustand state is **split into 9 domain stores** (not one monolithic store). Each has its own file in `src/stores/` and is exported from `src/stores/index.ts`:
+Zustand state is **split into 10 domain stores** (not one monolithic store). Each has its own file in `src/stores/` and is exported from `src/stores/index.ts`:
 
 | Store | Responsibility |
 |---|---|
@@ -120,6 +123,7 @@ Zustand state is **split into 9 domain stores** (not one monolithic store). Each
 | `useOffline` | Offline mutation queue (see `useOfflineMutation` hook) |
 | `useNotifications` | Notification center, sound/confetti toggles, order-celebration overlay |
 | `useActivityLog` | User activity log |
+| `useScheduledReports` | Scheduled report settings (type, frequency, time, format, `lastRun`); persisted |
 | `posStore` (separate module) | POS cart/checkout state — imported directly, not via `src/stores` barrel |
 
 Always use the individual hooks (the old combined `useStore()` shim was removed).
@@ -269,7 +273,7 @@ pnpm run build:electron   # build + electron-builder → distributable in dist-e
 ### Testing
 
 ```bash
-pnpm run test             # vitest run — full suite (108 files, ~1,734 tests)
+pnpm run test             # vitest run — full suite (131 files, ~1,973 tests)
 pnpm run test:watch       # vitest (watch mode)
 pnpm run test:coverage    # vitest run --coverage (v8 provider)
 pnpm run e2e:build        # one-off packaged build (electron-builder --dir --mac --arm64) for the e2e suite
@@ -411,7 +415,7 @@ Verify field names match the data shape (e.g. `billing.email`, not `email`) and 
 
 ## Testing Guidelines
 
-The project has a full **Vitest** suite (108 files, ~1,734 tests) — this is not a "manual testing only" project. Key points:
+The project has a full **Vitest** suite (131 files, ~1,973 tests) — this is not a "manual testing only" project. Key points:
 
 - `clearMocks: true` in `vitest.config.ts` — mock implementations reset between tests automatically.
 - Set up mocks in `beforeEach()`, not inside `vi.mock()` factories.
@@ -452,6 +456,13 @@ The project has a full **Vitest** suite (108 files, ~1,734 tests) — this is no
 - **Batch results**: `src/utils/batchResult.ts` (`batchErrorIds`) reads per-item `error` entries from WooCommerce batch responses — batch call sites report "X of Y failed" instead of treating the HTTP 200 as success.
 - **Load errors**: `src/utils/loadErrors.ts` (`isInvalidCredentials`, `loadFailureMessage`, `openSetupAction`) powers the "Open Setup" toast in `DataManager` and `StoreHealthPage`.
 - **PIN length**: `appSettingsStore.pinLength` (default 4) is saved with the PIN; the lock screen shows that many dots and submits on the last digit. The app always starts locked when a PIN is enabled.
+- **Modal**: `src/components/Modal.tsx` (`onClose`, `closeOnEscape`, `closeOnBackdrop`, `className`, aria props) is the shared modal shell.
+- **Analytics**: `useAnalyticsBase` (`src/hooks/`) holds the shared time-range/currency state for the analytics pages; ranges come from `src/constants/timeRanges.ts` (`TIME_RANGES`) via `components/analytics/TimeRangeSelect.tsx`; `src/utils/chartSetup.ts` registers Chart.js once.
+- **Helpers**: `downloadBlob(content, mime, filename)` in `csvExport.ts` is the single download path; `storeCurrencySymbol(store)` in `currency.ts` resolves a store's symbol; `src/utils/lowStock.ts` (`isLowStock`, `detectLowStockCrossings`, `lowStockMessage`) drives low-stock notifications.
+- **Reorder report**: `src/utils/reorderReport.ts` builds the low-stock reorder list; `ReorderReportModal` (opened from `InventoryPage`) exports it.
+- **Offline POS sales**: `src/utils/posOfflineSale.ts` — when `createOrderIdempotent` fails offline the sale is queued via `useOffline` with a `_storeos_client_id` meta; `OfflineIndicator` replays it (`replayPosSale`, which de-duplicates by client id) and `resolvePendingSale` updates the recent-transactions list (`pos_recent_transactions`, `pos-transactions-changed` event); `decrementCachedStock` keeps cached stock consistent.
+- **Scheduled reports**: `useScheduledReports` store + `src/utils/reportSchedule.ts` (`lastSlot`, `nextRun`, `isDue`, `reportPeriod`); `ScheduledReportRunner` (mounted in `App.tsx` once stores exist) generates the file when due; settings UI in `settings/SettingsScheduledReports.tsx`. Files are written by the main process (`electron/reportFiles.js`) over IPC channels `reports:get-dir`, `reports:choose-dir` (native folder dialog, the only way the folder is set) and `reports:save`, exposed in `preload.js`.
+- **CSV safety**: `csvExport.ts` neutralizes spreadsheet formula injection in text cells (numbers keep their sign).
 - **Packaging**: `scripts/adhocSign.cjs` (`build.afterSign`) re-signs ad-hoc only when `codesign --verify` fails after the Electron fuse flip (otherwise arm64 builds are SIGKILLed on launch). e2e launches use `--use-mock-keychain` to avoid Keychain prompts.
 
 ## Resources & Documentation
