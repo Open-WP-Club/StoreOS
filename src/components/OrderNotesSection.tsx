@@ -1,5 +1,7 @@
-import { ReactElement, FormEvent } from 'react';
+import { ReactElement, FormEvent, useState } from 'react';
 import { MessageSquare, Send, Trash2, Loader2 } from 'lucide-react';
+import useAppSettings from '../stores/appSettingsStore';
+import NoteTemplatesModal from './NoteTemplatesModal';
 import type { OrderNote } from '../types';
 
 interface OrderNotesSectionProps {
@@ -30,6 +32,8 @@ export function OrderNotesSection({
   onAddNote,
   onDeleteNote,
 }: OrderNotesSectionProps): ReactElement {
+  const templates = useAppSettings((s) => s.noteTemplates);
+  const [showTemplates, setShowTemplates] = useState(false);
   return (
     <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden transition-colors">
       <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex items-center justify-between">
@@ -42,6 +46,29 @@ export function OrderNotesSection({
       <div className="px-6 py-4 space-y-4">
         {/* Add new note form */}
         <form onSubmit={onAddNote} className="space-y-3">
+          <div className="flex items-center gap-2">
+            <select
+              aria-label="Шаблон за бележка"
+              value=""
+              onChange={(e) => e.target.value && onNewNoteChange(e.target.value)}
+              className="flex-1 px-2 py-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm"
+            >
+              <option value="">Шаблон...</option>
+              {templates.map((t) => (
+                <option key={t.id} value={t.text}>
+                  {t.text.length > 60 ? t.text.slice(0, 60) + '…' : t.text}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => setShowTemplates(true)}
+              className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              Шаблони
+            </button>
+          </div>
+          {showTemplates && <NoteTemplatesModal onClose={() => setShowTemplates(false)} />}
           <textarea
             value={newNote}
             onChange={(e) => onNewNoteChange(e.target.value)}

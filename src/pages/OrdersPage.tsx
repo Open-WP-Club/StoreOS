@@ -303,7 +303,61 @@ function OrdersPage(): React.ReactElement {
     }
   };
 
-  const handleBulkExport = useCallback((): void => {
+  const handleBulkMarkShipped = async (noteText: string | null): Promise<void> => {
+    if (selectedOrderIds.length === 0 || !currentStore) return;
+    try {
+      setBulkProcessing(true);
+      const service = new WooCommerceService(currentStore);
+      const total = selectedOrderIds.length;
+      const batchResult = await service.batchOrders({
+        update: selectedOrderIds.map((id) => ({ id, status: 'completed' as OrderStatus })),
+      });
+      if (!batchResult.success) throw new Error(batchResult.error);
+      const statusFailed = batchErrorIds(batchResult.data, 'update');
+      const succeededIds = selectedOrderIds.filter((id) => !statusFailed.includes(id));
+
+      let noteFailed = 0;
+      if (noteText) {
+        const notes = await Promise.all(
+          succeededIds.map((id) => service.addOrderNote(id, noteText, true))
+        );
+        noteFailed = notes.filter((r) => !r.success).length;
+      }
+
+      if (succeededIds.length > 0) {
+        const updatedOrders = orders.map((o) =>
+          succeededIds.includes(o.id) ? { ...o, status: 'completed' as OrderStatus } : o
+        );
+        setOrders(updatedOrders);
+        await setCachedData('orders', updatedOrders);
+        logActivity({
+          action: 'order_status_changed',
+          entityType: 'order',
+          storeId: currentStore.id ?? null,
+          storeName: currentStore.name,
+          details: `Bulk marked ${succeededIds.length} orders as shipped`,
+          changes: { status: { from: 'various', to: 'completed' } },
+        });
+      }
+      setSelectedOrderIds(statusFailed);
+      if (statusFailed.length > 0) {
+        showToast(`${statusFailed.length} от ${total} поръчки не бяха обновени`, 'warning');
+      } else if (noteFailed > 0) {
+        showToast(`${noteFailed} от ${succeededIds.length} бележки не бяха добавени`, 'warning');
+      } else {
+        showToast(`${succeededIds.length} поръчки са маркирани като изпратени`, 'success');
+      }
+    } catch (err) {
+      showToast(
+        `Грешка при обновяване: ${err instanceof Error ? err.message : 'Unknown error'}`,
+        'error'
+      );
+    } finally {
+      setBulkProcessing(false);
+    }
+  };
+
+  const handleBulkExport =useCallback((): void => {
     if (selectedOrders.length === 0) return;
 
     const exportData = selectedOrders.map((order) => ({
@@ -555,6 +609,7 @@ function OrdersPage(): React.ReactElement {
             selectedCount={selectedOrderIds.length}
             selectedOrders={selectedOrders}
             onStatusChange={handleBulkStatusUpdate}
+            onMarkShipped={handleBulkMarkShipped}
             onExport={handleBulkExport}
             onDelete={handleBulkDelete}
             onClearSelection={() => setSelectedOrderIds([])}

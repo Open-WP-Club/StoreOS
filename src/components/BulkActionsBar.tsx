@@ -9,7 +9,10 @@ import {
   ChevronDown,
   Loader2,
   AlertTriangle,
+  Truck,
 } from 'lucide-react';
+import Modal from './TitledModal';
+import useAppSettings from '../stores/appSettingsStore';
 import type { Order, OrderStatus } from '../types';
 
 interface BulkActionsBarProps {
@@ -19,6 +22,8 @@ interface BulkActionsBarProps {
   onExport: () => void;
   onDelete?: () => Promise<void>;
   onPrintLabels?: () => void;
+  /** Mark selected as shipped (completed); noteText is an optional customer note. */
+  onMarkShipped?: (noteText: string | null) => Promise<void>;
   onClearSelection: () => void;
   isProcessing?: boolean;
 }
@@ -40,12 +45,16 @@ export default function BulkActionsBar({
   onExport,
   onDelete,
   onPrintLabels,
+  onMarkShipped,
   onClearSelection,
   isProcessing = false,
-}: BulkActionsBarProps): ReactElement {
+}:BulkActionsBarProps): ReactElement {
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus>('processing');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const [showShipModal, setShowShipModal] = useState(false);
+  const [shipTemplate, setShipTemplate] = useState('');
+  const noteTemplates = useAppSettings((s) => s.noteTemplates);
 
   // Calculate totals for selected orders
   const totalValue = selectedOrders.reduce(
@@ -152,6 +161,18 @@ export default function BulkActionsBar({
             <span className="hidden sm:inline">Експорт</span>
           </button>
 
+          {onMarkShipped && (
+            <button
+              onClick={() => setShowShipModal(true)}
+              disabled={isProcessing}
+              className="flex items-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors disabled:opacity-50"
+              title="Маркирай като изпратени"
+            >
+              <Truck className="w-4 h-4" />
+              <span className="hidden sm:inline">Изпратени</span>
+            </button>
+          )}
+
           {/* Print Labels Button (if available) */}
           {onPrintLabels && (
             <button
@@ -226,6 +247,36 @@ export default function BulkActionsBar({
           </button>
         </div>
       </div>
+
+      {showShipModal && (
+        <Modal title={`Изпратени: ${selectedCount}`} onClose={() => setShowShipModal(false)}>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+            Статусът ще бъде сменен на „Completed“. По желание добави бележка към клиента.
+          </p>
+          <select
+            aria-label="Шаблон за бележка"
+            value={shipTemplate}
+            onChange={(e) => setShipTemplate(e.target.value)}
+            className="w-full px-2 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm"
+          >
+            <option value="">Без бележка</option>
+            {noteTemplates.map((t) => (
+              <option key={t.id} value={t.text}>
+                {t.text.length > 60 ? t.text.slice(0, 60) + '…' : t.text}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={async () => {
+              setShowShipModal(false);
+              await onMarkShipped?.(shipTemplate || null);
+            }}
+            className="mt-4 w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium"
+          >
+            Потвърди
+          </button>
+        </Modal>
+      )}
 
       {/* Click outside to close dropdowns */}
       {(showStatusDropdown || showDeleteConfirm) && (

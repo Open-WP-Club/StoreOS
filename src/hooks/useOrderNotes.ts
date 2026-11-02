@@ -16,6 +16,7 @@ interface UseOrderNotesResult {
   setIsCustomerNote: (value: boolean) => void;
   handleAddNote: (e: FormEvent) => Promise<void>;
   handleDeleteNote: (noteId: number) => Promise<void>;
+  refreshNotes: () => Promise<void>;
 }
 
 /**
@@ -123,6 +124,7 @@ export function useOrderNotes(
     setIsCustomerNote,
     handleAddNote,
     handleDeleteNote,
+    refreshNotes: fetchNotes,
   };
 }
 

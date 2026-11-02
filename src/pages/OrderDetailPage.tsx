@@ -15,6 +15,7 @@ import PluginMetaPanel from '../components/PluginMetaPanel';
 import WpAdminModal from '../components/WpAdminModal';
 import ImageLightbox from '../components/ImageLightbox';
 import OrderItemsTable from '../components/OrderItemsTable';
+import OrderTrackingSection from '../components/OrderTrackingSection';
 import OrderNotesSection from '../components/OrderNotesSection';
 import OrderSidebar from '../components/OrderSidebar';
 
@@ -244,6 +245,16 @@ function OrderDetailPage(): ReactElement {
               </div>
             </div>
           )}
+
+          <OrderTrackingSection
+            key={order.id}
+            order={order}
+            showToast={showToast}
+            onSaved={() => {
+              void fetchOrderFromApi(false);
+              void notesHook.refreshNotes();
+            }}
+          />
 
           <OrderNotesSection
             notes={notesHook.notes}
