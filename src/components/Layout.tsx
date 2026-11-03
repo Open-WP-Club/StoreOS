@@ -1,4 +1,4 @@
-import { isStockAtOrBelow } from '../utils/stock';
+import { isLowButInStock, isOutOfStock } from '../utils/stock';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -149,12 +149,8 @@ function Layout(): React.ReactElement {
         const products = (await getCachedData('products')) as WooCommerceProduct[] | null;
         if (products) {
           const lowStockCount =
-            products.filter(
-              (p) =>
-                p.stock_quantity !== null &&
-                isStockAtOrBelow(p.stock_quantity, lowStockThreshold) &&
-                p.stock_quantity > 0
-            ).length + products.filter((p) => p.stock_status === 'outofstock').length;
+            products.filter((p) => isLowButInStock(p.stock_quantity, lowStockThreshold)).length +
+            products.filter(isOutOfStock).length;
 
           setHealthIndicators((prev) => ({
             ...prev,

@@ -1,4 +1,4 @@
-import { isStockAtOrBelow } from '../utils/stock';
+import { isLowButInStock, isOutOfStock, isStockAtOrBelow } from '../utils/stock';
 import React, { useState, useDeferredValue, ChangeEvent, KeyboardEvent } from 'react';
 import { useStoreConfig, useCache, useActivityLog, useSettings } from '../stores';
 import WooCommerceService from '../services/woocommerce';
@@ -417,14 +417,8 @@ const InventoryPage: React.FC = (): React.ReactElement => {
   const stats: InventoryStats = {
     total: products.length,
     inStock: products.filter((p) => p.stock_status === 'instock').length,
-    lowStock: products.filter(
-      (p) =>
-        p.stock_quantity !== null &&
-        p.stock_quantity !== undefined &&
-        isStockAtOrBelow(p.stock_quantity, lowStockThreshold) &&
-        p.stock_quantity > 0
-    ).length,
-    outOfStock: products.filter((p) => p.stock_status === 'outofstock').length,
+    lowStock: products.filter((p) => isLowButInStock(p.stock_quantity, lowStockThreshold)).length,
+    outOfStock: products.filter(isOutOfStock).length,
   };
 
   if (!currentStore) {
@@ -591,18 +585,14 @@ const InventoryPage: React.FC = (): React.ReactElement => {
                   </tr>
                 ) : (
                   visibleRows.map((product) => {
-                    const isLowStock =
-                      product.stock_quantity !== null &&
-                      product.stock_quantity !== undefined &&
-                      isStockAtOrBelow(product.stock_quantity, lowStockThreshold) &&
-                      product.stock_quantity > 0;
-                    const isOutOfStock = product.stock_status === 'outofstock';
+                    const isLowStock = isLowButInStock(product.stock_quantity, lowStockThreshold);
+                    const isOut = isOutOfStock(product);
 
                     return (
                       <tr
                         key={product.id}
                         className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                          isOutOfStock
+                          isOut
                             ? 'bg-red-50 dark:bg-red-900/20'
                             : isLowStock
                               ? 'bg-yellow-50 dark:bg-yellow-900/20'
@@ -674,7 +664,7 @@ const InventoryPage: React.FC = (): React.ReactElement => {
                               className={
                                 isLowStock
                                   ? 'text-yellow-600 dark:text-yellow-400 font-semibold'
-                                  : isOutOfStock
+                                  : isOut
                                     ? 'text-red-600 dark:text-red-400 font-semibold'
                                     : ''
                               }

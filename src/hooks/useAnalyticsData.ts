@@ -1,4 +1,4 @@
-import { isStockAtOrBelow } from '../utils/stock';
+import { isLowButInStock, isOutOfStock } from '../utils/stock';
 import { useState, useCallback } from 'react';
 import WooCommerceService from '../services/woocommerce';
 import { getCurrencyCode } from '../utils/currency';
@@ -183,13 +183,9 @@ export function useAnalyticsData({
         products: {
           total: products.length,
           inStock: products.filter((p) => p.stock_status === 'instock').length,
-          lowStock: products.filter(
-            (p) =>
-              p.stock_quantity !== null &&
-              isStockAtOrBelow(p.stock_quantity, lowStockThreshold) &&
-              p.stock_quantity > 0
-          ).length,
-          outOfStock: products.filter((p) => p.stock_status === 'outofstock').length,
+          lowStock: products.filter((p) => isLowButInStock(p.stock_quantity, lowStockThreshold))
+            .length,
+          outOfStock: products.filter(isOutOfStock).length,
           inventoryValue: products.reduce((s, p) => {
             return s + parseFloat(p.price || '0') * parseInt(String(p.stock_quantity || 0));
           }, 0),
