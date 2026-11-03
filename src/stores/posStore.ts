@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import type { WooCommerceProduct } from '../types';
+import useAppSettings from './appSettingsStore';
 import { computeTotals, fromCents, type Discount, type PricedTotals } from '../utils/posPricing';
 import { summarizePayments, type Payment, type PaymentSummary } from '../utils/payments';
 
@@ -195,7 +196,11 @@ export const usePOSStore = create<POSState>()(
     // Computed values (integer-cent math lives in utils/posPricing)
     getTotals: () => {
       const { cart, discountType, discountValue } = get();
-      return computeTotals(cart, { type: discountType, value: discountValue });
+      return computeTotals(
+        cart,
+        { type: discountType, value: discountValue },
+        useAppSettings.getState().maxDiscountPercent
+      );
     },
 
     getSubtotal: () => fromCents(get().getTotals().subtotalCents),

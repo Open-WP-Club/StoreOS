@@ -9,7 +9,7 @@ interface PricedLine {
   discount?: Discount | null;
 }
 
-/** No discount (line or sale) may exceed this share of the amount it applies to. */
+/** Default cap: no discount (line or sale) may exceed this share of its base. Overridable via the `maxPercent` params (app setting). */
 export const MAX_DISCOUNT_PERCENT = 50;
 
 /** All money math runs in integer cents so totals never drift by a cent. */
@@ -17,10 +17,14 @@ export const toCents = (n: number): number => Math.round((n + Number.EPSILON) * 
 export const fromCents = (c: number): number => c / 100;
 
 /** Discount in cents on a base, clamped to [0, MAX_DISCOUNT_PERCENT of base] (and to the base). */
-export function discountCents(baseCents: number, d?: Discount | null): number {
+export function discountCents(
+  baseCents: number,
+  d?: Discount | null,
+  maxPercent: number = MAX_DISCOUNT_PERCENT
+): number {
   if (!d || !(d.value > 0) || baseCents <= 0) return 0;
   const raw = d.type === 'percent' ? Math.round((baseCents * d.value) / 100) : toCents(d.value);
-  return Math.min(raw, baseCents, Math.floor((baseCents * MAX_DISCOUNT_PERCENT) / 100));
+  return Math.min(raw, baseCents, Math.floor((baseCents * maxPercent) / 100));
 }
 
 export interface PricedTotals {
@@ -32,15 +36,19 @@ export interface PricedTotals {
 }
 
 /** Line discounts first, then the sale-level discount on the remaining net. */
-export function computeTotals(lines: PricedLine[], sale?: Discount | null): PricedTotals {
+export function computeTotals(
+  lines: PricedLine[],
+  sale?: Discount | null,
+  maxPercent: number = MAX_DISCOUNT_PERCENT
+): PricedTotals {
   const priced = lines.map((l) => {
     const grossCents = toCents(l.price) * l.quantity;
-    const d = discountCents(grossCents, l.discount);
+    const d = discountCents(grossCents, l.discount, maxPercent);
     return { grossCents, discountCents: d, netCents: grossCents - d };
   });
   const subtotalCents = priced.reduce((s, l) => s + l.grossCents, 0);
   const lineDiscountCents = priced.reduce((s, l) => s + l.discountCents, 0);
-  const saleDiscountCents = discountCents(subtotalCents - lineDiscountCents, sale);
+  const saleDiscountCents = discountCents(subtotalCents - lineDiscountCents, sale, maxPercent);
   return {
     lines: priced,
     subtotalCents,

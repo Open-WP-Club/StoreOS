@@ -1,6 +1,7 @@
 import { memo, useState, useEffect } from 'react';
 import { Printer, RefreshCw } from 'lucide-react';
 import NumberInput from '../NumberInput';
+import { MAX_DISCOUNT_PERCENT } from '../../utils/posPricing';
 import { t } from '../../utils/i18n';
 import type { Language } from '../../utils/i18n';
 
@@ -14,6 +15,8 @@ interface SettingsPrinterProps {
   setReceiptShowLogo: (v: boolean) => void;
   receiptVatRate: number;
   setReceiptVatRate: (v: number) => void;
+  maxDiscountPercent: number;
+  setMaxDiscountPercent: (v: number) => void;
   openCashDrawer: boolean;
   setOpenCashDrawer: (v: boolean) => void;
 }
@@ -28,6 +31,8 @@ const SettingsPrinter = memo(function SettingsPrinter({
   setReceiptShowLogo,
   receiptVatRate,
   setReceiptVatRate,
+  maxDiscountPercent,
+  setMaxDiscountPercent,
   openCashDrawer,
   setOpenCashDrawer,
 }: SettingsPrinterProps) {
@@ -112,6 +117,19 @@ const SettingsPrinter = memo(function SettingsPrinter({
           {language === 'bg'
             ? 'ДДС % в бележката (включен в цените; 0 скрива реда)'
             : 'Receipt VAT % (included in prices; 0 hides the line)'}
+        </label>
+        <label className="flex items-center gap-3">
+          <NumberInput
+            min={0}
+            max={100}
+            fallback={MAX_DISCOUNT_PERCENT}
+            value={maxDiscountPercent}
+            onValueChange={setMaxDiscountPercent}
+            className="w-20 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white text-center"
+          />
+          {language === 'bg'
+            ? 'POS: максимална отстъпка в % (0-100)'
+            : 'POS: maximum discount % (0-100)'}
         </label>
         <label className="flex items-center gap-3">
           <input

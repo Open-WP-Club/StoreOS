@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, useCallback, useRef, KeyboardEvent, RefObject } from 'react';
 import { useStoreConfig, useCache } from '../stores';
 import WooCommerceService from '../services/woocommerce';
+import useOffline from '../stores/offlineStore';
+import { useToast } from '../contexts/ToastContext';
 import type { WooCommerceProduct } from '../types';
 
 const PRODUCTS_PER_PAGE = 20;
@@ -44,6 +46,7 @@ export function usePOSProducts(
   const getCurrentStore = useStoreConfig((state) => state.getCurrentStore);
   const productsFromCache = useCache((state) => state.cache.products?.data ?? EMPTY_PRODUCTS);
   const currentStore = getCurrentStore();
+  const toast = useToast();
 
   const retryDelaySeconds = currentStore?.loadingSettings?.retryDelaySeconds ?? 60;
   const infiniteScrollEnabled = currentStore?.loadingSettings?.posInfiniteScroll !== false;
@@ -308,18 +311,42 @@ export function usePOSProducts(
     return filtered;
   }, [products, searchTerm, selectedCategory]);
 
-  // Barcode scan handler
+  // Barcode scan handler: cache first, then API lookup by SKU on a miss.
   const handleSearchKeyDown = useCallback(
     (e: KeyboardEvent<HTMLInputElement>): void => {
-      if (e.key === 'Enter' && searchTerm) {
-        const product = products.find((p) => p.sku?.toLowerCase() === searchTerm.toLowerCase());
-        if (product) {
-          addToCart(product);
-          setSearchTerm('');
-        }
+      if (e.key !== 'Enter' || !searchTerm) return;
+      const code = searchTerm.trim();
+      const lower = code.toLowerCase();
+      const product = products.find((p) => p.sku?.toLowerCase() === lower);
+      if (product) {
+        addToCart(product);
+        setSearchTerm('');
+        return;
       }
+      if (!currentStore) return;
+      if (!useOffline.getState().isOnline) {
+        toast.error('Няма връзка - артикул с код "' + code + '" не е в кеша');
+        return;
+      }
+      void (async () => {
+        // WooCommerce's products?sku=X searches both `product` and `product_variation`
+        // post types (WC_REST_Products_Controller::prepare_objects_query), so variations
+        // come back as type "variation" with parent_id. Cached products lack variations.
+        const result = await new WooCommerceService(currentStore).getProducts({ sku: code });
+        if (!result.success) {
+          toast.error('Грешка при търсене на код "' + code + '": ' + result.error);
+          return;
+        }
+        const found = result.data.find((p) => p.sku?.toLowerCase() === lower);
+        if (!found) {
+          toast.error('Не е намерен артикул с код "' + code + '"');
+          return;
+        }
+        addToCart(found);
+        setSearchTerm('');
+      })();
     },
-    [searchTerm, products, addToCart]
+    [searchTerm, products, addToCart, currentStore, toast]
   );
 
   return {
