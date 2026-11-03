@@ -473,4 +473,12 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
   }): Promise<ApiResponse<BatchOperationResponse<WooCommerceProduct>>> {
     return this.batchResource<WooCommerceProduct>('products', ops);
   }
+
+  async batchProductCategories(ops: {
+    create?: ProductCategoryUpdateData[];
+    update?: Array<{ id: number } & ProductCategoryUpdateData>;
+    delete?: number[];
+  }): Promise<ApiResponse<BatchOperationResponse<WooCommerceProductCategory>>> {
+    return this.batchResource<WooCommerceProductCategory>('products/categories', ops);
+  }
 }

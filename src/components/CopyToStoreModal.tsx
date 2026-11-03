@@ -5,7 +5,9 @@ import { useStoreConfig } from '../stores';
 import {
   executeCouponCopy,
   executeProductCopy,
+  fetchAllCategories,
   loadProductTargetContext,
+  planCategories,
   previewProductCopy,
   summarizeCopy,
   type CollisionMode,
@@ -38,8 +40,15 @@ export default function CopyToStoreModal(props: Props): ReactElement {
     setBusy(true);
     setError('');
     const loaded = await loadProductTargetContext(new WooCommerceService(target));
-    if (loaded.ok) setPreview(previewProductCopy(props.items, loaded.ctx));
-    else setError(`Could not read the target store: ${loaded.error}`);
+    const src = await fetchAllCategories(new WooCommerceService(sourceStore));
+    if (loaded.ok) {
+      const plan = planCategories(
+        src.ok ? src.data : [],
+        loaded.categories,
+        props.items.flatMap((p) => p.categories ?? [])
+      );
+      setPreview(previewProductCopy(props.items, loaded.ctx, plan));
+    } else setError(`Could not read the target store: ${loaded.error}`);
     setBusy(false);
   };
 
@@ -60,7 +69,13 @@ export default function CopyToStoreModal(props: Props): ReactElement {
               createMissingCategories: createCats,
               onProgress: setProgress,
             })
-          : await executeCouponCopy({ source, target: tgt, coupons: props.items, collision })
+          : await executeCouponCopy({
+              source,
+              target: tgt,
+              coupons: props.items,
+              collision,
+              createMissingCategories: createCats,
+            })
       );
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Copy failed');
@@ -145,7 +160,7 @@ export default function CopyToStoreModal(props: Props): ReactElement {
             ))}
           </div>
 
-          {kind === 'products' && (
+          {
             <label className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200">
               <input
                 type="checkbox"
@@ -154,7 +169,7 @@ export default function CopyToStoreModal(props: Props): ReactElement {
               />
               Create missing categories (otherwise they are skipped)
             </label>
-          )}
+          }
 
           {kind === 'products' && (
             <div>
@@ -174,10 +189,23 @@ export default function CopyToStoreModal(props: Props): ReactElement {
                   </li>
                   {preview.missingCategories.length > 0 && (
                     <li>
-                      Missing categories ({createCats ? 'will be created' : 'will be skipped'}):{' '}
-                      {preview.missingCategories.map((c) => c.name).join(', ')}
+                      {preview.missingCategories.length} new categories (
+                      {createCats ? 'will be created' : 'will be skipped'}):
+                      <ul className="mt-1 font-mono text-xs">
+                        {preview.newCategories.map((c) => (
+                          <li key={c.slug} style={{ paddingLeft: `${c.depth * 16}px` }}>
+                            {c.depth > 0 ? '└ ' : ''}
+                            {c.name}
+                          </li>
+                        ))}
+                      </ul>
                     </li>
                   )}
+                  {preview.categoryWarnings.map((w) => (
+                    <li key={w} className="text-yellow-700 dark:text-yellow-400">
+                      {w}
+                    </li>
+                  ))}
                   {preview.unmatchedAttributes.length > 0 && (
                     <li className="text-yellow-700 dark:text-yellow-400">
                       Attributes not in target (copied as custom):{' '}
@@ -195,7 +223,8 @@ export default function CopyToStoreModal(props: Props): ReactElement {
           )}
           {kind === 'coupons' && (
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Category restrictions are remapped by slug; product restrictions are not copied.
+              Category restrictions are remapped by slug (missing ones are created with their
+              parents if enabled); product restrictions are not copied.
             </p>
           )}
           {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}

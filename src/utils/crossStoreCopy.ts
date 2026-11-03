@@ -91,6 +91,18 @@ export function buildProductPayload(source: Product, ctx: TargetContext): Produc
     warnings.push('Grouped product children are not copied');
   }
   if (source.downloads?.length) warnings.push('Downloadable files are not copied');
+  const links = (
+    [
+      ['related', source.related_ids],
+      ['upsell', source.upsell_ids],
+      ['cross-sell', source.cross_sell_ids],
+    ] as const
+  ).filter(([, ids]) => ids?.length);
+  if (links.length) {
+    warnings.push(
+      `${links.map(([n]) => n).join('/')} products are not copied (product ids differ per store)`
+    );
+  }
 
   const payload = {
     name: source.name,
@@ -152,17 +164,185 @@ export function buildVariationPayload(v: ProductVariation): VariationCreateData 
   } as VariationCreateData;
 }
 
+export interface PlannedCategory {
+  srcId: number;
+  /** source id of the parent that is also being created (undefined: top-level or existing parent) */
+  parentSrcId?: number;
+  /** target id of an already-existing parent (0 = top-level) */
+  parentTargetId: number;
+  name: string;
+  slug: string;
+  depth: number;
+}
+
+export interface CategoryPlan {
+  /** Categories to create, parents always before children. */
+  toCreate: PlannedCategory[];
+  /** source category id -> target id for categories that already exist in the target */
+  matched: Map<number, number>;
+  warnings: string[];
+}
+
+type CatLike = Pick<WooCommerceProductCategory, 'id' | 'name' | 'slug' | 'parent'>;
+
+/**
+ * Match needed source categories (plus ancestors) to the target by slug, falling back to
+ * name under the same mapped parent. Missing ones are planned parents-first.
+ */
+export function planCategories(
+  sourceCats: CatLike[],
+  targetCats: CatLike[],
+  needed: Array<{ id: number; name: string; slug: string }>
+): CategoryPlan {
+  const byId = new Map(sourceCats.map((c) => [c.id, c]));
+  const tSlug = new Map(targetCats.map((c) => [norm(c.slug), c.id]));
+  const tNameParent = new Map(targetCats.map((c) => [`${c.parent}|${norm(c.name)}`, c.id]));
+  const plan: CategoryPlan = { toCreate: [], matched: new Map(), warnings: [] };
+  const planned = new Map<number, PlannedCategory>();
+  const visiting = new Set<number>();
+
+  const resolve = (src: CatLike): { targetId?: number; planned?: PlannedCategory } => {
+    const done = plan.matched.get(src.id);
+    if (done !== undefined) return { targetId: done };
+    const was = planned.get(src.id);
+    if (was) return { planned: was };
+
+    visiting.add(src.id);
+    let parent: { targetId?: number; planned?: PlannedCategory } = { targetId: 0 };
+    if (src.parent) {
+      const p = byId.get(src.parent);
+      if (!p) {
+        plan.warnings.push(
+          `Category "${src.name}": parent #${src.parent} is not in the source list; created top-level`
+        );
+      } else if (visiting.has(p.id)) {
+        plan.warnings.push(`Category "${src.name}": parent cycle detected; created top-level`);
+      } else {
+        parent = resolve(p);
+      }
+    }
+    visiting.delete(src.id);
+
+    const parentTargetId = parent.targetId ?? 0;
+    const existing =
+      tSlug.get(norm(src.slug)) ??
+      (parent.planned ? undefined : tNameParent.get(`${parentTargetId}|${norm(src.name)}`));
+    if (existing !== undefined) {
+      plan.matched.set(src.id, existing);
+      return { targetId: existing };
+    }
+    const entry: PlannedCategory = {
+      srcId: src.id,
+      parentSrcId: parent.planned?.srcId,
+      parentTargetId,
+      name: src.name,
+      slug: src.slug,
+      depth: parent.planned ? parent.planned.depth + 1 : 0,
+    };
+    planned.set(src.id, entry);
+    plan.toCreate.push(entry);
+    return { planned: entry };
+  };
+
+  for (const n of needed) {
+    resolve(byId.get(n.id) ?? { id: n.id, name: n.name, slug: n.slug, parent: 0 });
+  }
+  return plan;
+}
+
+/** Fetch every category (paged) so >100 categories do not truncate the hierarchy. */
+export async function fetchAllCategories(
+  svc: WooCommerceService
+): Promise<{ ok: true; data: WooCommerceProductCategory[] } | { ok: false; error: string }> {
+  const all: WooCommerceProductCategory[] = [];
+  for (let page = 1; page <= 50; page++) {
+    const r = await svc.getProductCategories({ per_page: 100, page });
+    if (!r.success) return { ok: false, error: r.error };
+    all.push(...r.data);
+    if (r.data.length < 100) break;
+  }
+  return { ok: true, data: all };
+}
+
+/**
+ * Create the planned categories level by level (chunked batches), then record source slug ->
+ * target id in ctx.categoryIdBySlug for payload remapping. Failures become warnings; children
+ * of a failed parent are not created.
+ */
+export async function applyCategoryPlan(
+  plan: CategoryPlan,
+  sourceCats: CatLike[],
+  target: WooCommerceService,
+  ctx: TargetContext,
+  create: boolean,
+  messages: string[]
+): Promise<void> {
+  const slugOf = new Map(sourceCats.map((c) => [c.id, c.slug]));
+  const idOf = new Map(plan.matched);
+  plan.matched.forEach((tid, sid) => {
+    const s = slugOf.get(sid);
+    if (s) ctx.categoryIdBySlug.set(norm(s), tid);
+  });
+  if (!create) return;
+
+  let failed = 0;
+  const maxDepth = Math.max(-1, ...plan.toCreate.map((c) => c.depth));
+  for (let d = 0; d <= maxDepth; d++) {
+    const level: PlannedCategory[] = [];
+    for (const c of plan.toCreate.filter((x) => x.depth === d)) {
+      if (c.parentSrcId !== undefined && !idOf.has(c.parentSrcId)) {
+        failed++;
+        messages.push(`Category "${c.name}" not created: its parent failed`);
+      } else level.push(c);
+    }
+    const res = emptyResult(level.length);
+    const ids: number[] = [];
+    await runBatches(
+      level.map((c) => ({
+        name: c.name,
+        slug: c.slug,
+        parent: c.parentSrcId !== undefined ? (idOf.get(c.parentSrcId) ?? 0) : c.parentTargetId,
+      })),
+      [],
+      (b) => target.batchProductCategories(b as never),
+      res,
+      (got) => ids.push(...got)
+    );
+    failed += res.failed;
+    messages.push(...res.messages.map((m) => `Categories: ${m}`));
+    level.forEach((c, i) => {
+      const id = ids[i];
+      if (id) {
+        idOf.set(c.srcId, id);
+        ctx.categoryIdBySlug.set(norm(c.slug), id);
+      }
+    });
+  }
+  if (failed) {
+    messages.push(
+      `${failed} of ${plan.toCreate.length} categories could not be created; affected products keep their other categories`
+    );
+  }
+}
+
 export interface ProductCopyPreview {
   willCreate: Product[];
   collisions: Product[];
   /** Categories that do not exist in the target (created first unless disabled). */
   missingCategories: Array<{ slug: string; name: string }>;
+  /** Planned new categories in creation order (parents first); depth is the indent level. */
+  newCategories: Array<{ slug: string; name: string; depth: number }>;
+  categoryWarnings: string[];
   /** Global attributes missing in the target (copied as custom attributes). */
   unmatchedAttributes: string[];
   variableCount: number;
 }
 
-export function previewProductCopy(products: Product[], ctx: TargetContext): ProductCopyPreview {
+export function previewProductCopy(
+  products: Product[],
+  ctx: TargetContext,
+  plan?: CategoryPlan
+): ProductCopyPreview {
   const missing = new Map<string, string>();
   const attrs = new Set<string>();
   const willCreate: Product[] = [];
@@ -180,7 +360,11 @@ export function previewProductCopy(products: Product[], ctx: TargetContext): Pro
   return {
     willCreate,
     collisions,
-    missingCategories: [...missing].map(([slug, name]) => ({ slug, name })),
+    missingCategories: plan
+      ? plan.toCreate.map((c) => ({ slug: c.slug, name: c.name }))
+      : [...missing].map(([slug, name]) => ({ slug, name })),
+    newCategories: plan?.toCreate.map(({ slug, name, depth }) => ({ slug, name, depth })) ?? [],
+    categoryWarnings: plan?.warnings ?? [],
     unmatchedAttributes: [...attrs],
     variableCount: products.filter((p) => p.type === 'variable').length,
   };
@@ -302,17 +486,21 @@ export interface ProductCopyOptions {
 /** Read the target store lookups needed for preview/execution. */
 export async function loadProductTargetContext(
   target: WooCommerceService
-): Promise<{ ok: true; ctx: TargetContext } | { ok: false; error: string }> {
+): Promise<
+  | { ok: true; ctx: TargetContext; categories: WooCommerceProductCategory[] }
+  | { ok: false; error: string }
+> {
   const [cats, attrs, prods] = await Promise.all([
-    target.getProductCategories({ per_page: 100 }),
+    fetchAllCategories(target),
     target.getProductAttributes(),
     target.getAllProducts({ per_page: 100 }),
   ]);
-  if (!cats.success) return { ok: false, error: cats.error };
+  if (!cats.ok) return { ok: false, error: cats.error };
   if (!attrs.success) return { ok: false, error: attrs.error };
   if (!prods.success) return { ok: false, error: prods.error };
   return {
     ok: true,
+    categories: cats.data,
     ctx: buildTargetContext({
       categories: cats.data,
       attributes: attrs.data,
@@ -334,13 +522,25 @@ export async function executeProductCopy(opts: ProductCopyOptions): Promise<Copy
   }
   const ctx = loaded.ctx;
 
-  if (opts.createMissingCategories) {
-    for (const m of previewProductCopy(products, ctx).missingCategories) {
-      const r = await target.createProductCategory({ name: m.name, slug: m.slug });
-      if (r.success) ctx.categoryIdBySlug.set(m.slug, r.data.id);
-      else result.messages.push(`Could not create category "${m.name}": ${r.error}`);
-    }
+  const srcCats = await fetchAllCategories(source);
+  if (!srcCats.ok) {
+    result.messages.push(`Could not read source categories (${srcCats.error}); hierarchy not kept`);
   }
+  const sourceCats = srcCats.ok ? srcCats.data : [];
+  const plan = planCategories(
+    sourceCats,
+    loaded.categories,
+    products.flatMap((p) => p.categories ?? [])
+  );
+  result.messages.push(...plan.warnings);
+  await applyCategoryPlan(
+    plan,
+    sourceCats,
+    target,
+    ctx,
+    opts.createMissingCategories,
+    result.messages
+  );
 
   const creates: Array<{ src: Product; payload: ProductUpdateData }> = [];
   const updates: Array<{ src: Product; payload: ProductUpdateData & { id: number } }> = [];
@@ -398,23 +598,45 @@ export interface CouponCopyOptions {
   target: WooCommerceService;
   coupons: WooCommerceCoupon[];
   collision: CollisionMode;
+  /** Create restriction categories missing in the target (hierarchy kept). Default false. */
+  createMissingCategories?: boolean;
 }
 
 export async function executeCouponCopy(opts: CouponCopyOptions): Promise<CopyResult> {
   const { source, target, coupons, collision } = opts;
   const result = emptyResult(coupons.length);
   const [sCats, tCats, tCoupons] = await Promise.all([
-    source.getProductCategories({ per_page: 100 }),
-    target.getProductCategories({ per_page: 100 }),
+    fetchAllCategories(source),
+    fetchAllCategories(target),
     target.getAllCoupons({ per_page: 100 }),
   ]);
-  if (!sCats.success || !tCats.success || !tCoupons.success) {
+  if (!sCats.ok || !tCats.ok || !tCoupons.success) {
     result.failed = coupons.length;
     result.messages.push('Could not read categories or coupons from the stores');
     return result;
   }
   const ctx = buildTargetContext({ categories: tCats.data, coupons: tCoupons.data });
   const slugById = new Map(sCats.data.map((c) => [c.id, c.slug]));
+  const wanted = new Set(
+    coupons.flatMap((c) => [
+      ...(c.product_categories ?? []),
+      ...(c.excluded_product_categories ?? []),
+    ])
+  );
+  const plan = planCategories(
+    sCats.data,
+    tCats.data,
+    [...wanted].filter((id) => slugById.has(id)).map((id) => ({ id, name: '', slug: '' }))
+  );
+  result.messages.push(...plan.warnings);
+  await applyCategoryPlan(
+    plan,
+    sCats.data,
+    target,
+    ctx,
+    opts.createMissingCategories === true,
+    result.messages
+  );
 
   const creates: CouponUpdateData[] = [];
   const updates: Array<CouponUpdateData & { id: number }> = [];

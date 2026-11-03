@@ -10,6 +10,8 @@ import {
   emptyResult,
   summarizeCopy,
   executeCouponCopy,
+  executeProductCopy,
+  planCategories,
 } from '../crossStoreCopy';
 import type { Product, WooCommerceCoupon, ProductVariation } from '../../types';
 
@@ -199,5 +201,168 @@ describe('executeCouponCopy', () => {
     });
     expect(r).toMatchObject({ skipped: 1, created: 1, failed: 0 });
     expect(batchCoupons.mock.calls[0]?.[0].create).toHaveLength(1);
+  });
+});
+
+const cat = (id: number, name: string, parent = 0, slug = name.toLowerCase()) => ({
+  id,
+  name,
+  slug,
+  parent,
+});
+
+describe('planCategories', () => {
+  const src = [cat(1, 'A'), cat(2, 'B', 1), cat(3, 'C', 2), cat(9, 'Unused')];
+  const need = [{ id: 3, name: 'C', slug: 'c' }];
+
+  it('creates only used categories plus ancestors, parents first', () => {
+    const p = planCategories(src, [], need);
+    expect(p.toCreate.map((c) => [c.name, c.depth])).toEqual([
+      ['A', 0],
+      ['B', 1],
+      ['C', 2],
+    ]);
+  });
+  it('maps onto an existing parent and keeps it as parentTargetId', () => {
+    const p = planCategories(src, [cat(50, 'A')], need);
+    expect(p.matched.get(1)).toBe(50);
+    expect(p.toCreate.map((c) => c.name)).toEqual(['B', 'C']);
+    expect(p.toCreate[0]).toMatchObject({ parentTargetId: 50, depth: 0 });
+    expect(p.toCreate[1]?.parentSrcId).toBe(2);
+  });
+  it('falls back to name under the same parent', () => {
+    const p = planCategories(src, [cat(50, 'A', 0, 'a-x'), cat(51, 'B', 50, 'b-x')], need);
+    expect(p.matched.get(2)).toBe(51);
+    expect(p.toCreate.map((c) => c.name)).toEqual(['C']);
+  });
+  it('makes orphans top-level with a warning and survives cycles', () => {
+    const orphan = planCategories([cat(5, 'O', 77)], [], [{ id: 5, name: 'O', slug: 'o' }]);
+    expect(orphan.toCreate[0]).toMatchObject({ parentTargetId: 0, depth: 0 });
+    expect(orphan.warnings).toHaveLength(1);
+    const cyc = planCategories(
+      [cat(1, 'X', 2), cat(2, 'Y', 1)],
+      [],
+      [{ id: 1, name: 'X', slug: 'x' }]
+    );
+    expect(cyc.toCreate).toHaveLength(2);
+    expect(cyc.warnings).toHaveLength(1);
+  });
+});
+
+describe('executeProductCopy', () => {
+  const ok = <T>(data: T) => Promise.resolve({ success: true as const, data });
+  const mk = (n: number, over: Record<string, unknown> = {}) =>
+    prod({
+      id: n,
+      sku: `K${n}`,
+      name: `P${n}`,
+      categories: [{ id: 3, name: 'C', slug: 'c' }],
+      ...over,
+    });
+  const setup = (batchProducts: ReturnType<typeof vi.fn>) => {
+    const batchProductCategories = vi
+      .fn()
+      .mockImplementation((b: { create: unknown[] }) =>
+        ok({ create: b.create.map((_, i) => ({ id: 100 + i })) })
+      );
+    const batchProductVariations = vi
+      .fn()
+      .mockResolvedValue({ success: true, data: { create: [{ id: 1 }] } });
+    const target = {
+      getProductCategories: () => ok([]),
+      getProductAttributes: () => ok([]),
+      getAllProducts: () => ok([{ id: 99, sku: 'K2' }]),
+      batchProducts,
+      batchProductCategories,
+      batchProductVariations,
+    };
+    const source = {
+      getProductCategories: () => ok([cat(1, 'A'), cat(2, 'B', 1), cat(3, 'C', 2)]),
+      getProductVariations: () => ok([{ id: 1, attributes: [], dimensions: {} }]),
+    };
+    return { source, target, batchProductCategories, batchProductVariations };
+  };
+
+  it('creates hierarchy, skips collisions, chunks creates, maps parent ids', async () => {
+    const batchProducts = vi
+      .fn()
+      .mockImplementation((b: { create?: unknown[] }) =>
+        ok({ create: (b.create ?? []).map((_, i) => ({ id: 500 + i })) })
+      );
+    const s = setup(batchProducts);
+    const products = Array.from({ length: 28 }, (_, i) => mk(i + 1));
+    const r = await executeProductCopy({
+      source: s.source as never,
+      target: s.target as never,
+      products,
+      collision: 'skip',
+      createMissingCategories: true,
+    });
+    expect(r).toMatchObject({ created: 27, skipped: 1, failed: 0 });
+    expect(batchProducts).toHaveBeenCalledTimes(2);
+    expect(s.batchProductCategories).toHaveBeenCalledTimes(3);
+    const parents = s.batchProductCategories.mock.calls.map((c) => c[0].create[0].parent);
+    expect(parents).toEqual([0, 100, 100]);
+    expect(batchProducts.mock.calls[0]?.[0].create[0].categories).toEqual([{ id: 100 }]);
+  });
+
+  it('updates collisions, variations only for new variable products, counts failures', async () => {
+    const batchProducts = vi
+      .fn()
+      .mockResolvedValueOnce({
+        success: true,
+        data: { create: [{ id: 700 }, { id: 0, error: {} }] },
+      })
+      .mockResolvedValueOnce({ success: true, data: { update: [{ id: 99 }] } });
+    const s = setup(batchProducts);
+    const r = await executeProductCopy({
+      source: s.source as never,
+      target: s.target as never,
+      products: [
+        mk(1, { type: 'variable' }),
+        mk(3, { type: 'variable' }),
+        mk(2, { type: 'variable' }),
+      ],
+      collision: 'update',
+      createMissingCategories: false,
+    });
+    expect(r).toMatchObject({ created: 1, updated: 1, failed: 1 });
+    expect(s.batchProductCategories).not.toHaveBeenCalled();
+    expect(s.batchProductVariations).toHaveBeenCalledTimes(1);
+    expect(s.batchProductVariations.mock.calls[0]?.[0]).toBe(700);
+    expect(r.messages.some((m) => m.includes('not synced'))).toBe(true);
+  });
+
+  it('keeps remaining categories when one category fails to create', async () => {
+    const batchProducts = vi.fn().mockImplementation(() => ok({ create: [{ id: 1 }] }));
+    const s = setup(batchProducts);
+    s.target.batchProductCategories = vi
+      .fn()
+      .mockResolvedValueOnce({ success: true, data: { create: [{ id: 100 }] } })
+      .mockResolvedValue({ success: true, data: { create: [{ id: 0, error: { code: 'x' } }] } });
+    const r = await executeProductCopy({
+      source: s.source as never,
+      target: s.target as never,
+      products: [
+        mk(1, {
+          categories: [
+            { id: 3, name: 'C', slug: 'c' },
+            { id: 1, name: 'A', slug: 'a' },
+          ],
+        }),
+      ],
+      collision: 'skip',
+      createMissingCategories: true,
+    });
+    expect(batchProducts.mock.calls[0]?.[0].create[0].categories).toEqual([{ id: 100 }]);
+    expect(r.messages.some((m) => m.includes('2 of 3 categories could not be created'))).toBe(true);
+    expect(r.failed).toBe(0);
+  });
+});
+
+describe('related links warning', () => {
+  it('warns when upsell/cross-sell ids exist', () => {
+    const { warnings } = buildProductPayload(prod({ upsell_ids: [1], cross_sell_ids: [2] }), ctx);
+    expect(warnings.some((w) => w.startsWith('upsell/cross-sell'))).toBe(true);
   });
 });
