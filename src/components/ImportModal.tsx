@@ -190,10 +190,16 @@ export default function ImportModal({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-700 text-left text-gray-500 dark:text-gray-400">
-                  <th className="py-2 pr-3">Line</th>
-                  <th className="pr-3">SKU</th>
-                  <th className="pr-3">Action</th>
-                  <th>Changes</th>
+                  <th scope="col" className="py-2 pr-3">
+                    Line
+                  </th>
+                  <th scope="col" className="pr-3">
+                    SKU
+                  </th>
+                  <th scope="col" className="pr-3">
+                    Action
+                  </th>
+                  <th scope="col">Changes</th>
                 </tr>
               </thead>
               <tbody>

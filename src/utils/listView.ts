@@ -55,11 +55,11 @@ export function sortItems<T>(
   const get = sort && getters[sort.key];
   if (!sort || !get) return items;
   const m = sort.dir === 'asc' ? 1 : -1;
-  return [...items].sort((a, b) => {
-    const x = get(a);
-    const y = get(b);
-    return x < y ? -m : x > y ? m : 0;
-  });
+  // Decorate-sort-undecorate: getters (Date.parse, toLowerCase, template strings) run once per
+  // item instead of ~2 * n log n times.
+  const keyed = items.map((item) => ({ item, k: get(item) }));
+  keyed.sort((a, b) => (a.k < b.k ? -m : a.k > b.k ? m : 0));
+  return keyed.map((e) => e.item);
 }
 
 /** Coerce untrusted (persisted) sort to a valid one for this list, else default (null). */

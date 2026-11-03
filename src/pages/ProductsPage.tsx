@@ -160,7 +160,7 @@ function ProductsPage(): React.ReactElement {
                 className={`bg-gray-50 dark:bg-gray-700${virtualized ? ' sticky top-0 z-10' : ''}`}
               >
                 <tr>
-                  <th className="px-3 py-3 text-left w-10">
+                  <th scope="col" className="px-3 py-3 text-left w-10">
                     <input
                       type="checkbox"
                       checked={
@@ -181,7 +181,10 @@ function ProductsPage(): React.ReactElement {
                     onSort={filtersHook.setSort}
                   />
                   {show('sku') && (
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th
+                      scope="col"
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                    >
                       SKU
                     </th>
                   )}
@@ -194,7 +197,10 @@ function ProductsPage(): React.ReactElement {
                     />
                   )}
                   {show('stockStatus') && (
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th
+                      scope="col"
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                    >
                       Stock Status
                     </th>
                   )}
@@ -207,7 +213,10 @@ function ProductsPage(): React.ReactElement {
                       className="w-24"
                     />
                   )}
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                  >
                     Actions
                   </th>
                 </tr>

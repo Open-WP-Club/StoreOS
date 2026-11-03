@@ -81,17 +81,27 @@ const BulkEditPreview: React.FC<BulkEditPreviewProps> = ({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700 text-left text-gray-500 dark:text-gray-400">
-                <th className="pb-2 font-medium">Product</th>
+                <th scope="col" className="pb-2 font-medium">
+                  Product
+                </th>
                 {changePrice && (
                   <>
-                    <th className="pb-2 font-medium px-3">Regular Price</th>
-                    <th className="pb-2 font-medium px-3">→ New</th>
+                    <th scope="col" className="pb-2 font-medium px-3">
+                      Regular Price
+                    </th>
+                    <th scope="col" className="pb-2 font-medium px-3">
+                      → New
+                    </th>
                   </>
                 )}
                 {changeSalePrice && (
                   <>
-                    <th className="pb-2 font-medium px-3">Sale Price</th>
-                    <th className="pb-2 font-medium px-3">→ New</th>
+                    <th scope="col" className="pb-2 font-medium px-3">
+                      Sale Price
+                    </th>
+                    <th scope="col" className="pb-2 font-medium px-3">
+                      → New
+                    </th>
                   </>
                 )}
               </tr>

@@ -45,3 +45,41 @@ describe('Modal', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 });
+
+describe('Modal focus management', () => {
+  const Wrapper = ({ open }: { open: boolean }) => (
+    <div>
+      <button>opener</button>
+      {open && (
+        <Modal onClose={() => {}} aria-label="Focus">
+          <button>first</button>
+          <button>last</button>
+        </Modal>
+      )}
+    </div>
+  );
+
+  it('moves focus into the dialog on open', () => {
+    render(<Wrapper open />);
+    expect(screen.getByRole('dialog')).toHaveFocus();
+  });
+
+  it('cycles Tab from last to first and Shift+Tab from first to last', () => {
+    render(<Wrapper open />);
+    const dialog = screen.getByRole('dialog');
+    screen.getByText('last').focus();
+    fireEvent.keyDown(dialog, { key: 'Tab' });
+    expect(screen.getByText('first')).toHaveFocus();
+    fireEvent.keyDown(dialog, { key: 'Tab', shiftKey: true });
+    expect(screen.getByText('last')).toHaveFocus();
+  });
+
+  it('restores focus to the opener on close', () => {
+    const { rerender } = render(<Wrapper open={false} />);
+    screen.getByText('opener').focus();
+    rerender(<Wrapper open />);
+    expect(screen.getByRole('dialog')).toHaveFocus();
+    rerender(<Wrapper open={false} />);
+    expect(screen.getByText('opener')).toHaveFocus();
+  });
+});

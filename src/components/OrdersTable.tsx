@@ -53,7 +53,9 @@ function OrdersTable({
     onSort ? (
       <SortableTh label={label} sortKey={key} sort={sort} onSort={onSort} />
     ) : (
-      <th className={TH}>{label}</th>
+      <th scope="col" className={TH}>
+        {label}
+      </th>
     );
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-colors">
@@ -66,7 +68,7 @@ function OrdersTable({
             className={`bg-gray-50 dark:bg-gray-700${virtualized ? ' sticky top-0 z-10' : ''}`}
           >
             <tr>
-              <th className="px-3 py-3 text-left w-10">
+              <th scope="col" className="px-3 py-3 text-left w-10">
                 <input
                   type="checkbox"
                   checked={
@@ -76,14 +78,24 @@ function OrdersTable({
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th
+                scope="col"
+                className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+              >
                 Order ID
               </th>
-              {show('customer') && <th className={TH}>Customer</th>}
+              {show('customer') && (
+                <th scope="col" className={TH}>
+                  Customer
+                </th>
+              )}
               {show('date') && sortTh('Date', 'date')}
               {show('status') && sortTh('Status', 'status')}
               {show('total') && sortTh('Total', 'total')}
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              <th
+                scope="col"
+                className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+              >
                 Actions
               </th>
             </tr>

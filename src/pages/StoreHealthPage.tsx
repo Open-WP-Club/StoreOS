@@ -454,16 +454,28 @@ function StoreHealthPage(): ReactElement | null {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-gray-50 dark:bg-gray-700/50">
-                    <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                    <th
+                      scope="col"
+                      className="px-5 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase"
+                    >
                       Name
                     </th>
-                    <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                    <th
+                      scope="col"
+                      className="px-5 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase"
+                    >
                       Version
                     </th>
-                    <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                    <th
+                      scope="col"
+                      className="px-5 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase"
+                    >
                       Author
                     </th>
-                    <th className="px-5 py-2.5 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                    <th
+                      scope="col"
+                      className="px-5 py-2.5 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase"
+                    >
                       Network
                     </th>
                   </tr>

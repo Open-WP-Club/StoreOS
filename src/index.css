@@ -145,9 +145,9 @@ textarea {
 input:focus,
 select:focus,
 textarea:focus {
-  outline: none;
-  ring: 2px;
-  ring-color: rgb(59, 130, 246);
+  /* was invalid CSS (`ring`) with outline removed: inputs had no focus indicator */
+  outline: 2px solid rgb(59, 130, 246);
+  outline-offset: -1px;
 }
 
 /* Custom select dropdown arrow positioning */
@@ -185,6 +185,18 @@ select {
 
 .animate-slide-in-right {
   animation: slide-in-right 0.3s ease-out;
+}
+
+/* Respect the OS "reduce motion" setting */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Print styles */

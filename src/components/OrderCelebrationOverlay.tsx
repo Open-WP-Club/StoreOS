@@ -21,6 +21,7 @@ export default function OrderCelebrationOverlay(): React.ReactElement | null {
         void confetti({
           ...opts,
           origin: { y: 0.7 },
+          disableForReducedMotion: true,
           particleCount: Math.floor(200 * particleRatio),
         });
       };

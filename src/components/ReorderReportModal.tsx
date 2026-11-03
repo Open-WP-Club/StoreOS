@@ -115,7 +115,7 @@ const ReorderReportModal: React.FC<ReorderReportModalProps> = ({
             <thead>
               <tr className="text-left text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
                 {columns.map((c) => (
-                  <th key={c.key} className="py-2 pr-3 font-medium">
+                  <th scope="col" key={c.key} className="py-2 pr-3 font-medium">
                     {c.label}
                   </th>
                 ))}

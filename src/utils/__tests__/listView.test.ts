@@ -71,3 +71,18 @@ describe('listView columns/migration', () => {
     expect(normalizeHidden(['date', 'x'], ['date'])).toEqual(['date']);
   });
 });
+
+describe('sortItems performance contract', () => {
+  it('evaluates the getter once per item and stays stable', () => {
+    const items = Array.from({ length: 2000 }, (_, i) => ({ id: i, k: i % 7 }));
+    const get = vi.fn((x: { id: number; k: number }) => x.k);
+    const out = sortItems(items, { key: 'k', dir: 'asc' }, { k: get });
+    expect(get).toHaveBeenCalledTimes(items.length);
+    for (let i = 1; i < out.length; i++) {
+      const a = out[i - 1]!;
+      const b = out[i]!;
+      expect(a.k < b.k || (a.k === b.k && a.id < b.id)).toBe(true);
+    }
+    expect(items[0]!.id).toBe(0);
+  });
+});

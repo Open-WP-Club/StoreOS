@@ -97,10 +97,18 @@ export function RefundModal({
           <table className="min-w-full text-sm mb-4">
             <thead>
               <tr className="text-left text-xs uppercase text-gray-500 dark:text-gray-400">
-                <th className="py-2">Item</th>
-                <th className="py-2">Left</th>
-                <th className="py-2">Qty</th>
-                <th className="py-2">Amount</th>
+                <th scope="col" className="py-2">
+                  Item
+                </th>
+                <th scope="col" className="py-2">
+                  Left
+                </th>
+                <th scope="col" className="py-2">
+                  Qty
+                </th>
+                <th scope="col" className="py-2">
+                  Amount
+                </th>
               </tr>
             </thead>
             <tbody>
