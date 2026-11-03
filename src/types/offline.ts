@@ -25,6 +25,7 @@ export type PendingOperationType =
   | 'delete_tax_rate'
   | 'create_tax_class'
   | 'delete_tax_class'
+  | 'update_customer'
   | 'update_review'
   | 'delete_review'
   | 'batch_reviews'

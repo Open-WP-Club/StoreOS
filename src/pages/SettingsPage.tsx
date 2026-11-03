@@ -29,6 +29,8 @@ export default function SettingsPage(): ReactElement {
     setReceiptVatRate,
     openCashDrawer,
     setOpenCashDrawer,
+    syncCustomerProfile,
+    setSyncCustomerProfile,
     pinEnabled,
     pinCode,
     pinTimeout,
@@ -100,6 +102,22 @@ export default function SettingsPage(): ReactElement {
           openCashDrawer={openCashDrawer}
           setOpenCashDrawer={setOpenCashDrawer}
         />
+
+        <section className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+          <label className="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300">
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={syncCustomerProfile}
+              onChange={(e) => setSyncCustomerProfile(e.target.checked)}
+            />
+            <span>
+              {language === 'bg'
+                ? 'Синхронизирай тагове и бележки на клиенти с WooCommerce (meta_data). Изключено = остават само локално.'
+                : 'Sync customer tags and notes to WooCommerce (customer meta_data). Off = stays local only.'}
+            </span>
+          </label>
+        </section>
 
         <SettingsNotifications
           language={language}

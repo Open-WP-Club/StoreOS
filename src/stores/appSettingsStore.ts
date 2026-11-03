@@ -26,6 +26,9 @@ export interface AppSettingsState {
   receiptVatRate: number; // Receipt: VAT % included in prices; 0 hides the VAT line
   openCashDrawer: boolean; // POS: ESC/POS kick with the receipt (needs a named printer)
 
+  // Customers
+  syncCustomerProfile: boolean; // Push/pull local tags+notes via WooCommerce customer meta_data (default OFF)
+
   // PIN Lock
   pinEnabled: boolean;
   pinCode: string | null; // Stored as hashed value
@@ -50,6 +53,8 @@ interface AppSettingsActions {
   setReceiptVatRate: (v: number) => void;
   setReceiptShowLogo: (v: boolean) => void;
   setOpenCashDrawer: (v: boolean) => void;
+
+  setSyncCustomerProfile: (v: boolean) => void;
 
   // PIN Lock
   setPinEnabled: (enabled: boolean) => void;
@@ -104,6 +109,7 @@ const useAppSettings = create<AppSettingsStore>()(
       receiptShowLogo: false,
       receiptVatRate: 20,
       openCashDrawer: false,
+      syncCustomerProfile: false,
       pinEnabled: false,
       pinCode: null,
       pinLength: 4,
@@ -144,6 +150,7 @@ const useAppSettings = create<AppSettingsStore>()(
       setReceiptVatRate: (v: number) => set({ receiptVatRate: v }),
       setReceiptShowLogo: (v: boolean) => set({ receiptShowLogo: v }),
       setOpenCashDrawer: (v: boolean) => set({ openCashDrawer: v }),
+      setSyncCustomerProfile: (v: boolean) => set({ syncCustomerProfile: v }),
 
       // PIN Lock
       setPinEnabled: (enabled: boolean) => {
@@ -227,6 +234,7 @@ const useAppSettings = create<AppSettingsStore>()(
           receiptShowLogo: false,
           receiptVatRate: 20,
           openCashDrawer: false,
+          syncCustomerProfile: false,
           pinEnabled: false,
           pinCode: null,
           pinLength: 4,
@@ -248,6 +256,7 @@ const useAppSettings = create<AppSettingsStore>()(
         receiptShowLogo: state.receiptShowLogo,
         receiptVatRate: state.receiptVatRate,
         openCashDrawer: state.openCashDrawer,
+        syncCustomerProfile: state.syncCustomerProfile,
         pinEnabled: state.pinEnabled,
         pinCode: state.pinCode,
         pinLength: state.pinLength,

@@ -48,7 +48,11 @@ export type {
  * OPTIMIZED: Uses single-row DP and early termination
  * Returns Infinity if distance exceeds maxDistance (for performance)
  */
-function boundedLevenshteinDistance(str1: string, str2: string, maxDistance: number): number {
+export function boundedLevenshteinDistance(
+  str1: string,
+  str2: string,
+  maxDistance: number
+): number {
   let s1 = str1;
   let s2 = str2;
 
