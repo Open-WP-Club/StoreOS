@@ -43,7 +43,7 @@ StoreOS - Built for WooCommerce is an Electron-based desktop application for man
 
 ### Development & Testing Tools
 
-- **Vitest 5.x** - Test runner (`jsdom` environment), **not Jest** — 160 test files, ~2,203 tests
+- **Vitest 5.x** - Test runner (`jsdom` environment), **not Jest** — 178 test files, ~2,203 tests
 - **@testing-library/react** + **jest-dom** matchers + **user-event**
 - **ESLint 9.x** - Flat config (`eslint.config.js`, not `.eslintrc.json`), includes `eslint-plugin-react-compiler`
 - **Prettier** - Code formatting
