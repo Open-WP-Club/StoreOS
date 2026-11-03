@@ -103,10 +103,12 @@ Mock the HTTP layer with `vi.mock`, then assert on the `{ success, data, error }
 ### Async, mocks and timers
 
 ```typescript
-await screen.findByText('Loaded');                                  // or: await waitFor(() => expect(...))
+await screen.findByText('Loaded'); // or: await waitFor(() => expect(...))
 const fn = vi.fn().mockResolvedValue({ success: true, data: [] });
-vi.mock('../api', () => ({ fetchData: vi.fn() }));                  // set return values in beforeEach
-vi.useFakeTimers(); vi.advanceTimersByTime(1000); vi.useRealTimers();
+vi.mock('../api', () => ({ fetchData: vi.fn() })); // set return values in beforeEach
+vi.useFakeTimers();
+vi.advanceTimersByTime(1000);
+vi.useRealTimers();
 ```
 
 IndexedDB code can use `fake-indexeddb` (see `indexedDBCache.fake.test.ts`).
