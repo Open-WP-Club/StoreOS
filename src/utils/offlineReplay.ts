@@ -9,6 +9,7 @@ import {
   createTaxRateOnce,
   createTaxClassOnce,
   createVariationOnce,
+  createOrderOnce,
 } from './offlineCreates';
 import type { ApiResponse, BatchOperationResponse, PendingOperation } from '../types';
 import type WooCommerceService from '../services/woocommerce';
@@ -62,7 +63,7 @@ export async function replayOperation(
     case 'create_order':
       return typeof d.clientId === 'string'
         ? replayPosSale(service, d as PosSaleOpData, operation.timestamp)
-        : service.createOrder(d);
+        : createOrderOnce(service, d, operation.timestamp);
     case 'update_order':
       return service.updateOrder(d.id as number, d);
     case 'create_product':

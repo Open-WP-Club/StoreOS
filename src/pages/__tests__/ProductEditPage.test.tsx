@@ -5,6 +5,7 @@ import ProductEditPage from '../ProductEditPage';
 import { createMockStore, createMockProduct } from '../../__test_utils__';
 import { useStoreConfig, useCache } from '../../stores';
 import WooCommerceService from '../../services/woocommerce';
+import useOffline from '../../stores/offlineStore';
 
 // Mock stores
 vi.mock('../../stores', () => ({
@@ -135,6 +136,31 @@ describe('ProductEditPage', () => {
     expect(screen.getByText('Inventory')).toBeInTheDocument();
     expect(screen.getByText('Shipping')).toBeInTheDocument();
     expect(screen.getByText('Advanced')).toBeInTheDocument();
+  });
+
+  it('shows a queued-changes notice only when ops target this product', async () => {
+    useOffline.setState({ pendingOperations: [] });
+    const { unmount } = renderWithRoute();
+    await waitFor(() => expect(screen.getByText('General')).toBeInTheDocument());
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    unmount();
+
+    const id = mockProduct.id;
+    const base = {
+      type: 'update_product' as const,
+      storeId: mockStore.id,
+      timestamp: 1,
+      retryCount: 0,
+    };
+    useOffline.setState({
+      pendingOperations: [
+        { ...base, id: 'a', data: { id } },
+        { ...base, id: 'b', data: { id: id + 1 } },
+      ],
+    });
+    renderWithRoute();
+    expect(await screen.findByRole('status')).toHaveTextContent('1 change queued');
+    useOffline.setState({ pendingOperations: [] });
   });
 
   it('should show General tab by default', async () => {

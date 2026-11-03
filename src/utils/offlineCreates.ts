@@ -8,11 +8,12 @@ type D = Record<string, unknown>;
 /** Meta key carrying the client-generated UUID of a queued create (idempotency key). */
 export const CLIENT_ID_META = '_storeos_client_id';
 /** Create types that get a client id injected when queued (no natural unique key). */
-export const CLIENT_ID_TYPES: string[] = ['create_product', 'create_variation'];
+export const CLIENT_ID_TYPES: string[] = ['create_product', 'create_variation', 'create_order'];
 
 const MARGIN_MS = 24 * 60 * 60 * 1000; // tolerate client/server clock skew
 const PAGE = 100;
-const MAX_PAGES = 5;
+/** Upper cap on pages scanned for a client id (5,000 items); the scan stops early on a match or short page. */
+const MAX_PAGES = 50;
 
 export const clientIdOf = (meta: Meta): string | undefined =>
   meta?.find((m) => m.key === CLIENT_ID_META)?.value as string | undefined;
@@ -21,6 +22,24 @@ const norm = (v: unknown): string =>
   String(v ?? '')
     .trim()
     .toLowerCase();
+
+/**
+ * Page through a listing until `isMatch` hits, the listing is exhausted (short page) or MAX_PAGES.
+ * A failed page is returned as failure so callers never create blindly.
+ */
+export async function findByClientId<T>(
+  fetchPage: (page: number) => Promise<ApiResponse<T[]>>,
+  isMatch: (item: T) => boolean
+): Promise<ApiResponse<T | undefined>> {
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const r = await fetchPage(page);
+    if (!r.success) return r;
+    const hit = r.data.find(isMatch);
+    if (hit) return { success: true, data: hit };
+    if (r.data.length < PAGE) break;
+  }
+  return { success: true, data: undefined };
+}
 
 /** Create only if no match exists; a failed lookup is returned as failure so we never create blindly. */
 async function createUnlessExists<T>(
@@ -50,18 +69,13 @@ export async function createProductOnce(
   }
   if (clientId) {
     const after = new Date(queuedAt - MARGIN_MS).toISOString();
-    for (let page = 1; page <= MAX_PAGES; page++) {
-      const r = await service.getProducts({
-        after,
-        per_page: PAGE,
-        page,
-        orderby: 'date',
-        order: 'desc',
-      });
-      if (!r.success) return r;
-      if (r.data.some((p) => clientIdOf(p.meta_data) === clientId)) return { success: true };
-      if (r.data.length < PAGE) break;
-    }
+    const r = await findByClientId(
+      (page) =>
+        service.getProducts({ after, per_page: PAGE, page, orderby: 'date', order: 'desc' }),
+      (p) => clientIdOf(p.meta_data) === clientId
+    );
+    if (!r.success) return r;
+    if (r.data) return { success: true };
   }
   return service.createProduct(d);
 }
@@ -121,12 +135,53 @@ export const createTaxClassOnce = (service: WooCommerceService, d: D) =>
     () => service.createTaxClass(d as { name: string })
   );
 
-export const createVariationOnce = (service: WooCommerceService, d: D) => {
+export async function createVariationOnce(service: WooCommerceService, d: D): Promise<Result> {
   const { productId, ...data } = d;
   const clientId = clientIdOf(data.meta_data as Meta);
-  return createUnlessExists(
-    () => service.getProductVariations(productId as number, { per_page: PAGE }),
-    (v) => !!clientId && clientIdOf((v as { meta_data?: Meta }).meta_data) === clientId,
-    () => service.createProductVariation(productId as number, data)
+  if (clientId) {
+    const r = await findByClientId(
+      (page) => service.getProductVariations(productId as number, { per_page: PAGE, page }),
+      (v) => clientIdOf((v as { meta_data?: Meta }).meta_data) === clientId
+    );
+    if (!r.success) return r;
+    if (r.data) return { success: true };
+  }
+  return service.createProductVariation(productId as number, data);
+}
+
+/** Non-POS order create, guarded by client id (scan orders created since the op was queued). */
+export async function createOrderOnce(
+  service: WooCommerceService,
+  d: D,
+  queuedAt: number
+): Promise<Result> {
+  const clientId = clientIdOf(d.meta_data as Meta);
+  if (!clientId) return { success: false, error: 'Refusing unguarded order create (no client id)' };
+  const after = new Date(queuedAt - MARGIN_MS).toISOString();
+  const r = await findByClientId(
+    (page) => service.getOrders({ after, per_page: PAGE, page, orderby: 'date', order: 'desc' }),
+    (o) => clientIdOf(o.meta_data) === clientId
   );
-};
+  if (!r.success) return r;
+  return r.data ? { success: true } : service.createOrder(d);
+}
+
+/** True when a queued op targets this product (itself, its stock, a batch entry or a variation). */
+export function opTouchesProduct(
+  op: { type: string; storeId: string; data: D },
+  storeId: string,
+  productId: number
+): boolean {
+  if (op.storeId !== storeId) return false;
+  const d = op.data;
+  if (op.type === 'update_product' || op.type === 'delete_product') return d.id === productId;
+  if (op.type === 'update_stock') return d.productId === productId;
+  if (op.type.endsWith('_variation') || op.type === 'batch_variations') {
+    return d.productId === productId;
+  }
+  if (op.type === 'batch_products') {
+    const b = d as { update?: Array<{ id?: number }>; delete?: number[] };
+    return !!b.update?.some((u) => u.id === productId) || !!b.delete?.includes(productId);
+  }
+  return false;
+}

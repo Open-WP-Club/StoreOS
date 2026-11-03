@@ -21,6 +21,8 @@ const list = (data: unknown[]) => ({ success: true, data });
 
 const METHODS = [
   'getProducts',
+  'getOrders',
+  'createOrder',
   'createProduct',
   'getCoupons',
   'createCoupon',
@@ -252,6 +254,55 @@ describe('replay: create duplicate guards', () => {
     s.createProductVariation.mockResolvedValue(ok);
     await run(s, op('create_variation', { productId: 9, meta_data: meta, sku: 'q' }));
     expect(s.createProductVariation).toHaveBeenCalledWith(9, { meta_data: meta, sku: 'q' });
+  });
+
+  it('create_order (non-POS): existing client id -> no create; else creates; no id -> refused', async () => {
+    const meta = [{ key: CLIENT_ID_META, value: 'o1' }];
+    s.getOrders.mockResolvedValue(list([{ id: 1, meta_data: meta }]));
+    expect((await run(s, op('create_order', { meta_data: meta }))).success).toBe(true);
+    expect(s.createOrder).not.toHaveBeenCalled();
+    s.getOrders.mockResolvedValue(list([]));
+    s.createOrder.mockResolvedValue(ok);
+    await run(s, op('create_order', { meta_data: meta }));
+    expect(s.createOrder).toHaveBeenCalledTimes(1);
+    s.createOrder.mockClear();
+    expect((await run(s, op('create_order', {}))).success).toBe(false);
+    s.getOrders.mockResolvedValue(bad);
+    expect((await run(s, op('create_order', { meta_data: meta }))).success).toBe(false);
+    expect(s.createOrder).not.toHaveBeenCalled();
+  });
+
+  it('client-id scan paginates past 5 pages, exits early on match, stops when exhausted', async () => {
+    const meta = [{ key: CLIENT_ID_META, value: 'p1' }];
+    const full = Array.from({ length: 100 }, (_, i) => ({ id: i, meta_data: [] }));
+    s.getProducts.mockImplementation(async (params: { page: number }) =>
+      list(params.page === 8 ? [{ id: 999, meta_data: meta }] : full)
+    );
+    const d = { sku: '', meta_data: meta };
+    expect((await run(s, op('create_product', d))).success).toBe(true);
+    expect(s.getProducts).toHaveBeenCalledTimes(8);
+    expect(s.createProduct).not.toHaveBeenCalled();
+
+    s.getProducts.mockClear();
+    s.getProducts.mockImplementation(async (params: { page: number }) =>
+      list(params.page === 3 ? [] : full)
+    );
+    s.createProduct.mockResolvedValue(ok);
+    await run(s, op('create_product', d));
+    expect(s.getProducts).toHaveBeenCalledTimes(3);
+    expect(s.createProduct).toHaveBeenCalledTimes(1);
+  });
+
+  it('variation scan paginates', async () => {
+    const meta = [{ key: CLIENT_ID_META, value: 'v2' }];
+    const full = Array.from({ length: 100 }, (_, i) => ({ id: i, meta_data: [] }));
+    s.getProductVariations.mockImplementation(async (_id: number, p: { page: number }) =>
+      list(p.page === 2 ? [{ id: 500, meta_data: meta }] : full)
+    );
+    expect((await run(s, op('create_variation', { productId: 9, meta_data: meta }))).success).toBe(
+      true
+    );
+    expect(s.createProductVariation).not.toHaveBeenCalled();
   });
 
   it('lookup failure blocks every create', async () => {

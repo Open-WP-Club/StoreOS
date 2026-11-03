@@ -1,6 +1,6 @@
 import useCache from '../stores/cacheStore';
 import useStoreConfig from '../stores/storeConfigStore';
-import { CLIENT_ID_META } from './offlineCreates';
+import { CLIENT_ID_META, findByClientId } from './offlineCreates';
 import type { ApiResponse, WooCommerceOrder, WooCommerceProduct } from '../types';
 
 /** Order meta key carrying the client-generated sale UUID (idempotency key). */
@@ -26,7 +26,6 @@ interface OrderLookup {
 
 const LOOKUP_MARGIN_MS = 24 * 60 * 60 * 1000; // tolerate client/server clock skew
 const LOOKUP_PAGE = 100;
-const LOOKUP_MAX_PAGES = 5;
 
 /**
  * Create the order unless one carrying the same client id already exists on the server
@@ -40,21 +39,13 @@ export async function createOrderIdempotent(
   soldAt: number
 ): Promise<ApiResponse<WooCommerceOrder>> {
   const after = new Date(soldAt - LOOKUP_MARGIN_MS).toISOString();
-  for (let page = 1; page <= LOOKUP_MAX_PAGES; page++) {
-    const res = await service.getOrders({
-      after,
-      per_page: LOOKUP_PAGE,
-      page,
-      orderby: 'date',
-      order: 'desc',
-    });
-    if (!res.success) return res;
-    const hit = res.data.find((o) =>
-      o.meta_data?.some((m) => m.key === CLIENT_ID_META && m.value === clientId)
-    );
-    if (hit) return { success: true, data: hit };
-    if (res.data.length < LOOKUP_PAGE) break;
-  }
+  const found = await findByClientId(
+    (page) =>
+      service.getOrders({ after, per_page: LOOKUP_PAGE, page, orderby: 'date', order: 'desc' }),
+    (o) => !!o.meta_data?.some((m) => m.key === CLIENT_ID_META && m.value === clientId)
+  );
+  if (!found.success) return found;
+  if (found.data) return { success: true, data: found.data };
   return service.createOrder(order);
 }
 

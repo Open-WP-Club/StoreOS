@@ -236,13 +236,14 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
 
   async getProductVariations(
     productId: number,
-    params: { per_page?: number } = {}
+    params: { per_page?: number; page?: number } = {}
   ): Promise<ApiResponse<ProductVariation[]>> {
     try {
       const response: WooCommerceApiResponse<ProductVariation[]> = await (
         await this.getApi()
       ).get(`products/${productId}/variations`, {
         per_page: params.per_page || 100,
+        ...(params.page ? { page: params.page } : {}),
       });
       return { success: true, data: response.data };
     } catch (error) {

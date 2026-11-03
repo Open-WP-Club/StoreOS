@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, ReactElement } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useStoreConfig, useCache } from '../stores';
+import useOffline from '../stores/offlineStore';
+import { opTouchesProduct } from '../utils/offlineCreates';
 import WooCommerceService from '../services/woocommerce';
 import type { WooCommerceProduct } from '../types';
 import { formatPrice } from '../utils/currency';
@@ -99,6 +101,12 @@ export default function ProductEditPage(): ReactElement {
   const [prevSyncKey, setPrevSyncKey] = useState<
     typeof NOT_SYNCED | { id: string | undefined; storeId: string | undefined }
   >(NOT_SYNCED);
+  const pendingForProduct = useOffline(
+    (s) =>
+      s.pendingOperations.filter((op) =>
+        opTouchesProduct(op, currentStore?.id ?? '', parseInt(id ?? '', 10))
+      ).length
+  );
   const syncKey = { id, storeId: currentStore?.id };
   if (
     currentStore &&
@@ -194,6 +202,16 @@ export default function ProductEditPage(): ReactElement {
             </button>
           </div>
         </div>
+
+        {pendingForProduct > 0 && (
+          <div
+            role="status"
+            className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-4 text-sm text-amber-800 dark:text-amber-300"
+          >
+            {pendingForProduct} change{pendingForProduct === 1 ? '' : 's'} queued for this product
+            and waiting to sync.
+          </div>
+        )}
 
         {/* Success/Error Messages */}
         {form.successMessage && (
