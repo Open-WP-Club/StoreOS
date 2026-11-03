@@ -1,11 +1,14 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import type { WooCommerceProduct } from '../types';
+import { computeTotals, fromCents, type Discount, type PricedTotals } from '../utils/posPricing';
+import { summarizePayments, type Payment, type PaymentSummary } from '../utils/payments';
 
 export interface CartItem {
   product: WooCommerceProduct;
   quantity: number;
   price: number; // Actual price (sale or regular)
+  discount?: Discount; // Per-line discount
 }
 
 interface POSState {
@@ -25,6 +28,8 @@ interface POSState {
   // Payment
   paymentMethod: 'cash' | 'card' | 'other';
   amountTendered: number;
+  /** Split payment rows; null = single-method payment (paymentMethod/amountTendered). */
+  splitPayments: Payment[] | null;
 
   // UI State
   isCheckoutOpen: boolean;
@@ -44,6 +49,9 @@ interface POSState {
   setPaymentMethod: (method: 'cash' | 'card' | 'other') => void;
   setAmountTendered: (amount: number) => void;
 
+  setLineDiscount: (productId: number, discount: Discount | null) => void;
+  setSplitPayments: (payments: Payment[] | null) => void;
+
   setCheckoutOpen: (open: boolean) => void;
 
   // Computed values (as functions since Zustand doesn't support getters well)
@@ -52,6 +60,9 @@ interface POSState {
   getTax: (rate?: number) => number;
   getTotal: () => number;
   getChange: () => number;
+  getTotals: () => PricedTotals;
+  getLineDiscountAmount: () => number;
+  getPaymentSummary: () => PaymentSummary;
   getItemCount: () => number;
 }
 
@@ -73,6 +84,7 @@ export const usePOSStore = create<POSState>()(
     discountValue: 0,
     paymentMethod: 'cash',
     amountTendered: 0,
+    splitPayments: null,
     isCheckoutOpen: false,
 
     // Cart actions
@@ -121,6 +133,7 @@ export const usePOSStore = create<POSState>()(
         discountType: 'percent',
         discountValue: 0,
         amountTendered: 0,
+        splitPayments: null,
         isCheckoutOpen: false,
       });
     },
@@ -162,47 +175,51 @@ export const usePOSStore = create<POSState>()(
       set({ amountTendered: amount });
     },
 
+    setLineDiscount: (productId, discount) => {
+      set((state) => {
+        const item = state.cart.find((i) => i.product.id === productId);
+        if (!item) return;
+        if (discount && discount.value > 0) item.discount = discount;
+        else delete item.discount;
+      });
+    },
+
+    setSplitPayments: (payments) => {
+      set({ splitPayments: payments });
+    },
+
     setCheckoutOpen: (open) => {
       set({ isCheckoutOpen: open });
     },
 
-    // Computed values
-    getSubtotal: () => {
-      const { cart } = get();
-      return cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    // Computed values (integer-cent math lives in utils/posPricing)
+    getTotals: () => {
+      const { cart, discountType, discountValue } = get();
+      return computeTotals(cart, { type: discountType, value: discountValue });
     },
 
-    getDiscountAmount: () => {
-      const { discountType, discountValue } = get();
-      const subtotal = get().getSubtotal();
+    getSubtotal: () => fromCents(get().getTotals().subtotalCents),
 
-      if (discountValue <= 0) return 0;
+    getLineDiscountAmount: () => fromCents(get().getTotals().lineDiscountCents),
 
-      if (discountType === 'percent') {
-        return (subtotal * discountValue) / 100;
-      }
-      return Math.min(discountValue, subtotal);
-    },
+    // Sale-level discount (applied after line discounts)
+    getDiscountAmount: () => fromCents(get().getTotals().saleDiscountCents),
 
-    getTax: (rate = 20) => {
-      const subtotal = get().getSubtotal();
-      const discount = get().getDiscountAmount();
-      return ((subtotal - discount) * rate) / 100;
-    },
+    getTax: (rate = 20) => (get().getTotal() * rate) / 100,
 
-    getTotal: () => {
-      const subtotal = get().getSubtotal();
-      const discount = get().getDiscountAmount();
-      // Note: Tax is usually included in Bulgarian prices
-      return subtotal - discount;
-    },
+    // Note: Tax is usually included in Bulgarian prices
+    getTotal: () => fromCents(get().getTotals().totalCents),
 
-    getChange: () => {
-      const { amountTendered, paymentMethod } = get();
-      if (paymentMethod !== 'cash') return 0;
+    getPaymentSummary: () => {
+      const { splitPayments, paymentMethod, amountTendered } = get();
       const total = get().getTotal();
-      return Math.max(0, amountTendered - total);
+      const payments: Payment[] = splitPayments ?? [
+        { method: paymentMethod, amount: paymentMethod === 'cash' ? amountTendered : total },
+      ];
+      return summarizePayments(payments, total);
     },
+
+    getChange: () => get().getPaymentSummary().change,
 
     getItemCount: () => {
       const { cart } = get();

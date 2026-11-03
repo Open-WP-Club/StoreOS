@@ -1,5 +1,12 @@
 import { isLowButInStock, isOutOfStock, isStockAtOrBelow } from '../utils/stock';
-import React, { useState, useDeferredValue, ChangeEvent, KeyboardEvent } from 'react';
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useDeferredValue,
+  ChangeEvent,
+  KeyboardEvent,
+} from 'react';
 import { useStoreConfig, useCache, useActivityLog, useSettings } from '../stores';
 import WooCommerceService from '../services/woocommerce';
 import { batchErrorIds } from '../utils/batchResult';
@@ -9,6 +16,7 @@ import { exportTableToPDF } from '../utils/pdfExport';
 import { useVirtualRows } from '../hooks/useVirtualRows';
 import ExportMenu from '../components/ExportMenu';
 import Pagination from '../components/Pagination';
+import StockCountModal from '../components/StockCountModal';
 import BulkEditModal from '../components/BulkEditModal';
 import ReorderReportModal from '../components/ReorderReportModal';
 import ToastContainer from '../components/ToastContainer';
@@ -16,7 +24,7 @@ import LoadingIndicator from '../components/LoadingIndicator';
 import { useToast } from '../hooks/useToast';
 import { useOfflineMutation } from '../hooks/useOfflineMutation';
 import { useProgressiveLoading } from '../hooks/useProgressiveLoading';
-import { Trash2, Edit, RefreshCw, ImageOff, ClipboardList } from 'lucide-react';
+import { Trash2, Edit, RefreshCw, ImageOff, ClipboardList, ScanBarcode } from 'lucide-react';
 import type { Order, Product, StockStatus } from '../types';
 import { EMPTY_PRODUCTS } from '../constants';
 import StatCard from '../components/StatCard';
@@ -52,11 +60,17 @@ const InventoryPage: React.FC = (): React.ReactElement => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [updating, setUpdating] = useState<boolean>(false);
 
+  const latestProducts = useRef<Product[]>(products);
+  useEffect(() => {
+    latestProducts.current = products;
+  }, [products]);
+
   const { loadingState } = useProgressiveLoading();
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(25);
   const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
   const [reorderOpen, setReorderOpen] = useState<boolean>(false);
+  const [countOpen, setCountOpen] = useState<boolean>(false);
   const [bulkEditModalOpen, setBulkEditModalOpen] = useState<boolean>(false);
 
   // Sync products state with cache
@@ -107,7 +121,11 @@ const InventoryPage: React.FC = (): React.ReactElement => {
           return result;
         },
         onSuccess: async (result) => {
-          const updatedProducts = products.map((p) => (p.id === productId ? result.data : p));
+          // Latest cache as base so sequential updates (stock count) don't overwrite each other
+          const updatedProducts = latestProducts.current.map((p) =>
+            p.id === productId ? result.data : p
+          );
+          latestProducts.current = updatedProducts;
           setProducts(updatedProducts);
           await setCachedData('products', updatedProducts);
           logActivity({
@@ -139,6 +157,14 @@ const InventoryPage: React.FC = (): React.ReactElement => {
     const quantity = parseInt(newValue) || 0;
     const stockStatus: StockStatus = quantity > 0 ? 'instock' : 'outofstock';
     updateStock(productId, quantity, stockStatus);
+  };
+
+  const applyStockCount = async (
+    changes: Array<{ productId: number; counted: number }>
+  ): Promise<void> => {
+    for (const c of changes) {
+      await updateStock(c.productId, c.counted, c.counted > 0 ? 'instock' : 'outofstock');
+    }
   };
 
   const deferredSearch = useDeferredValue(searchTerm);
@@ -475,6 +501,13 @@ const InventoryPage: React.FC = (): React.ReactElement => {
             Reorder report
           </button>
           <button
+            onClick={() => setCountOpen(true)}
+            className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+          >
+            <ScanBarcode className="w-4 h-4" />
+            Stock count
+          </button>
+          <button
             onClick={() => clearCacheForType('products')}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             title="Refresh inventory"
@@ -722,6 +755,14 @@ const InventoryPage: React.FC = (): React.ReactElement => {
             />
           )}
         </div>
+      )}
+
+      {countOpen && (
+        <StockCountModal
+          products={products}
+          onClose={() => setCountOpen(false)}
+          onApply={applyStockCount}
+        />
       )}
 
       <ReorderReportModal

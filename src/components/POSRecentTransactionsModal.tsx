@@ -35,6 +35,7 @@ export function POSRecentTransactionsModal({
       discount: tx.discount,
       total: tx.total,
       paymentMethod: tx.paymentMethod,
+      payments: tx.payments,
       tendered: tx.tendered,
       change: tx.change,
       orderId: tx.id,

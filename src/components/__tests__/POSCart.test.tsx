@@ -29,6 +29,18 @@ function setup(overrides: Partial<React.ComponentProps<typeof POSCart>> = {}) {
     getDiscountAmount: () => 0,
     getTotal: () => 25,
     getChange: () => 0,
+    setLineDiscount: vi.fn(),
+    getLineDiscountAmount: () => 0,
+    splitPayments: null,
+    setSplitPayments: vi.fn(),
+    getPaymentSummary: () => ({
+      applied: [],
+      tendered: 0,
+      change: 0,
+      remaining: 0,
+      valid:
+        (overrides.paymentMethod ?? 'cash') !== 'cash' || (overrides.amountTendered ?? 0) >= 25,
+    }),
     getItemCount: () => cart.reduce((n, i) => n + i.quantity, 0),
     showCheckout: false,
     setShowCheckout: vi.fn(),
@@ -53,7 +65,7 @@ describe('POSCart', () => {
     setup({ cart: [], getSubtotal: () => 0, getTotal: () => 0 });
     expect(screen.getByText('Кошницата е празна')).toBeInTheDocument();
     expect(screen.queryByText('Изчисти')).not.toBeInTheDocument();
-    expect(screen.queryByPlaceholderText('Отстъпка')).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Отстъпка', { exact: true })).not.toBeInTheDocument();
     expect(screen.getByText('Плащане').closest('button')).toBeDisabled();
   });
 
@@ -91,11 +103,15 @@ describe('POSCart', () => {
 
   it('handles discount input and type changes', () => {
     const p = setup({ discountValue: 10 });
-    fireEvent.change(screen.getByPlaceholderText('Отстъпка'), { target: { value: '15' } });
+    fireEvent.change(screen.getByPlaceholderText('Отстъпка', { exact: true }), {
+      target: { value: '15' },
+    });
     expect(p.setDiscount).toHaveBeenCalledWith('percent', 15);
-    fireEvent.change(screen.getByPlaceholderText('Отстъпка'), { target: { value: '' } });
+    fireEvent.change(screen.getByPlaceholderText('Отстъпка', { exact: true }), {
+      target: { value: '' },
+    });
     expect(p.setDiscount).toHaveBeenCalledWith('percent', 0);
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'fixed' } });
+    fireEvent.change(screen.getAllByRole('combobox').at(-1)!, { target: { value: 'fixed' } });
     expect(p.setDiscount).toHaveBeenCalledWith('fixed', 10);
   });
 

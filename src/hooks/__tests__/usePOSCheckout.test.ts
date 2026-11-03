@@ -9,6 +9,8 @@ import {
 import type { WooCommerceStore, WooCommerceCustomer } from '../../types';
 import WooCommerceService from '../../services/woocommerce';
 import { useStoreConfig } from '../../stores';
+import { computeTotals } from '../../utils/posPricing';
+import { summarizePayments } from '../../utils/payments';
 import { usePOSStore } from '../../stores/posStore';
 import useOffline from '../../stores/offlineStore';
 import { CLIENT_ID_META } from '../../utils/posOfflineSale';
@@ -37,10 +39,17 @@ const mockGetCustomers = vi.fn();
 const mockCreateOrder = vi.fn();
 const mockClearCart = vi.fn();
 const mockGetDiscountAmount = vi.fn(() => 0);
-let mockCart: Array<{ product: { id: number }; quantity: number }> = [];
+let mockCart: Array<{ product: { id: number }; quantity: number; price?: number }> = [];
 let mockPaymentMethod = 'cash';
 let mockDiscountType = 'percent' as const;
 let mockDiscountValue = 0;
+
+// Real pricing math over the mocked cart (items default to price 10)
+const totalsOf = (): ReturnType<typeof computeTotals> =>
+  computeTotals(
+    mockCart.map((i) => ({ price: 10, ...i })),
+    { type: mockDiscountType, value: mockDiscountValue }
+  );
 
 const mockSaveRecentTransaction = vi.fn();
 
@@ -66,7 +75,15 @@ beforeEach(() => {
     paymentMethod: mockPaymentMethod,
     discountType: mockDiscountType,
     discountValue: mockDiscountValue,
-    getDiscountAmount: mockGetDiscountAmount,
+    getDiscountAmount: () => totalsOf().saleDiscountCents / 100,
+    getLineDiscountAmount: () => totalsOf().lineDiscountCents / 100,
+    getTotals: totalsOf,
+    getTotal: () => totalsOf().totalCents / 100,
+    getPaymentSummary: () =>
+      summarizePayments(
+        [{ method: mockPaymentMethod as 'cash', amount: totalsOf().totalCents / 100 }],
+        totalsOf().totalCents / 100
+      ),
   }));
 
   (WooCommerceService as Mock).mockImplementation(function () {
@@ -276,7 +293,6 @@ describe('usePOSCheckout', () => {
     it('includes discount fee_lines when discount > 0', async () => {
       mockDiscountValue = 10;
       mockDiscountType = 'percent';
-      mockGetDiscountAmount.mockReturnValue(5);
       mockCart = [{ product: { id: 1 }, quantity: 1 }];
       mockCreateOrder.mockResolvedValue({ success: true, data: { id: 1 } });
 
@@ -291,7 +307,7 @@ describe('usePOSCheckout', () => {
           fee_lines: [
             expect.objectContaining({
               name: 'Отстъпка 10%',
-              total: '-5',
+              total: '-1.00',
             }),
           ],
         })

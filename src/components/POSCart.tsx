@@ -19,6 +19,8 @@ import {
 import { formatPrice } from '../utils/currency';
 import type { WooCommerceCustomer } from '../types';
 import type { CartItem } from '../stores/posStore';
+import type { Discount } from '../utils/posPricing';
+import { PAY_LABEL, type Payment, type PaymentSummary, type PayMethod } from '../utils/payments';
 
 const QUICK_AMOUNTS = [5, 10, 20, 50, 100];
 
@@ -38,6 +40,11 @@ interface POSCartProps {
   getDiscountAmount: () => number;
   getTotal: () => number;
   getChange: () => number;
+  setLineDiscount: (productId: number, discount: Discount | null) => void;
+  getLineDiscountAmount: () => number;
+  splitPayments: Payment[] | null;
+  setSplitPayments: (payments: Payment[] | null) => void;
+  getPaymentSummary: () => PaymentSummary;
   getItemCount: () => number;
   showCheckout: boolean;
   setShowCheckout: (show: boolean) => void;
@@ -72,6 +79,11 @@ export function POSCart({
   getDiscountAmount,
   getTotal,
   getChange,
+  setLineDiscount,
+  getLineDiscountAmount,
+  splitPayments,
+  setSplitPayments,
+  getPaymentSummary,
   getItemCount,
   showCheckout,
   setShowCheckout,
@@ -86,6 +98,10 @@ export function POSCart({
   onOpenQuantityNumpad,
   onOpenAmountNumpad,
 }: POSCartProps): ReactElement {
+  const payment = getPaymentSummary();
+  const lineDiscountTotal = getLineDiscountAmount();
+  const updateSplit = (i: number, patch: Partial<Payment>): void =>
+    setSplitPayments((splitPayments ?? []).map((p, idx) => (idx === i ? { ...p, ...patch } : p)));
   return (
     <div className="w-96 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col">
       {/* Cart Header */}
@@ -229,6 +245,37 @@ export function POSCart({
                   {formatPrice(item.price * item.quantity)}
                 </span>
               </div>
+              <div className="flex items-center gap-2 mt-2">
+                <Percent className="w-3 h-3 text-gray-400" />
+                <input
+                  type="number"
+                  min="0"
+                  aria-label="Отстъпка за артикул"
+                  value={item.discount?.value || ''}
+                  onChange={(e) =>
+                    setLineDiscount(item.product.id, {
+                      type: item.discount?.type ?? 'percent',
+                      value: parseFloat(e.target.value) || 0,
+                    })
+                  }
+                  placeholder="Отстъпка арт."
+                  className="flex-1 min-w-0 px-2 py-1 bg-white dark:bg-gray-600 border border-gray-200 dark:border-gray-500 rounded text-xs text-gray-900 dark:text-white"
+                />
+                <select
+                  aria-label="Тип отстъпка за артикул"
+                  value={item.discount?.type ?? 'percent'}
+                  onChange={(e) =>
+                    setLineDiscount(item.product.id, {
+                      type: e.target.value as 'percent' | 'fixed',
+                      value: item.discount?.value ?? 0,
+                    })
+                  }
+                  className="px-1 py-1 bg-white dark:bg-gray-600 border border-gray-200 dark:border-gray-500 rounded text-xs text-gray-900 dark:text-white"
+                >
+                  <option value="percent">%</option>
+                  <option value="fixed">{currencySymbol || 'fixed'}</option>
+                </select>
+              </div>
             </div>
           ))
         )}
@@ -264,8 +311,14 @@ export function POSCart({
           <span className="text-gray-500 dark:text-gray-400">Междинна сума</span>
           <span className="text-gray-900 dark:text-white">{formatPrice(getSubtotal())}</span>
         </div>
-        {discountValue > 0 && (
-          <div className="flex justify-between text-sm text-green-600">
+        {lineDiscountTotal > 0 && (
+          <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+            <span>Отстъпки по артикули</span>
+            <span>-{formatPrice(lineDiscountTotal)}</span>
+          </div>
+        )}
+        {getDiscountAmount() > 0 && (
+          <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
             <span>Отстъпка</span>
             <span>-{formatPrice(getDiscountAmount())}</span>
           </div>
@@ -325,7 +378,80 @@ export function POSCart({
               </button>
             </div>
 
-            {paymentMethod === 'cash' && (
+            <button
+              onClick={() =>
+                setSplitPayments(
+                  splitPayments
+                    ? null
+                    : [
+                        { method: 'cash', amount: 0 },
+                        { method: 'card', amount: 0 },
+                      ]
+                )
+              }
+              className="w-full text-xs text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              {splitPayments ? 'Едно плащане' : 'Раздели плащането'}
+            </button>
+
+            {splitPayments && (
+              <div className="space-y-2">
+                {splitPayments.map((p, i) => (
+                  <div key={i} className="flex gap-2">
+                    <select
+                      aria-label="Метод на плащане"
+                      value={p.method}
+                      onChange={(e) => updateSplit(i, { method: e.target.value as PayMethod })}
+                      className="px-2 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white"
+                    >
+                      {(Object.keys(PAY_LABEL) as PayMethod[]).map((m) => (
+                        <option key={m} value={m}>
+                          {PAY_LABEL[m]}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="number"
+                      min="0"
+                      aria-label="Сума"
+                      value={p.amount || ''}
+                      onChange={(e) => updateSplit(i, { amount: parseFloat(e.target.value) || 0 })}
+                      className="flex-1 min-w-0 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white"
+                    />
+                    {splitPayments.length > 1 && (
+                      <button
+                        onClick={() => setSplitPayments(splitPayments.filter((_, k) => k !== i))}
+                        aria-label="Премахни плащане"
+                        className="p-2 text-gray-400 hover:text-red-500"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  onClick={() =>
+                    setSplitPayments([...splitPayments, { method: 'card', amount: 0 }])
+                  }
+                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  + Добави плащане
+                </button>
+                <div className="text-center py-2 bg-gray-50 dark:bg-gray-700 rounded-lg text-sm">
+                  {payment.remaining > 0 ? (
+                    <span className="text-amber-600 dark:text-amber-400">
+                      Остава: {formatPrice(payment.remaining)}
+                    </span>
+                  ) : payment.change > 0 ? (
+                    <span className="text-green-600 dark:text-green-400">
+                      Ресто: {formatPrice(payment.change)}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            )}
+
+            {!splitPayments && paymentMethod === 'cash' && (
               <div className="space-y-2">
                 <div className="flex gap-2">
                   <input
@@ -373,9 +499,7 @@ export function POSCart({
               </button>
               <button
                 onClick={onCheckout}
-                disabled={
-                  processingOrder || (paymentMethod === 'cash' && amountTendered < getTotal())
-                }
+                disabled={processingOrder || !payment.valid}
                 className="flex-1 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
               >
                 {processingOrder ? (
