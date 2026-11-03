@@ -5,6 +5,7 @@ import type {
   ProductUpdateData,
   ProductVariation,
   VariationCreateData,
+  VariationUpdateData,
   WooCommerceCoupon,
   CouponUpdateData,
   WooCommerceProductCategory,
@@ -60,7 +61,12 @@ export interface ProductPayloadResult {
 }
 
 /** Build a create/update payload from a source product: no ids/links, remapped refs, image URLs only. */
-export function buildProductPayload(source: Product, ctx: TargetContext): ProductPayloadResult {
+export function buildProductPayload(
+  source: Product,
+  ctx: TargetContext,
+  /** source product id -> sku, used to map upsell/cross-sell links onto existing target products */
+  skuBySourceId?: Map<number, string>
+): ProductPayloadResult {
   const warnings: string[] = [];
 
   const categories: Array<{ id: number }> = [];
@@ -91,18 +97,14 @@ export function buildProductPayload(source: Product, ctx: TargetContext): Produc
     warnings.push('Grouped product children are not copied');
   }
   if (source.downloads?.length) warnings.push('Downloadable files are not copied');
-  const links = (
-    [
-      ['related', source.related_ids],
-      ['upsell', source.upsell_ids],
-      ['cross-sell', source.cross_sell_ids],
-    ] as const
-  ).filter(([, ids]) => ids?.length);
-  if (links.length) {
-    warnings.push(
-      `${links.map(([n]) => n).join('/')} products are not copied (product ids differ per store)`
-    );
-  }
+  // Links map via SKU to products already in the target; the rest are dropped silently.
+  // related_ids is read-only in the WooCommerce REST API, so it is not sent.
+  const mapLinks = (ids?: number[]): number[] =>
+    (ids ?? []).flatMap((id) => {
+      const sku = skuBySourceId?.get(id);
+      const t = sku ? ctx.productIdBySku.get(norm(sku)) : undefined;
+      return t === undefined ? [] : [t];
+    });
 
   const payload = {
     name: source.name,
@@ -133,6 +135,8 @@ export function buildProductPayload(source: Product, ctx: TargetContext): Produc
     reviews_allowed: source.reviews_allowed,
     purchase_note: source.purchase_note,
     menu_order: source.menu_order,
+    upsell_ids: mapLinks(source.upsell_ids),
+    cross_sell_ids: mapLinks(source.cross_sell_ids),
     categories,
     tags: (source.tags ?? []).map((t) => ({ name: t.name })),
     images: (source.images ?? []).filter((i) => i.src).map((i) => ({ src: i.src, alt: i.alt })),
@@ -185,9 +189,20 @@ export interface CategoryPlan {
 
 type CatLike = Pick<WooCommerceProductCategory, 'id' | 'name' | 'slug' | 'parent'>;
 
+/** Normalized names from the root down to the category, e.g. "men/shirts". Cycle-safe. */
+function namePath(c: CatLike, byId: Map<number, CatLike>): string {
+  const names: string[] = [];
+  const seen = new Set<number>();
+  for (let cur: CatLike | undefined = c; cur && !seen.has(cur.id); cur = byId.get(cur.parent)) {
+    seen.add(cur.id);
+    names.unshift(norm(cur.name));
+  }
+  return names.join('/');
+}
+
 /**
  * Match needed source categories (plus ancestors) to the target by slug, falling back to
- * name under the same mapped parent. Missing ones are planned parents-first.
+ * the full ancestor name path. Missing ones are planned parents-first.
  */
 export function planCategories(
   sourceCats: CatLike[],
@@ -196,7 +211,8 @@ export function planCategories(
 ): CategoryPlan {
   const byId = new Map(sourceCats.map((c) => [c.id, c]));
   const tSlug = new Map(targetCats.map((c) => [norm(c.slug), c.id]));
-  const tNameParent = new Map(targetCats.map((c) => [`${c.parent}|${norm(c.name)}`, c.id]));
+  const tById = new Map(targetCats.map((c) => [c.id, c]));
+  const tPath = new Map(targetCats.map((c) => [namePath(c, tById), c.id]));
   const plan: CategoryPlan = { toCreate: [], matched: new Map(), warnings: [] };
   const planned = new Map<number, PlannedCategory>();
   const visiting = new Set<number>();
@@ -225,8 +241,7 @@ export function planCategories(
 
     const parentTargetId = parent.targetId ?? 0;
     const existing =
-      tSlug.get(norm(src.slug)) ??
-      (parent.planned ? undefined : tNameParent.get(`${parentTargetId}|${norm(src.name)}`));
+      tSlug.get(norm(src.slug)) ?? (parent.planned ? undefined : tPath.get(namePath(src, byId)));
     if (existing !== undefined) {
       plan.matched.set(src.id, existing);
       return { targetId: existing };
@@ -542,6 +557,16 @@ export async function executeProductCopy(opts: ProductCopyOptions): Promise<Copy
     result.messages
   );
 
+  const skuBySourceId = new Map<number, string>();
+  products.forEach((p) => p.sku && skuBySourceId.set(p.id, p.sku));
+  const linkIds = [
+    ...new Set(products.flatMap((p) => [...(p.upsell_ids ?? []), ...(p.cross_sell_ids ?? [])])),
+  ].filter((id) => !skuBySourceId.has(id));
+  for (const ids of chunk(linkIds, 100)) {
+    const r = await source.getProducts({ include: ids, per_page: 100 });
+    if (r.success) r.data.forEach((p) => p.sku && skuBySourceId.set(p.id, p.sku));
+  }
+
   const creates: Array<{ src: Product; payload: ProductUpdateData }> = [];
   const updates: Array<{ src: Product; payload: ProductUpdateData & { id: number } }> = [];
   for (const p of products) {
@@ -550,7 +575,7 @@ export async function executeProductCopy(opts: ProductCopyOptions): Promise<Copy
       result.skipped++;
       continue;
     }
-    const { payload, warnings } = buildProductPayload(p, ctx);
+    const { payload, warnings } = buildProductPayload(p, ctx, skuBySourceId);
     warnings.forEach((w) => result.messages.push(`${p.name}: ${w}`));
     if (existing !== undefined) updates.push({ src: p, payload: { ...payload, id: existing } });
     else creates.push({ src: p, payload });
@@ -571,25 +596,46 @@ export async function executeProductCopy(opts: ProductCopyOptions): Promise<Copy
       })
   );
 
-  // Variations are best-effort and only for newly created variable products.
-  for (const { src, id } of createdVariable) {
+  // Variations are best-effort. Existing products match by SKU, else by attribute combination.
+  const varKey = (v: { sku?: string; attributes: Array<{ name: string; option: string }> }) =>
+    v.sku
+      ? `sku:${norm(v.sku)}`
+      : v.attributes
+          .map((a) => `${norm(a.name)}=${norm(a.option)}`)
+          .sort()
+          .join('|');
+  const syncVariations = async (src: Product, id: number, existing: boolean): Promise<void> => {
     const vars = await source.getProductVariations(src.id, { per_page: 100 });
     if (!vars.success) {
       result.messages.push(`${src.name}: could not read variations (${vars.error})`);
-      continue;
+      return;
     }
-    const res = await target.batchProductVariations(id, {
-      create: vars.data.map(buildVariationPayload),
-    });
+    const batch: { create: VariationCreateData[]; update?: VariationUpdateData[] } = { create: [] };
+    if (existing) {
+      const cur = await target.getProductVariations(id, { per_page: 100 });
+      if (!cur.success) {
+        result.messages.push(`${src.name}: could not read target variations (${cur.error})`);
+        return;
+      }
+      const byKey = new Map(cur.data.map((v) => [varKey(v), v.id]));
+      batch.update = [];
+      for (const v of vars.data) {
+        const tid = byKey.get(varKey(v));
+        if (tid !== undefined) batch.update.push({ ...buildVariationPayload(v), id: tid });
+        else batch.create.push(buildVariationPayload(v));
+      }
+    } else batch.create = vars.data.map(buildVariationPayload);
+    const res = await target.batchProductVariations(id, batch);
     if (!res.success) result.messages.push(`${src.name}: variations failed (${res.error})`);
     else {
-      const bad = batchErrorIds(res.data, 'create').length;
+      const bad =
+        batchErrorIds(res.data, 'create').length + batchErrorIds(res.data, 'update').length;
       if (bad) result.messages.push(`${src.name}: ${bad} of ${vars.data.length} variations failed`);
     }
-  }
-  if (updates.some((u) => u.src.type === 'variable')) {
-    result.messages.push('Variations of updated (existing) variable products are not synced');
-  }
+  };
+  for (const { src, id } of createdVariable) await syncVariations(src, id, false);
+  for (const u of updates)
+    if (u.src.type === 'variable') await syncVariations(u.src, u.payload.id, true);
   return result;
 }
 

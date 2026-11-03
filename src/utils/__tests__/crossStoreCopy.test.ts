@@ -230,6 +230,19 @@ describe('planCategories', () => {
     expect(p.toCreate[0]).toMatchObject({ parentTargetId: 50, depth: 0 });
     expect(p.toCreate[1]?.parentSrcId).toBe(2);
   });
+  it('name fallback needs the full ancestor path, not just the parent', () => {
+    const srcTree = [cat(1, 'Men'), cat(2, 'Shoes', 1)];
+    const tgt = [cat(50, 'Women', 0, 'w'), cat(51, 'Shoes', 50, 's-w')];
+    const p = planCategories(srcTree, tgt, [{ id: 2, name: 'Shoes', slug: 'shoes' }]);
+    expect(p.matched.has(2)).toBe(false);
+    expect(p.toCreate.map((c) => c.name)).toEqual(['Men', 'Shoes']);
+    const ok = planCategories(
+      srcTree,
+      [cat(60, 'MEN', 0, 'm'), cat(61, 'shoes', 60, 's-m')],
+      [{ id: 2, name: 'Shoes', slug: 'shoes' }]
+    );
+    expect(ok.matched.get(2)).toBe(61);
+  });
   it('falls back to name under the same parent', () => {
     const p = planCategories(src, [cat(50, 'A', 0, 'a-x'), cat(51, 'B', 50, 'b-x')], need);
     expect(p.matched.get(2)).toBe(51);
@@ -275,10 +288,12 @@ describe('executeProductCopy', () => {
       batchProducts,
       batchProductCategories,
       batchProductVariations,
+      getProductVariations: vi.fn().mockResolvedValue({ success: true, data: [] }),
     };
     const source = {
       getProductCategories: () => ok([cat(1, 'A'), cat(2, 'B', 1), cat(3, 'C', 2)]),
       getProductVariations: () => ok([{ id: 1, attributes: [], dimensions: {} }]),
+      getProducts: vi.fn().mockResolvedValue({ success: true, data: [] }),
     };
     return { source, target, batchProductCategories, batchProductVariations };
   };
@@ -306,7 +321,7 @@ describe('executeProductCopy', () => {
     expect(batchProducts.mock.calls[0]?.[0].create[0].categories).toEqual([{ id: 100 }]);
   });
 
-  it('updates collisions, variations only for new variable products, counts failures', async () => {
+  it('updates collisions, syncs variations for new and existing variable products, counts failures', async () => {
     const batchProducts = vi
       .fn()
       .mockResolvedValueOnce({
@@ -328,9 +343,62 @@ describe('executeProductCopy', () => {
     });
     expect(r).toMatchObject({ created: 1, updated: 1, failed: 1 });
     expect(s.batchProductCategories).not.toHaveBeenCalled();
-    expect(s.batchProductVariations).toHaveBeenCalledTimes(1);
+    expect(s.batchProductVariations).toHaveBeenCalledTimes(2);
     expect(s.batchProductVariations.mock.calls[0]?.[0]).toBe(700);
-    expect(r.messages.some((m) => m.includes('not synced'))).toBe(true);
+    expect(s.batchProductVariations.mock.calls[1]?.[0]).toBe(99);
+  });
+
+  it('updates existing variations by SKU/attributes and creates the rest', async () => {
+    const batchProducts = vi.fn().mockResolvedValue({ success: true, data: { update: [{}] } });
+    const s = setup(batchProducts);
+    const v = (id: number, sku: string, opt = 'M') => ({
+      id,
+      sku,
+      attributes: [{ id: 0, name: 'Size', option: opt }],
+      dimensions: {},
+    });
+    s.source.getProductVariations = () => ok([v(1, 'A'), v(2, ''), v(3, 'C', 'L')]) as never;
+    s.target.getProductVariations = vi
+      .fn()
+      .mockResolvedValue({ success: true, data: [v(40, 'a'), v(41, '', 'M')] });
+    await executeProductCopy({
+      source: s.source as never,
+      target: s.target as never,
+      products: [mk(2, { type: 'variable' })],
+      collision: 'update',
+      createMissingCategories: false,
+    });
+    const [id, batch] = s.batchProductVariations.mock.calls[0] ?? [];
+    expect(id).toBe(99);
+    expect(batch.update.map((u: { id: number }) => u.id)).toEqual([40, 41]);
+    expect(batch.create).toHaveLength(1);
+  });
+
+  it('maps upsell/cross-sell ids via SKU to existing target products, drops the rest', async () => {
+    const batchProducts = vi
+      .fn()
+      .mockResolvedValue({ success: true, data: { create: [{ id: 1 }] } });
+    const s = setup(batchProducts);
+    // source 50 -> sku K2 (exists in target as 99); source 51 -> sku NOPE (absent in target)
+    s.source.getProducts = vi.fn().mockResolvedValue({
+      success: true,
+      data: [
+        { id: 50, sku: 'K2' },
+        { id: 51, sku: 'NOPE' },
+      ],
+    });
+    const r = await executeProductCopy({
+      source: s.source as never,
+      target: s.target as never,
+      products: [mk(1, { upsell_ids: [50, 51, 52], cross_sell_ids: [50], related_ids: [50] })],
+      collision: 'skip',
+      createMissingCategories: false,
+    });
+    const sent = batchProducts.mock.calls[0]?.[0].create[0];
+    expect(sent.upsell_ids).toEqual([99]);
+    expect(sent.cross_sell_ids).toEqual([99]);
+    expect(sent).not.toHaveProperty('related_ids');
+    expect(r.messages.some((m) => m.includes('not copied'))).toBe(false);
   });
 
   it('keeps remaining categories when one category fails to create', async () => {
@@ -357,12 +425,5 @@ describe('executeProductCopy', () => {
     expect(batchProducts.mock.calls[0]?.[0].create[0].categories).toEqual([{ id: 100 }]);
     expect(r.messages.some((m) => m.includes('2 of 3 categories could not be created'))).toBe(true);
     expect(r.failed).toBe(0);
-  });
-});
-
-describe('related links warning', () => {
-  it('warns when upsell/cross-sell ids exist', () => {
-    const { warnings } = buildProductPayload(prod({ upsell_ids: [1], cross_sell_ids: [2] }), ctx);
-    expect(warnings.some((w) => w.startsWith('upsell/cross-sell'))).toBe(true);
   });
 });
