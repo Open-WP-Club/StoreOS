@@ -5,6 +5,7 @@ import CustomerProfileExtras from '../CustomerProfileExtras';
 import DuplicateCustomersModal from '../DuplicateCustomersModal';
 import useCustomerNotes, { getCustomerNote } from '../../stores/customerNotesStore';
 import { findDuplicateGroups } from '../../utils/customerProfile';
+import useAppSettings from '../../stores/appSettingsStore';
 import { createMockCustomer, createMockOrder } from '../../__test_utils__';
 
 describe('CustomerProfileExtras', () => {
@@ -25,10 +26,43 @@ describe('CustomerProfileExtras', () => {
     expect(screen.getByText('vip')).toBeInTheDocument();
     await user.type(screen.getByLabelText('Customer notes'), 'hi');
     const n = getCustomerNote(useCustomerNotes.getState().byStore, 's1', 3);
-    expect(n).toEqual({ tags: ['vip'], notes: 'hi' });
+    expect(n).toMatchObject({ tags: ['vip'], notes: 'hi' });
 
     await user.click(screen.getByLabelText('Remove tag vip'));
     expect(screen.queryByText('vip')).not.toBeInTheDocument();
+  });
+});
+
+describe('CustomerProfileExtras sync', () => {
+  beforeEach(() => {
+    useCustomerNotes.setState({ byStore: {} });
+    useAppSettings.setState({ syncCustomerProfile: false });
+  });
+
+  it('adopts remote meta_data when sync is ON and remote is newer', () => {
+    useAppSettings.setState({ syncCustomerProfile: true });
+    const c = createMockCustomer({
+      id: 3,
+      meta_data: [
+        { id: 1, key: '_storeos_tags', value: '["vip"]' },
+        { id: 2, key: '_storeos_notes', value: 'remote' },
+        { id: 3, key: '_storeos_updated', value: '1000' },
+      ],
+    });
+    render(<CustomerProfileExtras customer={c} storeId="s1" orders={[]} />);
+    expect(getCustomerNote(useCustomerNotes.getState().byStore, 's1', 3)).toMatchObject({
+      tags: ['vip'],
+      notes: 'remote',
+    });
+  });
+
+  it('ignores remote meta_data when sync is OFF', () => {
+    const c = createMockCustomer({
+      id: 3,
+      meta_data: [{ id: 3, key: '_storeos_updated', value: '1000' }],
+    });
+    render(<CustomerProfileExtras customer={c} storeId="s1" orders={[]} />);
+    expect(getCustomerNote(useCustomerNotes.getState().byStore, 's1', 3).updatedAt).toBeUndefined();
   });
 });
 

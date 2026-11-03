@@ -162,6 +162,8 @@ export async function replayOperation(
       return createTaxClassOnce(service, d);
     case 'delete_tax_class':
       return okIfGone(await service.deleteTaxClass(d.slug as string));
+    case 'update_customer':
+      return okIfGone(await service.updateCustomer(d.id as number, d));
     case 'update_review':
       return okIfGone(await service.updateReview(d.id as number, d));
     case 'delete_review':

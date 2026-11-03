@@ -2,6 +2,10 @@ import { describe, it, expect } from 'vitest';
 import {
   customerOrderStats,
   findDuplicateGroups,
+  namesMatch,
+  normalizeName,
+  profileMeta,
+  remoteProfile,
   normalizeEmail,
   normalizePhone,
   ordersForCustomer,
@@ -92,5 +96,69 @@ describe('customerProfile', () => {
     expect(ids).toContainEqual([3, 4]);
     expect(ids.flat()).not.toContain(7);
     expect(groups.find((g) => g.customers.some((x) => x.id === 3))?.reasons).toEqual(['phone']);
+  });
+
+  describe('fuzzy names', () => {
+    const n = (first: string, last: string): string =>
+      normalizeName({ first_name: first, last_name: last });
+    const noPhone = createMockBilling({ phone: '' });
+    const dup = (a: [string, string], b: [string, string]): boolean =>
+      findDuplicateGroups([
+        createMockCustomer({
+          id: 1,
+          email: 'a@x.com',
+          first_name: a[0],
+          last_name: a[1],
+          billing: noPhone,
+        }),
+        createMockCustomer({
+          id: 2,
+          email: 'b@x.com',
+          first_name: b[0],
+          last_name: b[1],
+          billing: noPhone,
+        }),
+      ]).length === 1;
+
+    it('matches diacritics, order and surname typos', () => {
+      expect(dup(['José', 'Álvarez'], ['jose', 'alvarez'])).toBe(true);
+      expect(dup(['Smith', 'John'], ['John', 'Smith'])).toBe(true);
+      expect(dup(['Maria', 'Petrova'], ['Maria', 'Petrovq'])).toBe(true);
+      expect(dup(['Georgi', 'Dimitrov'], ['Georgi', 'Dimitrow'])).toBe(true);
+    });
+
+    it('does not merge different people with similar names', () => {
+      expect(dup(['Maria', 'Petrova'], ['Mario', 'Petrova'])).toBe(false);
+      expect(dup(['Jon', 'Smith'], ['Jan', 'Smith'])).toBe(false);
+      expect(dup(['Ana', 'Li'], ['Ana', 'Lo'])).toBe(false);
+      expect(dup(['Ivan', 'Petrov'], ['Ivana', 'Petrova'])).toBe(false);
+      expect(dup(['Maria', 'Petrova'], ['Maria', 'Ivanova'])).toBe(false);
+      expect(dup(['Peter', 'Johnson'], ['Peter', 'Jackson'])).toBe(false);
+    });
+
+    it('needs two tokens and two typos are too many', () => {
+      expect(namesMatch('madonna', 'madonnb')).toBe(false);
+      expect(namesMatch(n('Georgi', 'Dimitrov'), n('Georgy', 'Dimitrow'))).toBe(false);
+    });
+
+    it('keeps exact email matching', () => {
+      const g = findDuplicateGroups([
+        createMockCustomer({ id: 1, email: 'same@x.com', first_name: 'A', last_name: 'B' }),
+        createMockCustomer({ id: 2, email: 'SAME@x.com', first_name: 'C', last_name: 'D' }),
+      ]);
+      expect(g[0]?.reasons).toContain('email');
+    });
+  });
+
+  it('round-trips profile meta_data and rejects missing/corrupt data', () => {
+    const meta = profileMeta({ tags: ['vip'], notes: 'hi', updatedAt: 5 });
+    expect(remoteProfile(meta)).toEqual({ tags: ['vip'], notes: 'hi', updatedAt: 5 });
+    expect(remoteProfile([])).toBeNull();
+    expect(
+      remoteProfile([
+        { key: '_storeos_tags', value: '{bad' },
+        { key: '_storeos_updated', value: '9' },
+      ])
+    ).toEqual({ tags: [], notes: '', updatedAt: 9 });
   });
 });
