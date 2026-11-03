@@ -265,6 +265,20 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
     }
   }
 
+  async getProductVariation(
+    productId: number,
+    variationId: number
+  ): Promise<ApiResponse<ProductVariation>> {
+    try {
+      const response: WooCommerceApiResponse<ProductVariation> = await (
+        await this.getApi()
+      ).get(`products/${productId}/variations/${variationId}`);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return this.fail(error);
+    }
+  }
+
   async updateProductVariation(
     productId: number,
     variationId: number,
@@ -338,6 +352,17 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
     }
   }
 
+  async getProductCategory(id: number): Promise<ApiResponse<WooCommerceProductCategory>> {
+    try {
+      const response: WooCommerceApiResponse<WooCommerceProductCategory> = await (
+        await this.getApi()
+      ).get(`products/categories/${id}`);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return this.fail(error);
+    }
+  }
+
   async updateProductCategory(
     id: number,
     data: ProductCategoryUpdateData
@@ -391,6 +416,17 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
     }
   }
 
+  async getProductAttribute(id: number): Promise<ApiResponse<WooCommerceProductAttribute>> {
+    try {
+      const response: WooCommerceApiResponse<WooCommerceProductAttribute> = await (
+        await this.getApi()
+      ).get(`products/attributes/${id}`);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return this.fail(error);
+    }
+  }
+
   async updateProductAttribute(
     id: number,
     data: ProductAttributeUpdateData
@@ -435,6 +471,20 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
       const response: WooCommerceApiResponse<WooCommerceAttributeTerm> = await (
         await this.getApi()
       ).post(`products/attributes/${attributeId}/terms`, data);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return this.fail(error);
+    }
+  }
+
+  async getAttributeTerm(
+    attributeId: number,
+    termId: number
+  ): Promise<ApiResponse<WooCommerceAttributeTerm>> {
+    try {
+      const response: WooCommerceApiResponse<WooCommerceAttributeTerm> = await (
+        await this.getApi()
+      ).get(`products/attributes/${attributeId}/terms/${termId}`);
       return { success: true, data: response.data };
     } catch (error) {
       return this.fail(error);

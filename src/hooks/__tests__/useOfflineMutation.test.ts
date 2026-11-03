@@ -6,7 +6,9 @@ const showToast = vi.fn();
 let online = true;
 
 vi.mock('../../stores/offlineStore', () => ({
-  default: (selector: (s: unknown) => unknown) => selector({ addPendingOperation }),
+  default: Object.assign((selector: (s: unknown) => unknown) => selector({ addPendingOperation }), {
+    getState: () => ({ pendingOperations: [] }),
+  }),
 }));
 vi.mock('../useOnlineStatus', () => ({ default: () => ({ isOnline: online }) }));
 vi.mock('../useToast', () => ({ useToast: () => ({ showToast }) }));

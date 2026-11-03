@@ -2,6 +2,8 @@ import { vi } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import OfflineIndicator from '../OfflineIndicator';
 import useOffline from '../../stores/offlineStore';
+import useCache from '../../stores/cacheStore';
+import useStoreConfig from '../../stores/storeConfigStore';
 
 const svc = {
   createOrder: vi.fn(),
@@ -10,6 +12,7 @@ const svc = {
   getOrder: vi.fn(),
   getProduct: vi.fn(),
   updateStock: vi.fn(),
+  batchProducts: vi.fn(),
 };
 let online = true;
 const checkStatus = vi.fn();
@@ -40,6 +43,7 @@ vi.mock('../../services/woocommerce', () => ({
     getOrder = svc.getOrder;
     getProduct = svc.getProduct;
     updateStock = svc.updateStock;
+    batchProducts = svc.batchProducts;
   },
 }));
 vi.mock('../../utils/posOfflineSale', () => ({
@@ -197,6 +201,166 @@ describe('OfflineIndicator', () => {
       });
       expect(svc.updateStock).toHaveBeenCalledWith(5, 17, 'instock');
       expect(useOffline.getState().pendingOperations).toHaveLength(0);
+    });
+  });
+
+  describe('conflict resolution extras', () => {
+    const open = async (): Promise<void> => {
+      render(<OfflineIndicator />);
+      await flush(2100);
+      await flush(600);
+      fireEvent.click(screen.getAllByRole('button')[0]!);
+    };
+    const T0 = '2024-01-01T10:00:00';
+    const T1 = '2024-01-02T10:00:00';
+    const queueBatch = (): void => {
+      svc.getProduct.mockImplementation(async (id: number) => ({
+        success: true,
+        data:
+          id === 1
+            ? { id, name: 'A', date_modified_gmt: T0 }
+            : { id, name: 'Theirs', date_modified_gmt: T1 },
+      }));
+      svc.batchProducts.mockResolvedValue({ success: true, data: {} });
+      useOffline.getState().addPendingOperation(
+        'batch_products',
+        {
+          update: [
+            { id: 1, name: 'A2' },
+            { id: 2, name: 'B2' },
+            { id: 3, name: 'C2' },
+          ],
+        },
+        's1',
+        {
+          modified: '',
+          prev: {},
+          items: {
+            '1': { modified: T0, prev: { name: 'A' } },
+            '2': { modified: T0, prev: { name: 'B' } },
+            '3': { modified: T0, prev: { name: 'C' } },
+          },
+        }
+      );
+      svc.getProduct.mockImplementation(async (id: number) => ({
+        success: true,
+        data:
+          id === 1
+            ? { id, name: 'A', date_modified_gmt: T0 }
+            : { id, name: `Theirs${id}`, date_modified_gmt: T1 },
+      }));
+    };
+
+    it('batch: clean item syncs, conflicting items are held and listed per item', async () => {
+      queueBatch();
+      await open();
+      expect(svc.batchProducts).toHaveBeenCalledWith({ update: [{ id: 1, name: 'A2' }] });
+      const ops = useOffline.getState().pendingOperations;
+      expect(ops).toHaveLength(1);
+      expect(ops[0]!.data.update).toEqual([
+        { id: 2, name: 'B2' },
+        { id: 3, name: 'C2' },
+      ]);
+      expect(screen.getAllByTestId('conflict-item')).toHaveLength(2);
+      expect(screen.getByTestId('conflict-panel')).toHaveTextContent('Theirs2');
+      expect(ops[0]!.retryCount).toBe(0);
+    });
+
+    it('batch: Keep mine sends only that item; Use server drops it; op ends when none left', async () => {
+      queueBatch();
+      await open();
+      svc.batchProducts.mockClear();
+      await act(async () => {
+        fireEvent.click(screen.getAllByText('Keep mine')[0]!);
+      });
+      expect(svc.batchProducts).toHaveBeenCalledTimes(1);
+      expect(svc.batchProducts).toHaveBeenCalledWith({ update: [{ id: 2, name: 'B2' }] });
+      expect(useOffline.getState().pendingOperations[0]!.data.update).toEqual([
+        { id: 3, name: 'C2' },
+      ]);
+      await act(async () => {
+        fireEvent.click(screen.getByText('Use server'));
+      });
+      expect(svc.batchProducts).toHaveBeenCalledTimes(1);
+      expect(useOffline.getState().pendingOperations).toHaveLength(0);
+    });
+
+    it('batch: failed Keep mine leaves the item held', async () => {
+      queueBatch();
+      await open();
+      svc.batchProducts.mockResolvedValue({ success: false, error: 'nope' });
+      await act(async () => {
+        fireEvent.click(screen.getAllByText('Keep mine')[0]!);
+      });
+      const op = useOffline.getState().pendingOperations[0]!;
+      expect(op.conflict?.items).toHaveLength(2);
+      expect(op.lastError).toBe('nope');
+    });
+
+    const queueStock = (): void => {
+      useOffline
+        .getState()
+        .addPendingOperation(
+          'update_stock',
+          { id: 5, stock_quantity: 7, stock_status: 'instock' },
+          's1',
+          {
+            modified: T0,
+            prev: { stock_quantity: 10, stock_status: 'instock' },
+          }
+        );
+    };
+
+    it('Apply as delta re-reads the server quantity at click time', async () => {
+      svc.getProduct.mockResolvedValue({
+        success: true,
+        data: { id: 5, stock_quantity: 20, date_modified_gmt: T1 },
+      });
+      queueStock();
+      await open();
+      svc.getProduct.mockResolvedValue({
+        success: true,
+        data: { id: 5, stock_quantity: 30, date_modified_gmt: T1 },
+      });
+      svc.updateStock.mockResolvedValue({ success: true });
+      await act(async () => {
+        fireEvent.click(screen.getByText(/Apply as delta/));
+      });
+      expect(svc.updateStock).toHaveBeenCalledWith(5, 27, 'instock');
+    });
+
+    it('Apply as delta: unreadable server quantity sends nothing and keeps the op', async () => {
+      svc.getProduct.mockResolvedValue({
+        success: true,
+        data: { id: 5, stock_quantity: 20, date_modified_gmt: T1 },
+      });
+      queueStock();
+      await open();
+      svc.getProduct.mockResolvedValue({ success: false, error: 'x' });
+      await act(async () => {
+        fireEvent.click(screen.getByText(/Apply as delta/));
+      });
+      expect(svc.updateStock).not.toHaveBeenCalled();
+      expect(useOffline.getState().pendingOperations[0]!.lastError).toMatch(/server quantity/);
+    });
+
+    it('every resolution invalidates the cached type for the item', async () => {
+      const clear = vi.spyOn(useCache.getState(), 'clearCacheForType').mockResolvedValue();
+      useStoreConfig.setState({ currentStoreId: 's1' } as never);
+      svc.getOrder.mockResolvedValue({
+        success: true,
+        data: { id: 7, status: 'cancelled', date_modified_gmt: T1 },
+      });
+      useOffline
+        .getState()
+        .addPendingOperation('update_order', { id: 7, status: 'completed' }, 's1', {
+          modified: T0,
+          prev: { status: 'processing' },
+        });
+      await open();
+      fireEvent.click(screen.getByText('Use server'));
+      expect(clear).toHaveBeenCalledWith('orders');
+      clear.mockRestore();
     });
   });
 

@@ -148,6 +148,7 @@ function VariationsTab({ product, storeConfig }: VariationsTabProps): ReactEleme
       const res = await mutate({
         operationType: 'update_variation',
         queueData: { productId: product.id, id: variation.id, ...updatePayload },
+        current: variation as unknown as Record<string, unknown>,
         storeId: storeConfig.id,
         execute: async () => {
           const result = await service.updateProductVariation(

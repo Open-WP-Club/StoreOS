@@ -6,7 +6,15 @@ import { useStoreConfig } from '../stores';
 import WooCommerceService from '../services/woocommerce';
 import { resolvePendingSale } from '../utils/posOfflineSale';
 import { replayOperation } from '../utils/offlineReplay';
-import { editedFields, stockDeltaData } from '../utils/offlineConflicts';
+import {
+  editedFields,
+  freshStockDeltaData,
+  invalidateCached,
+  itemFields,
+  singleItemOp,
+  stockDeltaData,
+  withoutHeldItem,
+} from '../utils/offlineConflicts';
 import type { PendingOperation } from '../types';
 
 function ConflictPanel({
@@ -15,56 +23,90 @@ function ConflictPanel({
   onKeepMine,
   onUseServer,
   onApplyDelta,
+  onKeepMineItem,
+  onUseServerItem,
 }: {
   op: PendingOperation;
   disabled: boolean;
   onKeepMine: () => void;
   onUseServer: () => void;
   onApplyDelta: () => void;
+  onKeepMineItem: (id: number) => void;
+  onUseServerItem: (id: number) => void;
 }): React.ReactElement | null {
   const c = op.conflict;
   if (!c) return null;
-  const mine = editedFields(op);
   const show = (v: unknown): string => (typeof v === 'string' ? v : JSON.stringify(v ?? null));
   const btn =
     'px-2 py-1 text-xs rounded border border-gray-300 dark:border-gray-500 text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50';
+  const diff = (
+    fields: string[],
+    mine: Record<string, unknown>,
+    server: Record<string, unknown>
+  ) => (
+    <table className="w-full text-xs text-gray-700 dark:text-gray-200">
+      <thead>
+        <tr className="text-left text-gray-500 dark:text-gray-400">
+          <th className="font-normal">Field</th>
+          <th className="font-normal">Mine</th>
+          <th className="font-normal">Server</th>
+        </tr>
+      </thead>
+      <tbody>
+        {fields.map((f) => (
+          <tr key={f}>
+            <td>{f}</td>
+            <td>{show(mine[f])}</td>
+            <td>{show(server[f])}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+  const heldUpdates = (op.data.update as Array<Record<string, unknown>> | undefined) ?? [];
   return (
     <div className="mt-1 space-y-1" data-testid="conflict-panel">
       <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
         Changed on the server while you were offline
       </p>
-      <table className="w-full text-xs text-gray-700 dark:text-gray-200">
-        <thead>
-          <tr className="text-left text-gray-500 dark:text-gray-400">
-            <th className="font-normal">Field</th>
-            <th className="font-normal">Mine</th>
-            <th className="font-normal">Server</th>
-          </tr>
-        </thead>
-        <tbody>
-          {c.fields.map((f) => (
-            <tr key={f}>
-              <td>{f}</td>
-              <td>{show(mine[f])}</td>
-              <td>{show(c.server[f])}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <div className="flex flex-wrap gap-1">
-        <button className={btn} disabled={disabled} onClick={onKeepMine}>
-          Keep mine
-        </button>
-        <button className={btn} onClick={onUseServer}>
-          Use server
-        </button>
-        {stockDeltaData(op) && (
-          <button className={btn} disabled={disabled} onClick={onApplyDelta}>
-            Apply as delta ({c.stockDelta! > 0 ? '+' : ''}
-            {c.stockDelta})
-          </button>
-        )}
-      </div>
+      {c.items ? (
+        c.items.map((it) => (
+          <div key={it.id} className="space-y-1" data-testid="conflict-item">
+            <p className="text-xs font-medium text-gray-800 dark:text-gray-100">Item #{it.id}</p>
+            {diff(
+              it.fields,
+              itemFields(heldUpdates.find((u) => u.id === it.id) ?? {}, false),
+              it.server
+            )}
+            <div className="flex flex-wrap gap-1">
+              <button className={btn} disabled={disabled} onClick={() => onKeepMineItem(it.id)}>
+                Keep mine
+              </button>
+              <button className={btn} onClick={() => onUseServerItem(it.id)}>
+                Use server
+              </button>
+            </div>
+          </div>
+        ))
+      ) : (
+        <>
+          {diff(c.fields, editedFields(op), c.server)}
+          <div className="flex flex-wrap gap-1">
+            <button className={btn} disabled={disabled} onClick={onKeepMine}>
+              Keep mine
+            </button>
+            <button className={btn} onClick={onUseServer}>
+              Use server
+            </button>
+            {stockDeltaData(op) && (
+              <button className={btn} disabled={disabled} onClick={onApplyDelta}>
+                Apply as delta ({c.stockDelta! > 0 ? '+' : ''}
+                {c.stockDelta})
+              </button>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -108,6 +150,14 @@ function OfflineIndicator(): React.ReactElement | null {
       try {
         const result = await replayOperation(new WooCommerceService(store), operation);
 
+        if (result.held) {
+          // Batch sent without its conflicting items; those stay as a conflicted op.
+          updatePendingOperation(operation.id, {
+            ...result.held,
+            lastError: 'Changed on the server',
+          });
+          return 'conflict';
+        }
         if (result.conflict) {
           updatePendingOperation(operation.id, {
             conflict: result.conflict,
@@ -146,7 +196,41 @@ function OfflineIndicator(): React.ReactElement | null {
       base: undefined,
       lastError: undefined,
     });
-    if ((await processOperation(next)) === true) removePendingOperation(op.id);
+    if ((await processOperation(next)) === true) {
+      removePendingOperation(op.id);
+      invalidateCached(op);
+    }
+  };
+
+  const serviceFor = (op: PendingOperation): WooCommerceService | null => {
+    const store = stores.find((s) => s.id === op.storeId);
+    return store ? new WooCommerceService(store) : null;
+  };
+
+  // Re-read the server quantity now (it may have moved since detection) before adding my change.
+  const applyDelta = async (op: PendingOperation): Promise<void> => {
+    const service = serviceFor(op);
+    const data = service ? await freshStockDeltaData(service, op) : null;
+    if (data) await sendResolved(op, data);
+    else updatePendingOperation(op.id, { lastError: 'Could not read the current server quantity' });
+  };
+
+  const takeServer = (op: PendingOperation): void => {
+    removePendingOperation(op.id);
+    invalidateCached(op);
+  };
+
+  // Resolve one held item of a batch: send just that item (Keep mine) or drop it (Use server).
+  const resolveItem = async (
+    op: PendingOperation,
+    id: number,
+    keepMine: boolean
+  ): Promise<void> => {
+    if (keepMine && (await processOperation(singleItemOp(op, id))) !== true) return;
+    invalidateCached(op);
+    const next = withoutHeldItem(op, id);
+    if (next) updatePendingOperation(op.id, { ...next, lastError: undefined });
+    else removePendingOperation(op.id);
   };
 
   // Sync all pending operations
@@ -300,11 +384,10 @@ function OfflineIndicator(): React.ReactElement | null {
                           op={op}
                           disabled={!isOnline}
                           onKeepMine={() => void sendResolved(op)}
-                          onUseServer={() => removePendingOperation(op.id)}
-                          onApplyDelta={() => {
-                            const data = stockDeltaData(op);
-                            if (data) void sendResolved(op, data);
-                          }}
+                          onUseServer={() => takeServer(op)}
+                          onApplyDelta={() => void applyDelta(op)}
+                          onKeepMineItem={(id) => void resolveItem(op, id, true)}
+                          onUseServerItem={(id) => void resolveItem(op, id, false)}
                         />
                       ) : (
                         op.lastError && (
