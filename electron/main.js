@@ -12,6 +12,7 @@ import fs from 'fs';
 import { resolveReportPath } from './reportFiles';
 import { resolveBackupPath, listBackupNames, selectPrune } from './backupFiles';
 import electronUpdater from 'electron-updater';
+import { startAutoUpdate } from './updater';
 import path from 'path';
 import { sanitizeNotificationPayload } from './ipcValidation';
 
@@ -440,11 +441,7 @@ ipcMain.handle('open-wp-admin', (event, rawUrl) => {
 
 app.whenReady().then(() => {
   createWindow();
-  if (!isDev) {
-    // Checks GitHub releases (see package.json "build.publish"), downloads in the
-    // background, and shows a native notification when ready to install on quit.
-    autoUpdater.checkForUpdatesAndNotify();
-  }
+  startAutoUpdate({ autoUpdater, isDev });
 });
 
 app.on('window-all-closed', () => {

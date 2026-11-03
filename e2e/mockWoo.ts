@@ -90,6 +90,12 @@ export async function startMockWoo(
       return void res.end('<title>Mock WP Admin</title><h1>Mock WP Admin</h1>');
     }
 
+    // Public, credential-less endpoints (the store-logo lookup reads the site root + media).
+    if (u.pathname === '/wp-json/' || u.pathname.startsWith('/wp-json/wp/v2/')) {
+      res.setHeader('content-type', 'application/json');
+      return void res.end('{"name":"E2E Store"}');
+    }
+
     // http stores use OAuth1 (Authorization header or query), https use query-string keys.
     const auth = `${req.headers.authorization ?? ''} ${u.search}`;
     if (!auth.includes(CK)) {
