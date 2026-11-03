@@ -247,99 +247,88 @@ function FilterPresetManager({
 
       {/* Save Modal */}
       {showSaveModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex min-h-screen items-center justify-center p-4">
-            <div
-              role="button"
-              tabIndex={0}
-              aria-label="Close modal"
-              className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-              onClick={() => setShowSaveModal(false)}
-              onKeyDown={(e) => e.key === 'Escape' && setShowSaveModal(false)}
-            />
-            <div className="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-xl">
-              <div className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Save Filter Preset
-                </h3>
+        <Modal
+          onClose={() => setShowSaveModal(false)}
+          aria-label="Save Filter Preset"
+          className="relative w-full max-w-md mx-4 bg-white dark:bg-gray-800 rounded-lg shadow-xl"
+        >
+          <div className="p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Save Filter Preset
+            </h3>
 
-                <div className="space-y-4">
-                  <div>
-                    <label
-                      htmlFor="preset-name"
-                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                    >
-                      Preset Name
-                    </label>
-                    <input
-                      id="preset-name"
-                      type="text"
-                      value={presetName}
-                      onChange={(e) => setPresetName(e.target.value)}
-                      placeholder="e.g., Low Stock Products"
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-purple-500 focus:border-purple-500"
-                    />
-                  </div>
+            <div className="space-y-4">
+              <div>
+                <label
+                  htmlFor="preset-name"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                  Preset Name
+                </label>
+                <input
+                  id="preset-name"
+                  type="text"
+                  value={presetName}
+                  onChange={(e) => setPresetName(e.target.value)}
+                  placeholder="e.g., Low Stock Products"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-purple-500 focus:border-purple-500"
+                />
+              </div>
 
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="saveAsGlobal"
-                      checked={saveAsGlobal}
-                      onChange={(e) => setSaveAsGlobal(e.target.checked)}
-                      className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
-                    />
-                    <label
-                      htmlFor="saveAsGlobal"
-                      className="text-sm text-gray-700 dark:text-gray-300"
-                    >
-                      Available for all stores
-                    </label>
-                  </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="saveAsGlobal"
+                  checked={saveAsGlobal}
+                  onChange={(e) => setSaveAsGlobal(e.target.checked)}
+                  className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                />
+                <label htmlFor="saveAsGlobal" className="text-sm text-gray-700 dark:text-gray-300">
+                  Available for all stores
+                </label>
+              </div>
 
-                  <div className="bg-gray-50 dark:bg-gray-700 rounded-md p-3">
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                      <strong>Active Filters:</strong>
-                    </p>
-                    <ul className="mt-1 text-xs text-gray-500 dark:text-gray-400 space-y-0.5">
-                      {Object.entries(currentFilters || {}).map(([key, value]) => {
-                        if (value && value !== 'all') {
-                          return (
-                            <li key={key}>
-                              &bull; {key}:{' '}
-                              {typeof value === 'object' ? JSON.stringify(value) : String(value)}
-                            </li>
-                          );
-                        }
-                        return null;
-                      })}
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 mt-6">
-                  <button
-                    onClick={handleSavePreset}
-                    disabled={!presetName.trim()}
-                    className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                  >
-                    Save Preset
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowSaveModal(false);
-                      setPresetName('');
-                      setSaveAsGlobal(false);
-                    }}
-                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-md p-3">
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  <strong>Active Filters:</strong>
+                </p>
+                <ul className="mt-1 text-xs text-gray-500 dark:text-gray-400 space-y-0.5">
+                  {Object.entries(currentFilters || {}).map(([key, value]) => {
+                    if (value && value !== 'all') {
+                      return (
+                        <li key={key}>
+                          &bull; {key}:{' '}
+                          {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                        </li>
+                      );
+                    }
+                    return null;
+                  })}
+                </ul>
               </div>
             </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={handleSavePreset}
+                disabled={!presetName.trim()}
+                className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              >
+                Save Preset
+              </button>
+              <button
+                onClick={() => {
+                  setShowSaveModal(false);
+                  setPresetName('');
+                  setSaveAsGlobal(false);
+                }}
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

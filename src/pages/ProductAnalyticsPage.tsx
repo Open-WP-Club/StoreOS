@@ -1,4 +1,4 @@
-import { isStockAtOrBelow } from '../utils/stock';
+import { isLowButInStock, isOutOfStock } from '../utils/stock';
 import React, { useState, useCallback, useMemo } from 'react';
 import { useCache, useTheme, useSettings } from '../stores';
 import { getCurrencyCode } from '../utils/currency';
@@ -97,14 +97,10 @@ const ProductAnalyticsPage: React.FC = (): React.ReactElement => {
 
       // Calculate stock metrics
       const inStock = products.filter((p) => p.stock_status === 'instock').length;
-      const lowStock = products.filter(
-        (p) =>
-          p.stock_quantity !== null &&
-          p.stock_quantity !== undefined &&
-          isStockAtOrBelow(p.stock_quantity, lowStockThreshold) &&
-          p.stock_quantity > 0
+      const lowStock = products.filter((p) =>
+        isLowButInStock(p.stock_quantity, lowStockThreshold)
       ).length;
-      const outOfStock = products.filter((p) => p.stock_status === 'outofstock').length;
+      const outOfStock = products.filter(isOutOfStock).length;
       const inventoryValue = products.reduce((sum, p) => {
         const price = parseFloat(p.price || '0');
         const quantity = parseInt(String(p.stock_quantity || 0));

@@ -34,12 +34,6 @@ export interface BatchLoadProgress<T = unknown> {
 
 export type OnBatchLoaded<T = unknown> = (progress: BatchLoadProgress<T>) => void;
 
-export interface BatchOperationRequest<T = unknown> {
-  create?: T[];
-  update?: T[];
-  delete?: number[];
-}
-
 export interface BatchOperationResponse<T> {
   create?: T[];
   update?: T[];

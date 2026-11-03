@@ -35,16 +35,3 @@ export interface CustomerQueryParams {
   email?: string;
   role?: string;
 }
-
-export interface CustomerMetrics {
-  totalCustomers: number;
-  newCustomers: number;
-  returningCustomers: number;
-  topCustomers: Array<{
-    id: number;
-    name: string;
-    email: string;
-    totalSpent: number;
-    orderCount: number;
-  }>;
-}

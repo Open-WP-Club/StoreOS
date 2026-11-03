@@ -1,4 +1,4 @@
-import { isStockAtOrBelow } from '../utils/stock';
+import { isLowButInStock, isOutOfStock } from '../utils/stock';
 import { useState, useCallback, useMemo, useDeferredValue } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { searchProducts, applyProductFilters } from '../utils/searchService';
@@ -79,13 +79,10 @@ export function useProductFilters(products: Product[]): UseProductFiltersResult 
   const stats = useMemo<ProductStats>(() => {
     const total = products.length;
     const inStock = products.filter((p) => p.stock_status === 'instock').length;
-    const lowStock = products.filter(
-      (p) =>
-        p.stock_quantity !== null &&
-        isStockAtOrBelow(p.stock_quantity, lowStockThreshold) &&
-        p.stock_quantity > 0
+    const lowStock = products.filter((p) =>
+      isLowButInStock(p.stock_quantity, lowStockThreshold)
     ).length;
-    const outOfStock = products.filter((p) => p.stock_status === 'outofstock').length;
+    const outOfStock = products.filter(isOutOfStock).length;
     return { total, inStock, lowStock, outOfStock };
   }, [products, lowStockThreshold]);
 
