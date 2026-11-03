@@ -98,7 +98,7 @@ export default function Modal({
             <button
               onClick={onClose}
               aria-label="Затвори"
-              className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              className="p-1 text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
             >
               <X className="w-5 h-5" />
             </button>

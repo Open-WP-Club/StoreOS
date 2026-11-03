@@ -196,11 +196,11 @@ function QuickSwitcher(): React.ReactElement | null {
           }}
           onKeyDown={handleKeyDown}
           placeholder="Search products, orders, or navigate..."
-          className="flex-1 bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-400 text-lg"
+          className="flex-1 bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-500 text-lg"
         />
         <button
           onClick={() => setIsOpen(false)}
-          className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          className="flex-shrink-0 text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
         >
           <X className="h-5 w-5" />
         </button>
@@ -237,7 +237,7 @@ function QuickSwitcher(): React.ReactElement | null {
                     }`}
                   >
                     <Icon
-                      className={`h-5 w-5 flex-shrink-0 ${isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400'}`}
+                      className={`h-5 w-5 flex-shrink-0 ${isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500'}`}
                     />
                     <div className="flex-1 min-w-0">
                       <div

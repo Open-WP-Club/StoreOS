@@ -65,9 +65,10 @@ Benchmark: `node_modules/.bin/vitest run -c scripts/vitest.bench.config.ts --dis
 
 ### Remaining issues
 
-- Contrast: `text-gray-400` on white (about 2.5:1) is used widely for secondary text/icons and
-  fails WCAG AA (4.5:1) in light mode. Needs a design pass (gray-500 minimum). Not changed
-  blanket-wide to avoid a large visual diff.
+- Contrast: DONE for text. Light-mode `text-gray-400` text (and `placeholder-gray-400`/
+  `placeholder:text-gray-400`) is now `text-gray-500` (`text-gray-600` on gray-50/100 backgrounds)
+  with a `dark:text-gray-400` counterpart. Decorative/lucide icons still use gray-300/400 and
+  yellow/amber-500 (WCAG 1.4.11 non-text needs 3:1; not text). Check new text for >= 4.5:1.
 - Some `<th>` cells that act as row headers should be `scope="row"`; all were set to `col`.
 - Icon-only buttons in POS components (Numpad, POSCart, POSProductGrid, POSScratchpad, POS
   modals) and `OfflineIndicator` were flagged by a heuristic scan but not edited (other work in

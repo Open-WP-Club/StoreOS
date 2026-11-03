@@ -60,7 +60,7 @@ export default function OrderCelebrationOverlay(): React.ReactElement | null {
       >
         <button
           onClick={clearCelebration}
-          className="absolute top-3 right-3 p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="absolute top-3 right-3 p-1 rounded-full text-gray-600 dark:text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           aria-label="Dismiss"
         >
           <X className="w-4 h-4" />

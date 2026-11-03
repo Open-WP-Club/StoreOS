@@ -645,7 +645,7 @@ const VariationRow = React.memo(function VariationRow({
             onClick={onToggle}
             aria-label={expanded ? 'Collapse variation' : 'Expand variation'}
             aria-expanded={expanded}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            className="text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
           >
             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
@@ -657,7 +657,7 @@ const VariationRow = React.memo(function VariationRow({
         <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
           {variation.sale_price ? (
             <span>
-              <span className="line-through text-gray-400 mr-1">
+              <span className="line-through text-gray-500 dark:text-gray-400 mr-1">
                 {formatPrice(variation.regular_price, product.categories?.[0] ? undefined : null)}
               </span>
               {formatPrice(variation.sale_price)}

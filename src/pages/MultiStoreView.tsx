@@ -535,7 +535,7 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
                 placeholder="Search by order ID, customer, email, or store..."
                 value={searchTerm}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500"
               />
             </div>
 
@@ -802,7 +802,7 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     {new Date(order.date_created).toLocaleDateString()}
                   </p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-500">
                     {new Date(order.date_created).toLocaleTimeString()}
                   </p>
                 </div>

@@ -140,7 +140,7 @@ export default function NotificationCenter(): React.ReactElement {
               {notifications.length > 0 && (
                 <button
                   onClick={clearAll}
-                  className="p-1 rounded text-xs text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                  className="p-1 rounded text-xs text-gray-500 dark:text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
                   title="Clear all"
                   aria-label="Clear all notifications"
                 >
@@ -200,7 +200,7 @@ export default function NotificationCenter(): React.ReactElement {
                       <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
                         {notification.body}
                       </p>
-                      <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">
+                      <p className="text-[10px] text-gray-500 dark:text-gray-500 mt-1">
                         {formatTimeAgo(notification.timestamp)}
                       </p>
                     </div>

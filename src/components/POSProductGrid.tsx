@@ -95,7 +95,7 @@ export function POSProductGrid({
           {searchTerm && (
             <button
               onClick={() => onSearchTermChange('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-600"
             >
               <X className="w-4 h-4" />
             </button>
@@ -115,7 +115,7 @@ export function POSProductGrid({
               </span>
             </div>
             <ChevronDown
-              className={`w-4 h-4 text-gray-400 transition-transform ${
+              className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${
                 showCategoryDropdown ? 'rotate-180' : ''
               }`}
             />
@@ -138,7 +138,7 @@ export function POSProductGrid({
                   {categorySearch && (
                     <button
                       onClick={() => onCategorySearchChange('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-600"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -161,7 +161,7 @@ export function POSProductGrid({
                 >
                   <Package className="w-4 h-4" />
                   <span className="font-medium">Всички категории</span>
-                  <span className="ml-auto text-xs text-gray-400">
+                  <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
                     {products.filter((p) => p.status === 'publish').length}
                   </span>
                 </button>
@@ -187,7 +187,9 @@ export function POSProductGrid({
                       >
                         <Folder className="w-4 h-4" />
                         <span className="font-medium truncate">{cat}</span>
-                        <span className="ml-auto text-xs text-gray-400">{count}</span>
+                        <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
+                          {count}
+                        </span>
                       </button>
                     );
                   })
@@ -293,7 +295,7 @@ export function POSProductGrid({
                     <div className="flex items-center gap-2">
                       <span className="text-lg font-bold text-blue-600">{formatPrice(price)}</span>
                       {onSale && (
-                        <span className="text-xs text-gray-400 line-through">
+                        <span className="text-xs text-gray-500 dark:text-gray-400 line-through">
                           {formatPrice(regularPrice)}
                         </span>
                       )}
@@ -342,7 +344,7 @@ export function POSProductGrid({
             )}
 
             {!hasMore && products.length > 0 && !searchTerm && selectedCategory === 'all' && (
-              <div className="text-center py-4 text-sm text-gray-400 dark:text-gray-500">
+              <div className="text-center py-4 text-sm text-gray-500 dark:text-gray-500">
                 Всички {totalProducts} продукта са заредени
               </div>
             )}

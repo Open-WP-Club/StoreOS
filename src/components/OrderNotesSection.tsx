@@ -136,7 +136,7 @@ export function OrderNotesSection({
                   <button
                     onClick={() => onDeleteNote(note.id)}
                     disabled={deletingNoteId === note.id}
-                    className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                    className="p-1 text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors"
                     title="Изтрий бележката"
                   >
                     {deletingNoteId === note.id ? (

@@ -42,7 +42,7 @@ function KPICard({
                 ? 'text-green-600 dark:text-green-400'
                 : isNegative
                   ? 'text-red-600 dark:text-red-400'
-                  : 'text-gray-400 dark:text-gray-500'
+                  : 'text-gray-500 dark:text-gray-500'
             }`}
           />
           <span
@@ -56,12 +56,12 @@ function KPICard({
           >
             {Math.abs(changePercent).toFixed(1)}%
           </span>
-          <span className="text-xs text-gray-400 dark:text-gray-500">vs prev period</span>
+          <span className="text-xs text-gray-500 dark:text-gray-500">vs prev period</span>
         </div>
       ) : (
         <div className="flex items-center gap-1">
           <Minus className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
-          <span className="text-sm text-gray-400 dark:text-gray-500">No change</span>
+          <span className="text-sm text-gray-500 dark:text-gray-500">No change</span>
         </div>
       )}
     </div>

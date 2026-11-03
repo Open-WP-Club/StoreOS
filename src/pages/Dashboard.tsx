@@ -211,7 +211,7 @@ function Dashboard(): React.ReactElement {
               ))}
             </div>
           </div>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mb-3 -mt-2">
+          <p className="text-xs text-gray-500 dark:text-gray-500 mb-3 -mt-2">
             Comparing {KPI_PERIOD_LABELS[kpiPeriod]}
           </p>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

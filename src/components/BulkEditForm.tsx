@@ -110,7 +110,7 @@ const BulkEditForm: React.FC<BulkEditFormProps> = ({
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Bulk Edit Products</h2>
         <button
           onClick={onClose}
-          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          className="text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           aria-label="Close modal"
         >
           <X className="w-6 h-6" />

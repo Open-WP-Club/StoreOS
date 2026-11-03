@@ -46,7 +46,7 @@ export default function NoteTemplatesModal({ onClose }: { onClose: () => void })
               <button
                 aria-label="Изтрий шаблона"
                 onClick={() => remove(t.id)}
-                className="p-1 text-gray-400 hover:text-red-500"
+                className="p-1 text-gray-500 dark:text-gray-400 hover:text-red-500"
               >
                 <Trash2 className="w-4 h-4" />
               </button>

@@ -394,7 +394,7 @@ const GeographicAnalyticsPage: React.FC = () => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
             </div>
           ) : globeMarkers.length === 0 ? (
-            <div className="flex items-center justify-center h-64 w-full text-gray-400 dark:text-gray-500 text-sm">
+            <div className="flex items-center justify-center h-64 w-full text-gray-500 dark:text-gray-500 text-sm">
               No geographic data available
             </div>
           ) : (
@@ -402,7 +402,7 @@ const GeographicAnalyticsPage: React.FC = () => {
               <GlobeCanvas markers={globeMarkers} dark={isDark} />
             </div>
           )}
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Drag to rotate</p>
+          <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">Drag to rotate</p>
         </div>
 
         {/* Tables */}
@@ -447,7 +447,7 @@ const GeographicAnalyticsPage: React.FC = () => {
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500" />
                 </div>
               ) : geoData.countries.length === 0 ? (
-                <div className="flex items-center justify-center h-48 text-gray-400 dark:text-gray-500 text-sm">
+                <div className="flex items-center justify-center h-48 text-gray-500 dark:text-gray-500 text-sm">
                   No data for selected period
                 </div>
               ) : (
@@ -498,7 +498,7 @@ const GeographicAnalyticsPage: React.FC = () => {
                               <p className="text-sm font-medium text-gray-900 dark:text-white">
                                 {c.name}
                               </p>
-                              <p className="text-xs text-gray-400 dark:text-gray-500">{c.code}</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-500">{c.code}</p>
                             </div>
                           </div>
                         </td>
@@ -537,7 +537,7 @@ const GeographicAnalyticsPage: React.FC = () => {
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500" />
                 </div>
               ) : geoData.cities.length === 0 ? (
-                <div className="flex items-center justify-center h-48 text-gray-400 dark:text-gray-500 text-sm">
+                <div className="flex items-center justify-center h-48 text-gray-500 dark:text-gray-500 text-sm">
                   No data for selected period
                 </div>
               ) : (
@@ -582,7 +582,7 @@ const GeographicAnalyticsPage: React.FC = () => {
                               <p className="text-sm font-medium text-gray-900 dark:text-white">
                                 {c.city}
                               </p>
-                              <p className="text-xs text-gray-400 dark:text-gray-500">
+                              <p className="text-xs text-gray-500 dark:text-gray-500">
                                 {getCountryName(c.country)}
                               </p>
                             </div>

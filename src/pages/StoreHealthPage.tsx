@@ -281,7 +281,7 @@ function StoreHealthPage(): ReactElement | null {
         </div>
         <div className="flex items-center gap-3">
           {lastChecked && (
-            <span className="text-xs text-gray-400 dark:text-gray-500">
+            <span className="text-xs text-gray-500 dark:text-gray-500">
               Last checked: {lastChecked.toLocaleTimeString()}
             </span>
           )}
@@ -536,7 +536,7 @@ function HealthSection({
             <div>
               <span className="text-sm text-gray-600 dark:text-gray-400">{check.label}</span>
               {check.detail && (
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{check.detail}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">{check.detail}</p>
               )}
             </div>
             <div className="flex items-center gap-2">

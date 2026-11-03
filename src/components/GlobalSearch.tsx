@@ -287,7 +287,7 @@ function GlobalSearch({
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="block w-full pl-10 pr-10 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+          className="block w-full pl-10 pr-10 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
         />
         {query && (
           <button
@@ -295,7 +295,7 @@ function GlobalSearch({
               setQuery('');
               inputRef.current?.focus();
             }}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             aria-label="Clear search"
           >
             <X className="h-4 w-4" />
@@ -338,7 +338,7 @@ function GlobalSearch({
                     </div>
                     <button
                       onClick={(e) => handleRemoveRecentSearch(e, search.id)}
-                      className="ml-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0"
+                      className="ml-2 text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0"
                       aria-label={`Remove recent search: ${search.query}`}
                     >
                       <X className="h-3 w-3" />
@@ -384,7 +384,7 @@ function GlobalSearch({
                               {result.subtitle}
                             </div>
                           </div>
-                          <div className="flex-shrink-0 text-xs text-gray-400">
+                          <div className="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">
                             {result.type === 'product' && <Package className="h-4 w-4" />}
                             {result.type === 'order' && <ShoppingCart className="h-4 w-4" />}
                             {result.type === 'customer' && <Users className="h-4 w-4" />}

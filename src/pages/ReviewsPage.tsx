@@ -605,7 +605,7 @@ function ReviewsPage(): React.ReactElement {
                         {renderStars(review.rating, 'md')}
                         <button
                           onClick={() => setExpandedReview(isExpanded ? null : review.id)}
-                          className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                          className="p-1 text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                         >
                           {isExpanded ? (
                             <ChevronUp className="w-5 h-5" />

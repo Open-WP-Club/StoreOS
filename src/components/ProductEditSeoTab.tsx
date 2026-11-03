@@ -99,7 +99,7 @@ export default function ProductEditSeoTab({
           URL Slug
         </label>
         <div className="flex items-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
-          <span className="px-3 py-2 text-sm text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800 border-r border-gray-300 dark:border-gray-600 shrink-0 select-none">
+          <span className="px-3 py-2 text-sm text-gray-600 dark:text-gray-500 bg-gray-50 dark:bg-gray-800 border-r border-gray-300 dark:border-gray-600 shrink-0 select-none">
             /product/
           </span>
           <input
@@ -120,7 +120,7 @@ export default function ProductEditSeoTab({
               style={{ width: `${slugBarWidth}%` }}
             />
           </div>
-          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-500">
             {formData.slug.length > 0
               ? `${formData.slug.length} characters — ${formData.slug.length <= 75 ? 'good length' : 'consider shortening'}`
               : 'Leave blank to auto-generate from product name'}
@@ -160,7 +160,7 @@ export default function ProductEditSeoTab({
             title={formData.name}
           >
             {serpTitle.text}
-            {serpTitle.truncated && <span className="text-gray-400"> ...</span>}
+            {serpTitle.truncated && <span className="text-gray-500 dark:text-gray-400"> ...</span>}
           </div>
 
           {/* URL breadcrumb */}
@@ -218,7 +218,7 @@ export default function ProductEditSeoTab({
             </div>
           </div>
         </div>
-        <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
+        <p className="mt-2 text-xs text-gray-500 dark:text-gray-500">
           Preview uses product name and description as title/snippet. Install Yoast or Rank Math to
           set custom meta tags.
         </p>

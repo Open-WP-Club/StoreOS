@@ -219,7 +219,7 @@ function SetupPage(): React.ReactElement {
               OpenWPClub.com
             </a>
           </span>
-          <span className="text-gray-400 dark:text-gray-500">Version {__APP_VERSION__}</span>
+          <span className="text-gray-500 dark:text-gray-500">Version {__APP_VERSION__}</span>
         </div>
       </div>
 
@@ -301,21 +301,21 @@ function SetupPage(): React.ReactElement {
                         href={store.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                        className="p-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
                         title="Open store"
                       >
                         <ExternalLink className="w-4 h-4" />
                       </a>
                       <button
                         onClick={() => handleEditStore(store)}
-                        className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                        className="p-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
                         title="Edit store"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteStore(store.id)}
-                        className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                        className="p-2 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
                         title="Remove store"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -618,7 +618,7 @@ function SetupPage(): React.ReactElement {
                 <details className="group">
                   <summary className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-white">
                     <span>How to get API credentials</span>
-                    <span className="text-gray-400 group-open:rotate-180 transition-transform">
+                    <span className="text-gray-500 dark:text-gray-400 group-open:rotate-180 transition-transform">
                       ▾
                     </span>
                   </summary>

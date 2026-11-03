@@ -79,7 +79,9 @@ export default function LoadingScreen({
         <h1 className={`text-3xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
           StoreOS
         </h1>
-        <p className={`mb-8 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Desktop Edition</p>
+        <p className={`mb-8 ${isDark ? 'text-gray-500 dark:text-gray-400' : 'text-gray-500'}`}>
+          Desktop Edition
+        </p>
 
         {/* Progress Bar */}
         <div className="w-64 mx-auto mb-4">
@@ -94,12 +96,18 @@ export default function LoadingScreen({
         </div>
 
         {/* Status Message */}
-        <p className={`text-sm animate-pulse ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+        <p
+          className={`text-sm animate-pulse ${isDark ? 'text-gray-500 dark:text-gray-400' : 'text-gray-500'}`}
+        >
           {message}
         </p>
 
         {/* Progress Percentage */}
-        <p className={`text-xs mt-2 ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>{progress}%</p>
+        <p
+          className={`text-xs mt-2 ${isDark ? 'text-gray-600' : 'text-gray-500 dark:text-gray-400'}`}
+        >
+          {progress}%
+        </p>
       </div>
     </div>
   );

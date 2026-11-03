@@ -303,7 +303,7 @@ function BulkGenerateCouponsModal({
             onClick={onClose}
             disabled={generating}
             aria-label="Close"
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50"
+            className="text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50"
           >
             <X className="w-6 h-6" />
           </button>

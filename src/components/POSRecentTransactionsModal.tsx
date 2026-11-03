@@ -100,7 +100,7 @@ export function POSRecentTransactionsModal({
                       <p
                         className={`font-medium ${
                           tx.refunded
-                            ? 'text-gray-400 dark:text-gray-500 line-through'
+                            ? 'text-gray-500 dark:text-gray-500 line-through'
                             : 'text-gray-900 dark:text-white'
                         }`}
                       >
@@ -121,7 +121,7 @@ export function POSRecentTransactionsModal({
                       {tx.itemCount} артикула • {tx.paymentMethod}
                     </p>
                     {tx.customerName && (
-                      <p className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1 mt-1">
+                      <p className="text-xs text-gray-500 dark:text-gray-500 flex items-center gap-1 mt-1">
                         <User className="w-3 h-3" />
                         {tx.customerName}
                       </p>
@@ -131,13 +131,13 @@ export function POSRecentTransactionsModal({
                     <p
                       className={`font-semibold ${
                         tx.refunded
-                          ? 'text-gray-400 dark:text-gray-500 line-through'
+                          ? 'text-gray-500 dark:text-gray-500 line-through'
                           : 'text-blue-600 dark:text-blue-400'
                       }`}
                     >
                       {formatPrice(tx.total)}
                     </p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-500">
                       {dateStr}, {timeStr}
                     </p>
                     <button

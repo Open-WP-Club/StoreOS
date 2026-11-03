@@ -122,13 +122,15 @@ export function POSVariantPickerModal({
                   <p className="font-medium text-gray-900 dark:text-white truncate">
                     {getVariationName(variation)}
                   </p>
-                  {variation.sku && <p className="text-xs text-gray-400">SKU: {variation.sku}</p>}
+                  {variation.sku && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400">SKU: {variation.sku}</p>
+                  )}
                   {!inStock && <p className="text-xs text-red-500">Изчерпан</p>}
                 </div>
                 <div className="text-right">
                   <p className="font-semibold text-blue-600">{formatPrice(variationPrice)}</p>
                   {onSale && (
-                    <p className="text-xs text-gray-400 line-through">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 line-through">
                       {formatPrice(regularPrice)}
                     </p>
                   )}

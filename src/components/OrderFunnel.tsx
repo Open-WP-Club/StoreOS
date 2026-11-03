@@ -111,14 +111,14 @@ export default function OrderFunnel({ orders }: OrderFunnelProps): React.ReactEl
             </div>
 
             {/* Description */}
-            <p className="text-xs text-gray-400 dark:text-gray-500 pl-2 mt-0.5">
+            <p className="text-xs text-gray-500 dark:text-gray-500 pl-2 mt-0.5">
               {stage.description}
             </p>
           </div>
         );
       })}
 
-      <p className="text-xs text-gray-400 dark:text-gray-500 pt-2 border-t border-gray-100 dark:border-gray-700">
+      <p className="text-xs text-gray-500 dark:text-gray-500 pt-2 border-t border-gray-100 dark:border-gray-700">
         Conversion rate = % of all received orders
       </p>
     </div>

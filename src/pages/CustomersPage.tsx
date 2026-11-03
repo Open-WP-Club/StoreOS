@@ -637,7 +637,7 @@ function CustomersPage(): React.ReactElement {
                   setSelectedCustomer(null);
                   setCustomerOrders([]);
                 }}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 <X className="w-6 h-6" />
               </button>

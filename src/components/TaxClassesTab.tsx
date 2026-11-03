@@ -166,7 +166,9 @@ function TaxClassesTab({
                           <Trash2 className="w-4 h-4" />
                         </button>
                       )}
-                      {isStandard && <span className="text-xs text-gray-400">Built-in</span>}
+                      {isStandard && (
+                        <span className="text-xs text-gray-500 dark:text-gray-400">Built-in</span>
+                      )}
                     </td>
                   </tr>
                 );

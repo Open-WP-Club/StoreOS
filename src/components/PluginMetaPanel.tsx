@@ -239,7 +239,7 @@ function ShippingCard({ data, plugin, title }: ShippingCardProps): ReactElement 
         <div className="grid grid-cols-2 gap-2 mb-2">
           {uniqueData.map((item, idx) => (
             <div key={idx} className="flex items-center gap-2 text-sm">
-              <item.Icon className="w-3 h-3 text-gray-400" />
+              <item.Icon className="w-3 h-3 text-gray-500 dark:text-gray-400" />
               <span className="text-gray-500 dark:text-gray-400">{item.label}:</span>
               <span className="text-gray-900 dark:text-white font-medium truncate">
                 {item.value}

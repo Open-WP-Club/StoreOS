@@ -94,7 +94,7 @@ const ConfirmDialog = memo(function ConfirmDialog({
     >
       <button
         onClick={onCancel}
-        className="absolute right-4 top-4 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+        className="absolute right-4 top-4 text-gray-500 dark:text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
         aria-label="Close"
       >
         <X className="h-5 w-5" />

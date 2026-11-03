@@ -401,12 +401,12 @@ function ActivityRow({
           </div>
           <div className="flex items-center gap-3 mt-1">
             <span
-              className="text-xs text-gray-400 dark:text-gray-500"
+              className="text-xs text-gray-500 dark:text-gray-500"
               title={formatFullDate(entry.timestamp)}
             >
               {formatRelativeTime(entry.timestamp)}
             </span>
-            <span className="text-xs text-gray-400 dark:text-gray-500">{storeName}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-500">{storeName}</span>
           </div>
 
           {/* Expanded: show changes */}
@@ -418,7 +418,7 @@ function ActivityRow({
                   <span className="text-red-500 dark:text-red-400 line-through">
                     {String(change.from || '—')}
                   </span>
-                  <span className="text-gray-400">&rarr;</span>
+                  <span className="text-gray-500 dark:text-gray-400">&rarr;</span>
                   <span className="text-green-600 dark:text-green-400">
                     {String(change.to || '—')}
                   </span>

@@ -170,7 +170,7 @@ export function POSCart({
               onChange={(e) => onOrderNoteChange(e.target.value)}
               placeholder="Бележка за поръчката..."
               rows={2}
-              className="w-full pl-9 pr-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300 resize-none"
+              className="w-full pl-9 pr-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 resize-none"
             />
           </div>
         </div>
@@ -213,7 +213,7 @@ export function POSCart({
 
                 <button
                   onClick={() => removeFromCart(item.product.id)}
-                  className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                  className="p-1 text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -422,7 +422,7 @@ export function POSCart({
                       <button
                         onClick={() => setSplitPayments(splitPayments.filter((_, k) => k !== i))}
                         aria-label="Премахни плащане"
-                        className="p-2 text-gray-400 hover:text-red-500"
+                        className="p-2 text-gray-500 dark:text-gray-400 hover:text-red-500"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -459,7 +459,7 @@ export function POSCart({
                     value={amountTendered || ''}
                     onChange={(e) => setAmountTendered(parseFloat(e.target.value) || 0)}
                     placeholder="Платена сума"
-                    className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-lg font-medium text-center text-gray-900 dark:text-white placeholder:text-gray-400"
+                    className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-lg font-medium text-center text-gray-900 dark:text-white placeholder:text-gray-500"
                   />
                   <button
                     onClick={onOpenAmountNumpad}

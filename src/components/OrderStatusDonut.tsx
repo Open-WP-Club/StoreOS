@@ -97,7 +97,7 @@ export default function OrderStatusDonut({
 
   if (!chartData) {
     return (
-      <div className="flex items-center justify-center h-40 text-gray-400 dark:text-gray-500 text-sm">
+      <div className="flex items-center justify-center h-40 text-gray-500 dark:text-gray-500 text-sm">
         No order data available
       </div>
     );

@@ -127,7 +127,9 @@ export function POSDailyReportModal({
                     {index === 1 && <Medal className="w-5 h-5 text-gray-400" />}
                     {index === 2 && <Award className="w-5 h-5 text-amber-700" />}
                     {index > 2 && (
-                      <span className="text-sm font-medium text-gray-400">{index + 1}.</span>
+                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        {index + 1}.
+                      </span>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">

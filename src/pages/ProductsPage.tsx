@@ -457,7 +457,7 @@ function ProductsPage(): React.ReactElement {
                   actions.setSelectedProduct(null);
                   actions.setEditMode(false);
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-600"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path

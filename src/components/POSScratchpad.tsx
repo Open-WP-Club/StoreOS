@@ -28,7 +28,7 @@ export function POSScratchpad({
           {note.trim() && (
             <button
               onClick={onClear}
-              className="p-1 hover:bg-yellow-100 dark:hover:bg-gray-700 rounded text-gray-400 hover:text-red-500"
+              className="p-1 hover:bg-yellow-100 dark:hover:bg-gray-700 rounded text-gray-500 dark:text-gray-400 hover:text-red-500"
               title="Изчисти"
             >
               <Trash2 className="w-4 h-4" />
@@ -47,7 +47,7 @@ export function POSScratchpad({
         onChange={(e) => onNoteChange(e.target.value)}
         placeholder="Запиши си нещо..."
         rows={6}
-        className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-yellow-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 resize-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+        className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-yellow-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 resize-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
       />
       <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Запазва се автоматично</p>
     </div>

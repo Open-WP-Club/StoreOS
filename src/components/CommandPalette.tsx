@@ -539,7 +539,7 @@ function CommandPalette(): React.ReactElement | null {
           Search
         </button>
         <div className="flex-1" />
-        <div className="px-4 text-xs text-gray-400">
+        <div className="px-4 text-xs text-gray-500 dark:text-gray-400">
           <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs">Tab</kbd> to
           switch
         </div>
@@ -562,7 +562,7 @@ function CommandPalette(): React.ReactElement | null {
               ? 'Type a command or search...'
               : 'Search products, orders, customers, coupons...'
           }
-          className="flex-1 bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-400 text-lg"
+          className="flex-1 bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-500 text-lg"
         />
       </div>
 
@@ -600,7 +600,7 @@ function CommandPalette(): React.ReactElement | null {
                   >
                     <Icon
                       className={`h-5 w-5 flex-shrink-0 ${
-                        isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400'
+                        isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500'
                       }`}
                     />
                     <div className="flex-1 min-w-0">

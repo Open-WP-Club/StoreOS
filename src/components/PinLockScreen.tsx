@@ -138,7 +138,7 @@ export default function PinLockScreen(): ReactElement | null {
         </div>
 
         {/* Hint */}
-        <p className="text-gray-400 dark:text-gray-500 text-xs mt-6">
+        <p className="text-gray-500 dark:text-gray-500 text-xs mt-6">
           Натисни цифри на клавиатурата или използвай бутоните
         </p>
       </div>

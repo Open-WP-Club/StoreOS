@@ -97,14 +97,16 @@ export function POSCustomerSearchModal({
                   {customer.email}
                 </p>
                 {customer.billing?.phone && (
-                  <p className="text-xs text-gray-400 dark:text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-500">
                     Тел: {customer.billing.phone}
                   </p>
                 )}
               </div>
               <div className="text-right flex-shrink-0">
                 {customer.orders_count !== undefined && (
-                  <p className="text-xs text-gray-400">{customer.orders_count} поръчки</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {customer.orders_count} поръчки
+                  </p>
                 )}
                 {customer.total_spent && parseFloat(customer.total_spent) > 0 && (
                   <p className="text-xs text-green-600 dark:text-green-400">

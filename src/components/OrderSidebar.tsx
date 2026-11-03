@@ -39,7 +39,7 @@ function CopyButton({ text }: { text: string }): ReactElement {
     <button
       onClick={handleCopy}
       title="Copy to clipboard"
-      className="p-1 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+      className="p-1 rounded text-gray-600 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
     >
       {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
     </button>

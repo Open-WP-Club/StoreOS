@@ -117,7 +117,7 @@ const SettingsNotifications = memo(function SettingsNotifications({
           <div className="flex items-center gap-3">
             <label className="text-sm text-gray-600 dark:text-gray-400 flex-1">
               {language === 'bg' ? 'Праг за нисък запас' : 'Low stock threshold'}
-              <span className="block text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+              <span className="block text-xs text-gray-500 dark:text-gray-500 mt-0.5">
                 {language === 'bg'
                   ? 'Продукти с наличност на или под тази стойност се маркират като "нисък запас"'
                   : 'Products with stock at or below this value are flagged as low stock'}
@@ -138,7 +138,7 @@ const SettingsNotifications = memo(function SettingsNotifications({
           <div className="flex items-center gap-3">
             <label className="text-sm text-gray-600 dark:text-gray-400 flex-1">
               {language === 'bg' ? 'Период за скорошни поръчки' : 'Recent orders window'}
-              <span className="block text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+              <span className="block text-xs text-gray-500 dark:text-gray-500 mt-0.5">
                 {language === 'bg'
                   ? 'Поръчки в рамките на този период се считат за "скорошни" в таблото'
                   : 'Orders within this period are shown as recent in the dashboard'}

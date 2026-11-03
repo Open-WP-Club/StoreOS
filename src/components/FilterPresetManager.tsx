@@ -135,7 +135,7 @@ function FilterPresetManager({
                 </h3>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -178,13 +178,13 @@ function FilterPresetManager({
                       <button
                         onClick={() => handleRenamePreset(preset)}
                         aria-label={`Rename ${preset.name}`}
-                        className="ml-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="ml-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDeletePreset(preset.id)}
-                        className="ml-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="ml-2 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -205,7 +205,7 @@ function FilterPresetManager({
                 className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm transition-colors ${
                   hasActiveFilters
                     ? 'bg-purple-600 text-white hover:bg-purple-700'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                    : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                 }`}
               >
                 <Save className="w-4 h-4" />

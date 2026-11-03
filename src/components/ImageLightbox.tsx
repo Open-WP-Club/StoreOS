@@ -66,7 +66,7 @@ export function ImageLightbox({ images, initialIndex, onClose }: ImageLightboxPr
         <div className="p-4 text-center">
           <p className="font-medium text-gray-900 dark:text-white">{current.name}</p>
           {images.length > 1 && (
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               {currentIndex + 1} / {images.length}
             </p>
           )}
