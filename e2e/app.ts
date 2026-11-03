@@ -52,6 +52,7 @@ export async function launchApp(userData: string): Promise<RunningApp> {
     [`--user-data-dir=${userData}`, `--remote-debugging-port=${port}`, '--use-mock-keychain'],
     {
       stdio: 'ignore',
+      env: { ...process.env, STOREOS_DISABLE_UPDATER: '1' },
     }
   );
   running.add(proc);

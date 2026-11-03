@@ -12,6 +12,7 @@ import SettingsNotifications from '../components/settings/SettingsNotifications'
 import SettingsSecurity from '../components/settings/SettingsSecurity';
 import SettingsAutoBackup from '../components/settings/SettingsAutoBackup';
 import SettingsScheduledReports from '../components/settings/SettingsScheduledReports';
+import SettingsUpdates from '../components/settings/SettingsUpdates';
 import SettingsBackup from '../components/settings/SettingsBackup';
 
 export default function SettingsPage(): ReactElement {
@@ -134,6 +135,8 @@ export default function SettingsPage(): ReactElement {
         <SettingsBackup language={language} showToast={showToast} />
 
         <SettingsAutoBackup language={language} showToast={showToast} />
+
+        <SettingsUpdates language={language} />
       </div>
 
       <ToastContainer toasts={toasts} removeToast={removeToast} />

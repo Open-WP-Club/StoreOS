@@ -1,4 +1,18 @@
-export {};
+export interface UpdateState {
+  status:
+    | 'disabled'
+    | 'idle'
+    | 'checking'
+    | 'available'
+    | 'up-to-date'
+    | 'downloading'
+    | 'downloaded'
+    | 'error';
+  currentVersion: string;
+  version?: string;
+  percent?: number;
+  error?: string;
+}
 
 declare global {
   interface Window {
@@ -44,6 +58,15 @@ declare global {
           data?: string;
           error?: string;
         }>;
+      };
+      /** Auto-update via GitHub Releases; nothing downloads/installs without an explicit call. */
+      updater: {
+        getState: () => Promise<UpdateState | null>;
+        check: () => Promise<void>;
+        download: () => Promise<void>;
+        install: () => Promise<void>;
+        /** Returns an unsubscribe function. */
+        onStatus: (callback: (state: UpdateState) => void) => () => void;
       };
       /** OS-keychain encryption via Electron safeStorage; both return null when unavailable. */
       secureStorage: {

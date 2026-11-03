@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - '[0-9]*' # Triggers on version tags like 1.0.0, 1.0.1, etc.
+      - 'v[0-9]*' # ...or v1.0.0
 
 jobs:
   test:
@@ -28,6 +29,10 @@ jobs:
 
       - name: Run linter
         run: pnpm run lint
+        continue-on-error: true
+
+      - name: Type check
+        run: pnpm run typecheck
         continue-on-error: true
 
       - name: Run tests
@@ -81,7 +86,8 @@ jobs:
           path: |
             release/*.dmg
             release/*.zip
-            release/*-mac.zip
+            release/*.blockmap
+            release/latest*.yml
           retention-days: 5
 
       - name: Upload artifacts (Linux)
@@ -93,7 +99,8 @@ jobs:
             release/*.AppImage
             release/*.deb
             release/*.rpm
-            release/*.tar.gz
+            release/*.blockmap
+            release/latest*.yml
           retention-days: 5
 
       - name: Upload artifacts (Windows)
@@ -104,7 +111,8 @@ jobs:
           path: |
             release/*.exe
             release/*.msi
-            release/*-win.zip
+            release/*.blockmap
+            release/latest*.yml
           retention-days: 5
 
   create-release:

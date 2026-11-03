@@ -31,6 +31,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     save: (filename, data, keep) => ipcRenderer.invoke('backups:save', filename, data, keep),
     readLatest: () => ipcRenderer.invoke('backups:read-latest'),
   },
+  updater: {
+    getState: () => ipcRenderer.invoke('updater:get-state'),
+    check: () => ipcRenderer.invoke('updater:check'),
+    download: () => ipcRenderer.invoke('updater:download'),
+    install: () => ipcRenderer.invoke('updater:install'),
+    onStatus: (callback) => subscribe('updater:status', callback),
+  },
   // OS-keychain backed encryption (returns null when unavailable)
   secureStorage: {
     encrypt: (text) => ipcRenderer.sendSync('secure-storage:encrypt', text),

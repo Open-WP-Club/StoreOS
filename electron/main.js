@@ -438,13 +438,61 @@ ipcMain.handle('open-wp-admin', (event, rawUrl) => {
   return true;
 });
 
+// Auto-update (GitHub Releases, see package.json "build.publish"). Packaged builds only; e2e sets
+// STOREOS_DISABLE_UPDATER=1. Never downloads or installs without the user's click.
+const updaterEnabled = app.isPackaged && process.env.STOREOS_DISABLE_UPDATER !== '1';
+let updateState = { status: updaterEnabled ? 'idle' : 'disabled', version: app.getVersion() };
+function setUpdateState(next) {
+  updateState = { ...next, currentVersion: app.getVersion() };
+  if (mainWindow && !mainWindow.isDestroyed())
+    mainWindow.webContents.send('updater:status', updateState);
+}
+setUpdateState(updateState);
+if (updaterEnabled) {
+  autoUpdater.autoDownload = false;
+  autoUpdater.autoInstallOnAppQuit = false;
+  autoUpdater.on('checking-for-update', () => setUpdateState({ status: 'checking' }));
+  autoUpdater.on('update-available', (i) =>
+    setUpdateState({ status: 'available', version: i.version })
+  );
+  autoUpdater.on('update-not-available', () => setUpdateState({ status: 'up-to-date' }));
+  autoUpdater.on('download-progress', (p) =>
+    setUpdateState({
+      status: 'downloading',
+      version: updateState.version,
+      percent: Math.round(p.percent),
+    })
+  );
+  autoUpdater.on('update-downloaded', (i) =>
+    setUpdateState({ status: 'downloaded', version: i.version })
+  );
+  autoUpdater.on('error', (e) =>
+    setUpdateState({ status: 'error', error: String((e && e.message) || e) })
+  );
+}
+const checkForUpdates = () => {
+  if (updaterEnabled) autoUpdater.checkForUpdates().catch(() => {}); // failure arrives via 'error'
+};
+ipcMain.handle('updater:get-state', (event) => (isTrustedSender(event) ? updateState : null));
+ipcMain.handle('updater:check', (event) => {
+  if (isTrustedSender(event) && !['checking', 'downloading'].includes(updateState.status)) {
+    checkForUpdates();
+  }
+});
+ipcMain.handle('updater:download', (event) => {
+  if (isTrustedSender(event) && updaterEnabled && updateState.status === 'available') {
+    autoUpdater.downloadUpdate().catch(() => {});
+  }
+});
+ipcMain.handle('updater:install', (event) => {
+  if (isTrustedSender(event) && updaterEnabled && updateState.status === 'downloaded') {
+    autoUpdater.quitAndInstall();
+  }
+});
+
 app.whenReady().then(() => {
   createWindow();
-  if (!isDev) {
-    // Checks GitHub releases (see package.json "build.publish"), downloads in the
-    // background, and shows a native notification when ready to install on quit.
-    autoUpdater.checkForUpdatesAndNotify();
-  }
+  checkForUpdates();
 });
 
 app.on('window-all-closed', () => {

@@ -20,3 +20,14 @@ Not enabled: `EmbeddedAsarIntegrityValidation` (verify with electron-updater + s
 `scripts/adhocSign.cjs` (`build.afterSign`) runs `codesign --verify` after the fuse flip and ad-hoc re-signs
 (`codesign --force --deep -s -`) only if verification fails; without it unsigned arm64 builds are SIGKILLed on launch.
 A properly signed (real identity) bundle verifies and is left untouched.
+
+## Auto-update (GitHub Releases)
+`electron-updater` reads `build.publish` (GitHub, Open-WP-Club/StoreOS). The main process only checks in packaged builds and
+when `STOREOS_DISABLE_UPDATER` is not `1` (the e2e launcher sets it). Download and restart-to-install are explicit user
+clicks (Settings > Updates); IPC `updater:*` is gated by `isTrustedSender`.
+- **macOS**: updates (Squirrel.Mac) require a code-signed app; with the current ad-hoc/unsigned builds the install step
+  fails. Sign + notarize (see above) before relying on auto-update on macOS. Users on unsigned builds must reinstall manually.
+- **Windows**: works unsigned but triggers SmartScreen; publisher verification only applies to signed builds.
+- **Linux**: only AppImage auto-updates (deb/rpm are manual).
+- Releases must include `latest.yml`, `latest-mac.yml`, `latest-linux.yml` (+ `.blockmap`) next to the installers;
+  `.github/workflows/release.yml` uploads them. The app's `package.json` version must match the tag.
