@@ -3,10 +3,8 @@ import {
   searchOrders,
   searchCustomers,
   universalSearch,
-  generateAutocompleteSuggestions,
   applyProductFilters,
   applyOrderFilters,
-  highlightMatch,
 } from '../searchService';
 
 describe('searchService - edge cases', () => {
@@ -208,33 +206,6 @@ describe('searchService - edge cases', () => {
   // ============================================
   // generateAutocompleteSuggestions - customers type
   // ============================================
-
-  describe('generateAutocompleteSuggestions - customers', () => {
-    const customers = [
-      { first_name: 'John', last_name: 'Doe', email: 'john@example.com', username: 'johnd' },
-      { first_name: 'Jane', last_name: 'Smith', email: 'jane@example.com', username: 'janes' },
-    ];
-
-    it('should generate customer name suggestions', () => {
-      const suggestions = generateAutocompleteSuggestions('John', customers, 'customers');
-      expect(suggestions).toContain('John Doe');
-    });
-
-    it('should generate customer email suggestions', () => {
-      const suggestions = generateAutocompleteSuggestions('john@', customers, 'customers');
-      expect(suggestions).toContain('john@example.com');
-    });
-
-    it('should generate customer username suggestions', () => {
-      const suggestions = generateAutocompleteSuggestions('johnd', customers, 'customers');
-      expect(suggestions).toContain('johnd');
-    });
-
-    it('should respect maxSuggestions limit', () => {
-      const suggestions = generateAutocompleteSuggestions('j', customers, 'customers', 1);
-      expect(suggestions.length).toBeLessThanOrEqual(1);
-    });
-  });
 
   // ============================================
   // searchProducts - additional edge cases
@@ -546,21 +517,4 @@ describe('searchService - edge cases', () => {
   // ============================================
   // highlightMatch - edge cases
   // ============================================
-
-  describe('highlightMatch - edge cases', () => {
-    it('should highlight multiple occurrences', () => {
-      const result = highlightMatch('Blue Blue Blue', 'Blue');
-      const markCount = (result.match(/<mark/g) || []).length;
-      expect(markCount).toBe(3);
-    });
-
-    it('should handle undefined text', () => {
-      expect(highlightMatch(undefined, 'test')).toBeUndefined();
-    });
-
-    it('should return text unchanged when no match found', () => {
-      const result = highlightMatch('Hello World', 'xyz');
-      expect(result).toBe('Hello World');
-    });
-  });
 });

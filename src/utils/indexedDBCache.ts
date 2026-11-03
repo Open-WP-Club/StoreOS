@@ -13,11 +13,6 @@ interface CacheData<T = unknown> {
   storeId: string;
 }
 
-interface IndexedDBStatus {
-  available: boolean;
-  supported: boolean;
-}
-
 type StoreName = 'products' | 'orders' | 'customers' | 'coupons' | 'offline_queue';
 
 // ============================================
@@ -539,37 +534,4 @@ export const clearAllCache = async (): Promise<boolean> => {
   } catch {
     return false;
   }
-};
-
-/**
- * Delete the entire IndexedDB database
- */
-export const deleteDatabase = async (): Promise<boolean> => {
-  if (!checkIndexedDBAvailability()) {
-    return false;
-  }
-
-  return new Promise<boolean>((resolve, reject) => {
-    if (dbInstance) {
-      dbInstance.close();
-      dbInstance = null;
-    }
-
-    const request = indexedDB.deleteDatabase(DB_NAME);
-    request.onsuccess = () => resolve(true);
-    request.onerror = () => reject(request.error);
-    request.onblocked = () => {
-      // Database deletion blocked
-    };
-  });
-};
-
-/**
- * Get IndexedDB availability status
- */
-export const getIndexedDBStatus = (): IndexedDBStatus => {
-  return {
-    available: isIndexedDBAvailable,
-    supported: typeof indexedDB !== 'undefined',
-  };
 };

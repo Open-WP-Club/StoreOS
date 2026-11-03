@@ -1,4 +1,4 @@
-import { formatPrice, getCurrencySymbol, formatCurrency, getCurrencyCode } from '../currency';
+import { formatPrice, formatCurrency, getCurrencyCode } from '../currency';
 
 describe('currency utilities - edge cases', () => {
   describe('formatPrice - edge cases', () => {
@@ -29,29 +29,6 @@ describe('currency utilities - edge cases', () => {
 
     it('should handle null currency symbol explicitly', () => {
       expect(formatPrice('10.00', null)).toBe('10.00');
-    });
-  });
-
-  describe('getCurrencySymbol - edge cases', () => {
-    it('should return null for undefined input', () => {
-      expect(getCurrencySymbol(undefined)).toBeNull();
-    });
-
-    it('should prefer currency_symbol over currency', () => {
-      const data = { currency: 'USD', currency_symbol: '€' };
-      expect(getCurrencySymbol(data)).toBe('€');
-    });
-
-    it('should return null when currency code exists but no symbol', () => {
-      expect(getCurrencySymbol({ currency: 'BGN' })).toBeNull();
-    });
-
-    it('should handle empty object', () => {
-      expect(getCurrencySymbol({})).toBeNull();
-    });
-
-    it('should handle object with only whitespace values', () => {
-      expect(getCurrencySymbol({ currency_symbol: '  ', currency: '  ' })).toBeNull();
     });
   });
 

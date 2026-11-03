@@ -9,6 +9,8 @@ interface ModalProps {
   className?: string;
   /** Optional header with title and close button (also used as aria-label). */
   title?: string;
+  /** 'top' = top-aligned, scrollable overlay (palettes/switchers). */
+  position?: 'center' | 'top';
   'aria-label'?: string;
   'aria-labelledby'?: string;
   children: ReactNode;
@@ -21,6 +23,7 @@ export default function Modal({
   closeOnBackdrop = true,
   className = 'w-full max-w-md mx-4 bg-white dark:bg-gray-800 rounded-lg shadow-xl p-5',
   title,
+  position = 'center',
   children,
   ...aria
 }: ModalProps): ReactElement {
@@ -35,7 +38,9 @@ export default function Modal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      className={`fixed inset-0 bg-black/50 flex justify-center z-50 ${
+        position === 'top' ? 'items-start overflow-y-auto p-4 pt-[10vh]' : 'items-center'
+      }`}
       role="presentation"
       onClick={closeOnBackdrop ? onClose : undefined}
     >

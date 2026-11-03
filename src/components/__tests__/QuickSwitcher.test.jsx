@@ -141,7 +141,7 @@ describe('QuickSwitcher', () => {
       });
 
       // Click backdrop
-      const backdrop = screen.getByLabelText('Close quick switcher');
+      const backdrop = screen.getByLabelText('Quick switcher').parentElement;
       fireEvent.click(backdrop);
 
       await waitFor(() => {

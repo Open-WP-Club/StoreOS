@@ -1,10 +1,8 @@
 import {
   searchProducts,
   searchOrders,
-  generateAutocompleteSuggestions,
   applyProductFilters,
   applyOrderFilters,
-  highlightMatch,
 } from '../searchService';
 
 describe('searchService', () => {
@@ -137,43 +135,6 @@ describe('searchService', () => {
     });
   });
 
-  describe('generateAutocompleteSuggestions', () => {
-    const products = [
-      { name: 'Blue T-Shirt', sku: 'TS-001' },
-      { name: 'Blue Jeans', sku: 'JN-001' },
-      { name: 'Red Hoodie', sku: 'HD-001' },
-    ];
-
-    it('should return empty array for empty query', () => {
-      expect(generateAutocompleteSuggestions('', products, 'products')).toEqual([]);
-    });
-
-    it('should generate product name suggestions', () => {
-      const suggestions = generateAutocompleteSuggestions('Blue', products, 'products');
-      expect(suggestions).toContain('Blue T-Shirt');
-      expect(suggestions).toContain('Blue Jeans');
-    });
-
-    it('should generate SKU suggestions', () => {
-      const suggestions = generateAutocompleteSuggestions('TS-', products, 'products');
-      expect(suggestions).toContain('TS-001');
-    });
-
-    it('should limit suggestions to maxSuggestions', () => {
-      const suggestions = generateAutocompleteSuggestions('Blue', products, 'products', 1);
-      expect(suggestions.length).toBeLessThanOrEqual(1);
-    });
-
-    it('should generate order suggestions', () => {
-      const orders = [
-        { billing: { first_name: 'John', last_name: 'Doe', email: 'john@example.com' } },
-        { billing: { first_name: 'Jane', last_name: 'Doe', email: 'jane@example.com' } },
-      ];
-      const suggestions = generateAutocompleteSuggestions('john', orders, 'orders');
-      expect(suggestions.some((s) => s.toLowerCase().includes('john'))).toBe(true);
-    });
-  });
-
   describe('applyProductFilters', () => {
     const products = [
       { id: 1, stock_status: 'instock', price: '19.99', stock_quantity: 100, status: 'publish' },
@@ -274,30 +235,6 @@ describe('searchService', () => {
       const filters = { totalMin: '', totalMax: '' };
       const results = applyOrderFilters(orders, filters);
       expect(results.length).toBe(orders.length);
-    });
-  });
-
-  describe('highlightMatch', () => {
-    it('should highlight matching text', () => {
-      const result = highlightMatch('Blue T-Shirt', 'Blue');
-      expect(result).toContain('<mark');
-      expect(result).toContain('Blue');
-    });
-
-    it('should be case insensitive', () => {
-      const result = highlightMatch('Blue T-Shirt', 'blue');
-      expect(result).toContain('<mark');
-    });
-
-    it('should handle empty query', () => {
-      const text = 'Blue T-Shirt';
-      expect(highlightMatch(text, '')).toBe(text);
-      expect(highlightMatch(text, null)).toBe(text);
-    });
-
-    it('should handle empty text', () => {
-      expect(highlightMatch(null, 'blue')).toBeNull();
-      expect(highlightMatch('', 'blue')).toBe('');
     });
   });
 });

@@ -1,21 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { batchErrorIds, countFailed } from '../batchResult';
-import type { ApiResponse } from '../../types';
-
-describe('countFailed', () => {
-  it('counts only unsuccessful responses', () => {
-    const results = [
-      { success: true, data: 1 },
-      { success: false, error: 'boom' },
-      { success: false, error: 'bad' },
-    ] as ApiResponse<unknown>[];
-    expect(countFailed(results)).toBe(2);
-  });
-
-  it('returns 0 for empty input', () => {
-    expect(countFailed([])).toBe(0);
-  });
-});
+import { batchErrorIds } from '../batchResult';
 
 describe('batchErrorIds', () => {
   it('returns ids of entries carrying an error', () => {

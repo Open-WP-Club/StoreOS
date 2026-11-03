@@ -72,30 +72,6 @@ describe('indexedDBCache', () => {
     });
   });
 
-  describe('getIndexedDBStatus', () => {
-    it('should return IndexedDB status', async () => {
-      const { mockDB } = createIndexedDBMock();
-      setupGlobalIndexedDB(mockDB);
-
-      const { getIndexedDBStatus } = await getFreshModule();
-      const status = getIndexedDBStatus();
-      expect(status).toHaveProperty('available');
-      expect(status).toHaveProperty('supported');
-      expect(status.supported).toBe(true);
-    });
-
-    it('should detect when IndexedDB is not supported', async () => {
-      const originalIndexedDB = global.indexedDB;
-      delete global.indexedDB;
-
-      const { getIndexedDBStatus } = await getFreshModule();
-      const status = getIndexedDBStatus();
-      expect(status.supported).toBe(false);
-
-      global.indexedDB = originalIndexedDB;
-    });
-  });
-
   describe('saveToCache', () => {
     it('should save data to cache successfully', async () => {
       const { mockObjectStore, mockDB } = createIndexedDBMock();
@@ -342,83 +318,6 @@ describe('indexedDBCache', () => {
 
       const { clearAllCache } = await getFreshModule();
       const result = await clearAllCache();
-      expect(result).toBe(false);
-
-      global.indexedDB = { open: vi.fn(), deleteDatabase: vi.fn() };
-    });
-  });
-
-  describe('deleteDatabase', () => {
-    it('should delete the database successfully', async () => {
-      const { mockDB } = createIndexedDBMock();
-
-      global.indexedDB = {
-        open: vi.fn().mockImplementation(() => {
-          const req = {
-            onsuccess: null,
-            onerror: null,
-            onupgradeneeded: null,
-            onblocked: null,
-            result: mockDB,
-            error: null,
-          };
-          Promise.resolve().then(() => {
-            if (req.onsuccess) req.onsuccess();
-          });
-          return req;
-        }),
-        deleteDatabase: vi.fn().mockImplementation(() => {
-          const deleteRequest = { onsuccess: null, onerror: null, onblocked: null };
-          Promise.resolve().then(() => {
-            if (deleteRequest.onsuccess) deleteRequest.onsuccess();
-          });
-          return deleteRequest;
-        }),
-      };
-
-      const { deleteDatabase } = await getFreshModule();
-      const result = await deleteDatabase();
-
-      expect(result).toBe(true);
-      expect(global.indexedDB.deleteDatabase).toHaveBeenCalledWith('woocommerce-cache');
-    });
-
-    it('should handle delete errors', async () => {
-      const { mockDB } = createIndexedDBMock();
-
-      global.indexedDB = {
-        open: vi.fn().mockImplementation(() => {
-          const req = {
-            onsuccess: null,
-            onerror: null,
-            result: mockDB,
-            error: null,
-          };
-          return req;
-        }),
-        deleteDatabase: vi.fn().mockImplementation(() => {
-          const deleteRequest = {
-            onsuccess: null,
-            onerror: null,
-            onblocked: null,
-            error: new Error('Delete failed'),
-          };
-          Promise.resolve().then(() => {
-            if (deleteRequest.onerror) deleteRequest.onerror();
-          });
-          return deleteRequest;
-        }),
-      };
-
-      const { deleteDatabase } = await getFreshModule();
-      await expect(deleteDatabase()).rejects.toThrow();
-    });
-
-    it('should return false when IndexedDB is unavailable', async () => {
-      delete global.indexedDB;
-
-      const { deleteDatabase } = await getFreshModule();
-      const result = await deleteDatabase();
       expect(result).toBe(false);
 
       global.indexedDB = { open: vi.fn(), deleteDatabase: vi.fn() };

@@ -41,28 +41,6 @@ export const formatPrice = (
 };
 
 /**
- * Get currency symbol from store settings or product/order data
- * Falls back to no symbol if not available
- */
-export const getCurrencySymbol = (data: CurrencyData | null | undefined): string | null => {
-  if (!data) return null;
-
-  // Check for currency_symbol (from orders)
-  if (data.currency_symbol && data.currency_symbol.trim() !== '') {
-    return data.currency_symbol;
-  }
-
-  // Check for currency code (could be used to get symbol)
-  if (data.currency && data.currency.trim() !== '') {
-    // Could expand this to map currency codes to symbols
-    // For now, return null to avoid showing incorrect symbols
-    return null;
-  }
-
-  return null;
-};
-
-/**
  * Format currency amount using Intl.NumberFormat
  * Automatically detects currency from data or uses provided currency code
  */

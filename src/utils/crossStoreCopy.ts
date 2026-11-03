@@ -583,6 +583,7 @@ export async function executeProductCopy(opts: ProductCopyOptions): Promise<Copy
 
   onProgress?.('Copying products...');
   const createdVariable: Array<{ src: Product; id: number }> = [];
+  const newIdBySrc = new Map<number, number>();
   let cursor = 0;
   await runBatches<ProductUpdateData>(
     creates.map((c) => c.payload),
@@ -592,9 +593,38 @@ export async function executeProductCopy(opts: ProductCopyOptions): Promise<Copy
     (ids) =>
       ids.forEach((id) => {
         const c = creates[cursor++];
+        if (c && id) newIdBySrc.set(c.src.id, id);
         if (c && id && c.src.type === 'variable') createdVariable.push({ src: c.src, id });
       })
   );
+
+  // Second pass: upsell/cross-sell links to products created in this run (ids unknown until now).
+  const extra = (ids: number[] | undefined, have: number[]): number[] => [
+    ...new Set(
+      (ids ?? []).flatMap((id) => newIdBySrc.get(id) ?? []).filter((n) => !have.includes(n))
+    ),
+  ];
+  const linkUpdates = [
+    ...creates.map((c) => ({ src: c.src, payload: c.payload, id: newIdBySrc.get(c.src.id) })),
+    ...updates.map((u) => ({ src: u.src, payload: u.payload, id: u.payload.id })),
+  ].flatMap(({ src, payload, id }) => {
+    const p = payload as { upsell_ids?: number[]; cross_sell_ids?: number[] };
+    const up = extra(src.upsell_ids, p.upsell_ids ?? []);
+    const cross = extra(src.cross_sell_ids, p.cross_sell_ids ?? []);
+    if (!id || (!up.length && !cross.length)) return [];
+    return [
+      {
+        id,
+        upsell_ids: [...(p.upsell_ids ?? []), ...up],
+        cross_sell_ids: [...(p.cross_sell_ids ?? []), ...cross],
+      },
+    ];
+  });
+  for (const part of chunk(linkUpdates)) {
+    const res = await target.batchProducts({ update: part } as never);
+    const bad = res.success ? batchErrorIds(res.data, 'update').length : part.length;
+    if (bad) result.messages.push(`Product links: ${bad} of ${part.length} updates failed`);
+  }
 
   // Variations are best-effort. Existing products match by SKU, else by attribute combination.
   const varKey = (v: { sku?: string; attributes: Array<{ name: string; option: string }> }) =>

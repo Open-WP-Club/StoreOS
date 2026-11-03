@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { formatPrice, getCurrencySymbol, formatCurrency, getCurrencyCode } from '../currency';
+import { formatPrice, formatCurrency, getCurrencyCode } from '../currency';
 
 describe('currency utilities', () => {
   describe('formatPrice', () => {
@@ -22,24 +22,6 @@ describe('currency utilities', () => {
     it('should ignore empty currency symbols', () => {
       expect(formatPrice('10.00', '')).toBe('10.00');
       expect(formatPrice('10.00', '   ')).toBe('10.00');
-    });
-  });
-
-  describe('getCurrencySymbol', () => {
-    it('should extract currency symbol from data', () => {
-      const data = { currency_symbol: '$' };
-      expect(getCurrencySymbol(data)).toBe('$');
-    });
-
-    it('should return null when no symbol is found', () => {
-      expect(getCurrencySymbol(null)).toBeNull();
-      expect(getCurrencySymbol({})).toBeNull();
-      expect(getCurrencySymbol({ currency: 'USD' })).toBeNull();
-    });
-
-    it('should ignore empty currency symbols', () => {
-      expect(getCurrencySymbol({ currency_symbol: '' })).toBeNull();
-      expect(getCurrencySymbol({ currency_symbol: '   ' })).toBeNull();
     });
   });
 

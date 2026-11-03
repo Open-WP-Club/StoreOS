@@ -87,9 +87,3 @@ export function useProgressiveLoading(): UseProgressiveLoadingReturn {
     isCancelled: useCallback(() => cancelRef.current, []),
   };
 }
-
-/**
- * Sleep utility for adding delays between batches
- */
-export const sleep = (ms: number): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, ms));

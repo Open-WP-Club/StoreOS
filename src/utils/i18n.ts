@@ -536,23 +536,5 @@ export function getSupportedLanguages(): LanguageInfo[] {
   return SUPPORTED_LANGUAGES.map((code) => LANGUAGE_INFO[code]);
 }
 
-/**
- * Check if a language is supported
- * @param code - Language code to check
- * @returns boolean
- */
-export function isLanguageSupported(code: string): code is Language {
-  return SUPPORTED_LANGUAGES.includes(code as Language);
-}
-
-/**
- * Get language info by code
- * @param code - Language code
- * @returns LanguageInfo or undefined
- */
-export function getLanguageInfo(code: Language): LanguageInfo {
-  return LANGUAGE_INFO[code];
-}
-
 // Export translations for direct access if needed
 export { translations };

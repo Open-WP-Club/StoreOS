@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useProgressiveLoading, sleep } from '../useProgressiveLoading';
+import { useProgressiveLoading } from '../useProgressiveLoading';
 
 describe('useProgressiveLoading', () => {
   beforeEach(() => {
@@ -188,43 +188,5 @@ describe('useProgressiveLoading', () => {
     });
 
     expect(result.current.loadingState.dataType).toBe('orders');
-  });
-});
-
-describe('sleep utility', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it('should delay for specified milliseconds', async () => {
-    const promise = sleep(1000);
-
-    vi.advanceTimersByTime(999);
-    await Promise.resolve(); // Flush promises
-
-    let resolved = false;
-    promise.then(() => {
-      resolved = true;
-    });
-
-    await Promise.resolve();
-    expect(resolved).toBe(false);
-
-    vi.advanceTimersByTime(1);
-    await promise;
-
-    expect(resolved).toBe(true);
-  });
-
-  it('should resolve immediately for 0 ms', async () => {
-    const promise = sleep(0);
-    vi.advanceTimersByTime(0);
-    await promise;
-    // If we get here without hanging, test passes
-    expect(true).toBe(true);
   });
 });

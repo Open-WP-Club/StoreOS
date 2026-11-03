@@ -1,8 +1,6 @@
 import {
   t,
   getSupportedLanguages,
-  isLanguageSupported,
-  getLanguageInfo,
   SUPPORTED_LANGUAGES,
   LANGUAGE_INFO,
   translations,
@@ -128,45 +126,6 @@ describe('i18n utilities', () => {
 
       expect(bgLang).toEqual(LANGUAGE_INFO.bg);
       expect(enLang).toEqual(LANGUAGE_INFO.en);
-    });
-  });
-
-  describe('isLanguageSupported', () => {
-    it('should return true for supported languages', () => {
-      expect(isLanguageSupported('bg')).toBe(true);
-      expect(isLanguageSupported('en')).toBe(true);
-    });
-
-    it('should return false for unsupported languages', () => {
-      expect(isLanguageSupported('de')).toBe(false);
-      expect(isLanguageSupported('fr')).toBe(false);
-      expect(isLanguageSupported('es')).toBe(false);
-      expect(isLanguageSupported('invalid')).toBe(false);
-    });
-
-    it('should return false for empty or invalid input', () => {
-      expect(isLanguageSupported('')).toBe(false);
-      expect(isLanguageSupported('x')).toBe(false);
-    });
-  });
-
-  describe('getLanguageInfo', () => {
-    it('should return correct info for Bulgarian', () => {
-      const info = getLanguageInfo('bg');
-
-      expect(info.code).toBe('bg');
-      expect(info.name).toBe('Български');
-      expect(info.englishName).toBe('Bulgarian');
-      expect(info.flag).toBe('🇧🇬');
-    });
-
-    it('should return correct info for English', () => {
-      const info = getLanguageInfo('en');
-
-      expect(info.code).toBe('en');
-      expect(info.name).toBe('English');
-      expect(info.englishName).toBe('English');
-      expect(info.flag).toBe('🇬🇧');
     });
   });
 

@@ -401,6 +401,27 @@ describe('executeProductCopy', () => {
     expect(r.messages.some((m) => m.includes('not copied'))).toBe(false);
   });
 
+  it('second pass links upsell/cross-sell to products created in the same run', async () => {
+    const batchProducts = vi
+      .fn()
+      .mockImplementation((b: { create?: unknown[]; update?: unknown[] }) =>
+        ok(b.create ? { create: [{ id: 501 }, { id: 502 }] } : { update: [] })
+      );
+    const s = setup(batchProducts);
+    const r = await executeProductCopy({
+      source: s.source as never,
+      target: s.target as never,
+      products: [mk(1, { upsell_ids: [3, 1, 77], cross_sell_ids: [3] }), mk(3)],
+      collision: 'skip',
+      createMissingCategories: false,
+    });
+    expect(batchProducts).toHaveBeenCalledTimes(2);
+    expect(batchProducts.mock.calls[1]?.[0]).toEqual({
+      update: [{ id: 501, upsell_ids: [502, 501], cross_sell_ids: [502] }],
+    });
+    expect(r.failed).toBe(0);
+  });
+
   it('keeps remaining categories when one category fails to create', async () => {
     const batchProducts = vi.fn().mockImplementation(() => ok({ create: [{ id: 1 }] }));
     const s = setup(batchProducts);

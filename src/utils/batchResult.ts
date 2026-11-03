@@ -1,9 +1,4 @@
-import type { ApiResponse, BatchOperationResponse } from '../types';
-
-/** Number of failed ApiResponses (the service layer never throws; it returns success: false). */
-export function countFailed(results: ApiResponse<unknown>[]): number {
-  return results.filter((r) => !r.success).length;
-}
+import type { BatchOperationResponse } from '../types';
 
 /** Ids of entries in a WC batch response that carry an `error` object instead of data. */
 export function batchErrorIds(
