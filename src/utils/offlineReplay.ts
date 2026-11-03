@@ -12,16 +12,23 @@ import {
   createVariationOnce,
   createOrderOnce,
 } from './offlineCreates';
-import { detectConflict } from './offlineConflicts';
+import { detectConflict, splitBatch } from './offlineConflicts';
 import type {
   ApiResponse,
   BatchOperationResponse,
+  OperationBase,
   OperationConflict,
   PendingOperation,
 } from '../types';
 import type WooCommerceService from '../services/woocommerce';
 
-type Result = { success: boolean; error?: string; conflict?: OperationConflict };
+type Result = {
+  success: boolean;
+  error?: string;
+  conflict?: OperationConflict;
+  /** batch ops: the batch was sent without these conflicting update items, which stay held */
+  held?: { data: Record<string, unknown>; base: OperationBase; conflict: OperationConflict };
+};
 
 // Deleting something that is already gone is a success on replay (idempotent delete).
 const GONE = /invalid[_ ]id|not found|no .* found|404/i;
@@ -82,6 +89,16 @@ export async function replayOperation(
     return { success: false, error: 'Refusing to sync a pending placeholder id' };
   }
   // Edits made elsewhere since queueing: hold the op instead of overwriting them.
+  const split = await splitBatch(service, operation);
+  if (split) {
+    // Conflict-free items go out now; conflicting ones are returned as `held`.
+    const c = split.clean;
+    const hasWork = [c.update, c.create, c.delete].some((l) => Array.isArray(l) && l.length > 0);
+    const res = hasWork
+      ? await replayOperation(service, { ...operation, data: c, base: undefined })
+      : { success: true };
+    return res.success ? { ...res, held: split.held } : res;
+  }
   const conflict = await detectConflict(service, operation);
   if (conflict) return { success: false, error: 'Changed on the server', conflict };
   switch (operation.type) {

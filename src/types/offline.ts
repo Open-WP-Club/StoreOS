@@ -39,6 +39,8 @@ export interface OperationBase {
   modified: string;
   /** previous values of the fields the op changes */
   prev: Record<string, unknown>;
+  /** batch ops: per-item snapshots of the update items, keyed by item id (modified/prev above are unused) */
+  items?: Record<string, { modified: string; prev: Record<string, unknown> }>;
 }
 
 /** Set when replay found the server item changed under the same fields; the op is held, not sent. */
@@ -48,6 +50,8 @@ export interface OperationConflict {
   server: Record<string, unknown>;
   /** stock ops: my change relative to the expected quantity */
   stockDelta?: number;
+  /** batch ops: the held (conflicting) update items; `fields`/`server` above are then empty */
+  items?: Array<{ id: number; fields: string[]; server: Record<string, unknown> }>;
 }
 
 export interface PendingOperation {

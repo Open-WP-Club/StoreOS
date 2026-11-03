@@ -200,7 +200,8 @@ function CategoriesPage(): React.ReactElement {
           ? service.updateProductCategory(editingId, data)
           : service.createProductCategory(data),
       (msg) => showToast(msg, 'error'),
-      'Failed to save category'
+      'Failed to save category',
+      loadedCategories as unknown as Record<string, unknown>[]
     );
 
     if (res.queued || res.success) {

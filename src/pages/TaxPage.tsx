@@ -171,7 +171,8 @@ function TaxPage(): React.ReactElement {
       () =>
         editingRateId ? service.updateTaxRate(editingRateId, data) : service.createTaxRate(data),
       (msg) => showToast(msg, 'error'),
-      'Failed to save tax rate'
+      'Failed to save tax rate',
+      loadedRates as unknown as Record<string, unknown>[]
     );
     if (res.queued || res.success) {
       if (res.success)

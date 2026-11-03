@@ -187,7 +187,8 @@ function AttributesPage(): React.ReactElement {
           ? service.updateProductAttribute(editingAttrId, data)
           : service.createProductAttribute(data),
       (msg) => showToast(msg, 'error'),
-      'Failed to save attribute'
+      'Failed to save attribute',
+      loadedAttributes as unknown as Record<string, unknown>[]
     );
     if (res.queued || res.success) {
       if (res.success)
@@ -247,7 +248,8 @@ function AttributesPage(): React.ReactElement {
           ? service.updateAttributeTerm(termAttrId, editingTermId, data)
           : service.createAttributeTerm(termAttrId, data),
       (msg) => showToast(msg, 'error'),
-      'Failed to save term'
+      'Failed to save term',
+      (termsMap[termAttrId] ?? []) as unknown as Record<string, unknown>[]
     );
     if (res.queued || res.success) {
       if (res.success) showToast(editingTermId ? 'Term updated' : 'Term created', 'success');

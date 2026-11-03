@@ -16,6 +16,8 @@ interface MutationOptions<T> {
   storeId: string;
   /** The actual API call to execute when online. Receives the data actually sent (placeholder ids removed from batches). */
   execute: (queueData: Record<string, unknown>) => Promise<T>;
+  /** The item(s) as the UI shows them now: conflict-detection snapshot for resources without a cache */
+  current?: Record<string, unknown> | Record<string, unknown>[];
   /** Called on successful execution */
   onSuccess?: (result: T) => void | Promise<void>;
   /** Called on failed execution (still online) */
@@ -41,7 +43,7 @@ export function useOfflineMutation() {
 
   const mutate = useCallback(
     async <T>(options: MutationOptions<T>): Promise<MutationResult> => {
-      const { operationType, queueData, storeId, execute, onSuccess, onError } = options;
+      const { operationType, queueData, storeId, execute, onSuccess, onError, current } = options;
 
       // Edits/deletes of an offline-created placeholder act on the queued create, online or not.
       const local = mutatePlaceholder(operationType, queueData, storeId);
@@ -72,7 +74,7 @@ export function useOfflineMutation() {
               ],
             }
           : payload;
-        const base = captureBase(operationType, data, storeId);
+        const base = captureBase(operationType, data, storeId, current);
         if (base) addPendingOperation(operationType, data, storeId, base);
         else addPendingOperation(operationType, data, storeId);
         showToast('You are offline. This change will sync when you reconnect.', 'warning');
@@ -100,12 +102,14 @@ export function useOfflineMutation() {
       storeId: string,
       call: () => Promise<{ success: boolean; error?: string }>,
       onError?: (error: string) => void,
-      fallback = 'Operation failed'
+      fallback = 'Operation failed',
+      current?: Record<string, unknown> | Record<string, unknown>[]
     ) =>
       mutate({
         operationType,
         queueData,
         storeId,
+        current,
         execute: async () => {
           const r = await call();
           if (!r.success) throw new Error(r.error || fallback);

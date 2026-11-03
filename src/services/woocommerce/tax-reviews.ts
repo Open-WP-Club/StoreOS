@@ -43,6 +43,17 @@ export class WooCommerceServiceTaxReviews extends WooCommerceServiceCoupons {
     }
   }
 
+  async getTaxRate(id: number): Promise<ApiResponse<WooCommerceTaxRate>> {
+    try {
+      const response: WooCommerceApiResponse<WooCommerceTaxRate> = await (
+        await this.getApi()
+      ).get(`taxes/${id}`);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return this.fail(error);
+    }
+  }
+
   async updateTaxRate(
     id: number,
     data: TaxRateUpdateData

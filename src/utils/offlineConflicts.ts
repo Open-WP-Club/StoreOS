@@ -1,38 +1,65 @@
 import useCache from '../stores/cacheStore';
+import useOffline from '../stores/offlineStore';
 import useStoreConfig from '../stores/storeConfigStore';
 import type { OperationBase, OperationConflict, PendingOperation } from '../types';
 import type WooCommerceService from '../services/woocommerce';
 
 type Item = Record<string, unknown>;
 type OpLike = Pick<PendingOperation, 'type' | 'data'>;
+type Snap = { modified: string; prev: Item };
 
-/** Op types that get conflict detection (single-item updates of cached resources). */
-const KINDS = {
+type Resource =
+  | 'products'
+  | 'orders'
+  | 'coupons'
+  | 'categories'
+  | 'attributes'
+  | 'terms'
+  | 'taxRates'
+  | 'reviews'
+  | 'variations';
+
+/** Single-item update ops that get conflict detection. (Tax classes have no update op.) */
+const SINGLE: Record<string, Resource> = {
   update_product: 'products',
   update_stock: 'products',
   update_order: 'orders',
   update_coupon: 'coupons',
-} as const;
-
-const kindOf = (type: string): 'products' | 'orders' | 'coupons' | undefined =>
-  KINDS[type as keyof typeof KINDS];
+  update_category: 'categories',
+  update_attribute: 'attributes',
+  update_attribute_term: 'terms',
+  update_tax_rate: 'taxRates',
+  update_review: 'reviews',
+  update_variation: 'variations',
+};
+/** Batch ops: detection is per `update` item. (batch_reviews is not covered.) */
+const BATCH: Record<string, Resource> = {
+  batch_products: 'products',
+  batch_coupons: 'coupons',
+  batch_orders: 'orders',
+  batch_variations: 'variations',
+};
+// These items carry no modified timestamp, so they are compared by value only.
+const UNTIMED = new Set<Resource>(['categories', 'attributes', 'terms', 'taxRates', 'reviews']);
+const CACHED = new Set<Resource>(['products', 'orders', 'coupons']);
 
 // Fields in op data that are not edits of the item itself.
-const SKIP = new Set(['id', 'productId', 'meta_data']);
-
-/** Op data normalised to item field names (stock ops may use quantity/stockStatus). */
-export function editedFields(op: OpLike): Item {
-  const out: Item = {};
-  for (const [k, v] of Object.entries(op.data)) {
-    if (SKIP.has(k)) continue;
-    out[op.type === 'update_stock' ? (STOCK_ALIAS[k] ?? k) : k] = v;
-  }
-  return out;
-}
+const SKIP = new Set(['id', 'productId', 'attributeId', 'meta_data']);
 const STOCK_ALIAS: Record<string, string> = {
   quantity: 'stock_quantity',
   stockStatus: 'stock_status',
 };
+
+/** Item/op data normalised to item field names (stock ops may use quantity/stockStatus). */
+export function itemFields(data: Item, stock: boolean): Item {
+  const out: Item = {};
+  for (const [k, v] of Object.entries(data)) {
+    if (SKIP.has(k)) continue;
+    out[stock ? (STOCK_ALIAS[k] ?? k) : k] = v;
+  }
+  return out;
+}
+export const editedFields = (op: OpLike): Item => itemFields(op.data, op.type === 'update_stock');
 
 const itemId = (op: OpLike): number =>
   (op.type === 'update_stock' ? (op.data.productId ?? op.data.id) : op.data.id) as number;
@@ -48,43 +75,97 @@ const isNewer = (server: string, base: string): boolean => {
   return !Number.isNaN(s) && !Number.isNaN(b) && s > b;
 };
 
-/** Snapshot of the cached item at queue time. Undefined when it can't be determined (replays as before). */
-export function captureBase(
-  type: PendingOperation['type'],
-  data: Record<string, unknown>,
-  storeId: string
-): OperationBase | undefined {
-  const kind = kindOf(type);
-  // The cache only holds the current store's data.
-  if (!kind || useStoreConfig.getState().currentStoreId !== storeId) return undefined;
-  const id = itemId({ type, data });
-  const list = useCache.getState().cache[kind]?.data as Item[] | null | undefined;
-  const item = list?.find((i) => i.id === id);
+const asList = (v: Item | Item[] | undefined): Item[] => (Array.isArray(v) ? v : v ? [v] : []);
+
+function snapshot(r: Resource, item: Item | undefined, edit: Item): Snap | undefined {
   if (!item) return undefined;
   const modified = modifiedOf(item);
-  if (!modified) return undefined;
+  if (!modified && !UNTIMED.has(r)) return undefined;
   const prev: Item = {};
-  for (const f of Object.keys(editedFields({ type, data }))) prev[f] = item[f] ?? null;
+  // Untimed items are compared by value: only fields the snapshot actually knows can conflict.
+  for (const f of Object.keys(edit)) if (!UNTIMED.has(r) || f in item) prev[f] = item[f] ?? null;
   return { modified, prev };
 }
 
-async function fetchServer(
-  service: WooCommerceService,
-  op: PendingOperation
+/**
+ * Snapshot of the item at queue time. Source: the store cache (products/orders/coupons) or
+ * `current` (the item(s) as the UI shows them, for resources without a cache).
+ * Undefined when it can't be determined (replays as before).
+ */
+export function captureBase(
+  type: PendingOperation['type'],
+  data: Record<string, unknown>,
+  storeId: string,
+  current?: Item | Item[]
+): OperationBase | undefined {
+  const r = SINGLE[type] ?? BATCH[type];
+  // The cache only holds the current store's data.
+  if (!r || useStoreConfig.getState().currentStoreId !== storeId) return undefined;
+  const cached = CACHED.has(r)
+    ? ((useCache.getState().cache[r as 'products']?.data as Item[] | null | undefined) ?? [])
+    : [];
+  const pool = [...asList(current), ...cached];
+  if (SINGLE[type]) {
+    const id = itemId({ type, data });
+    // UI lists are patched optimistically, so a 2nd queued edit would snapshot my own 1st edit.
+    const queued = useOffline
+      .getState()
+      .pendingOperations.some((o) => o.type === type && o.storeId === storeId && o.data.id === id);
+    if (UNTIMED.has(r) && queued) return undefined;
+    return snapshot(
+      r,
+      pool.find((i) => i.id === id),
+      editedFields({ type, data })
+    );
+  }
+  const items: Record<string, Snap> = {};
+  for (const u of (data.update as Item[] | undefined) ?? []) {
+    const snap = snapshot(
+      r,
+      pool.find((i) => i.id === u.id),
+      itemFields(u, false)
+    );
+    if (snap) items[String(u.id)] = snap;
+  }
+  return Object.keys(items).length ? { modified: '', prev: {}, items } : undefined;
+}
+
+async function fetchItem(
+  s: WooCommerceService,
+  r: Resource,
+  id: number,
+  ctx: Item
 ): Promise<Item | null> {
-  const id = itemId(op);
-  const kind = kindOf(op.type);
-  const res =
-    kind === 'orders'
-      ? await service.getOrder(id)
-      : kind === 'coupons'
-        ? await service.getCoupon(id)
-        : await service.getProduct(id);
+  const res = await {
+    products: () => s.getProduct(id),
+    orders: () => s.getOrder(id),
+    coupons: () => s.getCoupon(id),
+    categories: () => s.getProductCategory(id),
+    attributes: () => s.getProductAttribute(id),
+    terms: () => s.getAttributeTerm(ctx.attributeId as number, id),
+    taxRates: () => s.getTaxRate(id),
+    reviews: () => s.getReview(id),
+    variations: () => s.getProductVariation(ctx.productId as number, id),
+  }[r]();
   return res.success ? (res.data as unknown as Item) : null;
 }
 
 /**
- * Compare the live server item against the op's base snapshot.
+ * Fields where the server changed since the snapshot AND now differs from what I'm sending.
+ * Empty when the server is unchanged since queue time (timed items) or only other fields changed.
+ */
+function conflictFields(server: Item, base: Snap, mine: Item): string[] {
+  if (base.modified && !isNewer(modifiedOf(server), base.modified)) return [];
+  return Object.keys(mine).filter(
+    (f) => f in base.prev && !same(server[f], base.prev[f]) && !same(server[f], mine[f])
+  );
+}
+
+const pick = (server: Item, fields: string[]): Item =>
+  Object.fromEntries(fields.map((f) => [f, server[f] ?? null]));
+
+/**
+ * Compare the live server item against a single-item op's base snapshot.
  * Null (replay normally) when: no snapshot (legacy op), server unchanged since queue time,
  * the item can't be fetched, or the server edits touched only other fields.
  */
@@ -92,33 +173,120 @@ export async function detectConflict(
   service: WooCommerceService,
   op: PendingOperation
 ): Promise<OperationConflict | null> {
-  const base = op.base;
-  if (!base || !kindOf(op.type)) return null;
-  const server = await fetchServer(service, op);
-  if (!server || !isNewer(modifiedOf(server), base.modified)) return null;
+  const r = SINGLE[op.type];
+  if (!op.base || !r) return null;
+  const server = await fetchItem(service, r, itemId(op), op.data);
+  if (!server) return null;
   const mine = editedFields(op);
-  // Conflict = server changed the field since the snapshot AND it now differs from what I'm sending.
-  const fields = Object.keys(mine).filter(
-    (f) => !same(server[f], base.prev[f]) && !same(server[f], mine[f])
-  );
+  const fields = conflictFields(server, op.base, mine);
   if (!fields.length) return null;
-  const serverVals: Item = {};
-  for (const f of fields) serverVals[f] = server[f] ?? null;
   return {
     fields,
-    server: serverVals,
+    server: pick(server, fields),
     // Stock edits can be re-applied as "server quantity + my change".
     stockDelta:
       op.type === 'update_stock' && fields.includes('stock_quantity')
-        ? Number(mine.stock_quantity) - Number(base.prev.stock_quantity)
+        ? Number(mine.stock_quantity) - Number(op.base.prev.stock_quantity)
         : undefined,
   };
 }
 
+/**
+ * Per-item detection for a batch op. Null when nothing is held back. Otherwise `clean` is the
+ * batch data to send now and `held` the remainder (conflicting update items) to keep as a conflicted op.
+ * ponytail: one fetch per snapshotted update item; fine for typical batch sizes.
+ */
+export async function splitBatch(
+  service: WooCommerceService,
+  op: PendingOperation
+): Promise<{
+  clean: Record<string, unknown>;
+  held: { data: Record<string, unknown>; base: OperationBase; conflict: OperationConflict };
+} | null> {
+  const r = BATCH[op.type];
+  const snaps = op.base?.items;
+  if (!r || !snaps) return null;
+  const keep: Item[] = [];
+  const held: Item[] = [];
+  const items: NonNullable<OperationConflict['items']> = [];
+  const heldSnaps: Record<string, Snap> = {};
+  for (const u of (op.data.update as Item[] | undefined) ?? []) {
+    const snap = snaps[String(u.id)];
+    const server = snap ? await fetchItem(service, r, u.id as number, op.data) : null;
+    const fields = server && snap ? conflictFields(server, snap, itemFields(u, false)) : [];
+    if (!server || !snap || !fields.length) {
+      keep.push(u);
+      continue;
+    }
+    held.push(u);
+    heldSnaps[String(u.id)] = snap;
+    items.push({ id: u.id as number, fields, server: pick(server, fields) });
+  }
+  if (!held.length) return null;
+  const rest = { ...op.data };
+  delete rest.create;
+  delete rest.delete;
+  return {
+    clean: { ...op.data, update: keep },
+    held: {
+      data: { ...rest, update: held },
+      base: { modified: '', prev: {}, items: heldSnaps },
+      conflict: { fields: [], server: {}, items },
+    },
+  };
+}
+
+/** Batch op containing only update item `id` (no snapshot, so it is not re-checked). */
+export function singleItemOp(op: PendingOperation, id: number): PendingOperation {
+  const update = ((op.data.update as Item[] | undefined) ?? []).filter((u) => u.id === id);
+  return { ...op, data: { ...op.data, update }, base: undefined, conflict: undefined };
+}
+
+/**
+ * Updates for the op after held batch item `id` was resolved.
+ * Null when no held items remain (the op is finished).
+ */
+export function withoutHeldItem(
+  op: PendingOperation,
+  id: number
+): Partial<PendingOperation> | null {
+  const items = (op.conflict?.items ?? []).filter((i) => i.id !== id);
+  if (!items.length) return null;
+  const snaps = { ...op.base?.items };
+  delete snaps[String(id)];
+  return {
+    data: {
+      ...op.data,
+      update: ((op.data.update as Item[] | undefined) ?? []).filter((u) => u.id !== id),
+    },
+    base: { modified: '', prev: {}, items: snaps },
+    conflict: { fields: [], server: {}, items },
+  };
+}
+
+/** Current server quantity of a stock op's product (null when unreadable). */
+export async function freshStockDeltaData(
+  service: WooCommerceService,
+  op: PendingOperation
+): Promise<Record<string, unknown> | null> {
+  const server = await fetchItem(service, 'products', itemId(op), op.data);
+  return server ? stockDeltaData(op, Number(server.stock_quantity)) : null;
+}
+
+/** After a resolution the cached copy may be stale: drop it so it reloads from the server. */
+export function invalidateCached(op: PendingOperation): void {
+  const r = SINGLE[op.type] ?? BATCH[op.type];
+  if (r && CACHED.has(r) && useStoreConfig.getState().currentStoreId === op.storeId) {
+    void useCache.getState().clearCacheForType(r as 'products');
+  }
+}
+
 /** New op data adding my stock change onto the server quantity. Null when not applicable. */
-export function stockDeltaData(op: PendingOperation): Record<string, unknown> | null {
+export function stockDeltaData(
+  op: PendingOperation,
+  serverQty = Number(op.conflict?.server.stock_quantity)
+): Record<string, unknown> | null {
   const c = op.conflict;
-  const serverQty = Number(c?.server.stock_quantity);
   if (!c || c.stockDelta === undefined || Number.isNaN(serverQty) || Number.isNaN(c.stockDelta)) {
     return null;
   }

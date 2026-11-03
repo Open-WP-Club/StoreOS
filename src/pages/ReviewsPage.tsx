@@ -212,6 +212,7 @@ function ReviewsPage(): React.ReactElement {
       const res = await mutate({
         operationType: 'update_review',
         queueData: { id: reviewId, status: newStatus },
+        current: reviews as unknown as Record<string, unknown>[],
         storeId: currentStore.id,
         execute: async () => {
           const result = await service
