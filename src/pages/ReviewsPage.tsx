@@ -9,6 +9,8 @@ import Pagination from '../components/Pagination';
 import ToastContainer from '../components/ToastContainer';
 import LoadingIndicator from '../components/LoadingIndicator';
 import { useToast } from '../hooks/useToast';
+import { useOfflineMutation } from '../hooks/useOfflineMutation';
+import { batchErrorIds } from '../utils/batchResult';
 import { useProgressiveLoading } from '../hooks/useProgressiveLoading';
 import {
   RefreshCw,
@@ -52,6 +54,7 @@ function ReviewsPage(): React.ReactElement {
   const getCurrentStore = useStoreConfig((state) => state.getCurrentStore);
   const currentStore = getCurrentStore();
   const { toasts, showToast, removeToast } = useToast();
+  const { mutate, mutateApi } = useOfflineMutation();
 
   const [reviews, setReviews] = useState<WooCommerceReview[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -205,12 +208,31 @@ function ReviewsPage(): React.ReactElement {
     setActionLoading(reviewId);
     try {
       const service = new WooCommerceService(currentStore);
-      const result = await service.updateReview(reviewId, {
-        status: newStatus,
+      let updated: WooCommerceReview | null = null;
+      const res = await mutate({
+        operationType: 'update_review',
+        queueData: { id: reviewId, status: newStatus },
+        storeId: currentStore.id,
+        execute: async () => {
+          const result = await service
+            .updateReview(reviewId, { status: newStatus })
+            .catch((err: unknown) => {
+              throw new Error(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+            });
+          if (!result.success) throw new Error(result.error || 'Failed to update review');
+          updated = result.data;
+        },
+        onError: (msg) => showToast(msg, 'error'),
       });
 
-      if (result.success) {
-        setReviews((prev) => prev.map((r) => (r.id === reviewId ? result.data : r)));
+      if (res.queued) {
+        setReviews((prev) =>
+          prev.map((r) => (r.id === reviewId ? { ...r, status: newStatus } : r))
+        );
+      } else if (res.success && updated) {
+        setReviews((prev) =>
+          prev.map((r) => (r.id === reviewId ? (updated as WooCommerceReview) : r))
+        );
         const statusLabels: Record<string, string> = {
           approved: 'approved',
           hold: 'set to pending',
@@ -218,8 +240,6 @@ function ReviewsPage(): React.ReactElement {
           trash: 'trashed',
         };
         showToast(`Review ${statusLabels[newStatus]}`, 'success');
-      } else {
-        showToast(result.error || 'Failed to update review', 'error');
       }
     } catch (err) {
       showToast(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error');
@@ -244,15 +264,32 @@ function ReviewsPage(): React.ReactElement {
         id: r.id,
         status: 'approved' as const,
       }));
-      const result = await service.batchUpdateReviews(updates);
+      let failedIds: number[] = [];
+      const res = await mutate({
+        operationType: 'batch_reviews',
+        queueData: { update: updates },
+        storeId: currentStore.id,
+        execute: async () => {
+          const result = await service.batchUpdateReviews(updates);
+          if (!result.success) throw new Error(result.error || 'Failed to approve reviews');
+          failedIds = batchErrorIds(result.data, 'update');
+        },
+        onError: (msg) => showToast(msg, 'error'),
+      });
 
-      if (result.success) {
+      if (res.queued || res.success) {
+        const approved = new Set(updates.map((u) => u.id).filter((id) => !failedIds.includes(id)));
         setReviews((prev) =>
-          prev.map((r) => (r.status === 'hold' ? { ...r, status: 'approved' as const } : r))
+          prev.map((r) => (approved.has(r.id) ? { ...r, status: 'approved' as const } : r))
         );
-        showToast(`${pendingReviews.length} reviews approved`, 'success');
-      } else {
-        showToast(result.error || 'Failed to approve reviews', 'error');
+        if (res.success) {
+          showToast(
+            failedIds.length
+              ? `${failedIds.length} от ${updates.length} неуспешни`
+              : `${updates.length} reviews approved`,
+            failedIds.length ? 'error' : 'success'
+          );
+        }
       }
     } catch (err) {
       showToast(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error');
@@ -267,13 +304,18 @@ function ReviewsPage(): React.ReactElement {
     setActionLoading(reviewId);
     try {
       const service = new WooCommerceService(currentStore);
-      const result = await service.deleteReview(reviewId);
+      const res = await mutateApi(
+        'delete_review',
+        { id: reviewId },
+        currentStore.id,
+        () => service.deleteReview(reviewId),
+        (msg) => showToast(msg, 'error'),
+        'Failed to delete review'
+      );
 
-      if (result.success) {
+      if (res.queued || res.success) {
         setReviews((prev) => prev.filter((r) => r.id !== reviewId));
-        showToast('Review deleted permanently', 'success');
-      } else {
-        showToast(result.error || 'Failed to delete review', 'error');
+        if (res.success) showToast('Review deleted permanently', 'success');
       }
     } catch (err) {
       showToast(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error');

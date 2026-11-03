@@ -5,6 +5,7 @@ import LoadingIndicator from '../components/LoadingIndicator';
 import ConfirmDialog from '../components/ConfirmDialog';
 import PageHeader from '../components/PageHeader';
 import { useToast } from '../hooks/useToast';
+import { useOfflineMutation } from '../hooks/useOfflineMutation';
 import ToastContainer from '../components/ToastContainer';
 import StatCard from '../components/StatCard';
 import TaxRatesTab from '../components/TaxRatesTab';
@@ -67,6 +68,8 @@ function TaxPage(): React.ReactElement {
     slug: string | null;
   }>({ isOpen: false, type: 'rate', id: null, slug: null });
   const [deleting, setDeleting] = useState(false);
+
+  const { mutateApi } = useOfflineMutation();
 
   const service = useMemo(
     () => (currentStore ? new WooCommerceService(currentStore) : null),
@@ -149,18 +152,25 @@ function TaxPage(): React.ReactElement {
       class: rateForm.class,
     };
 
-    const result = editingRateId
-      ? await service.updateTaxRate(editingRateId, data)
-      : await service.createTaxRate(data);
-
-    if (result.success) {
-      showToast(editingRateId ? 'Tax rate updated' : 'Tax rate created', 'success');
+    const res = await mutateApi(
+      editingRateId ? 'update_tax_rate' : 'create_tax_rate',
+      editingRateId ? { id: editingRateId, ...data } : { ...data },
+      currentStore!.id,
+      () =>
+        editingRateId ? service.updateTaxRate(editingRateId, data) : service.createTaxRate(data),
+      (msg) => showToast(msg, 'error'),
+      'Failed to save tax rate'
+    );
+    if (res.queued || res.success) {
+      if (res.success)
+        showToast(editingRateId ? 'Tax rate updated' : 'Tax rate created', 'success');
+      else if (editingRateId) {
+        setTaxRates((prev) => prev.map((r) => (r.id === editingRateId ? { ...r, ...data } : r)));
+      }
       setShowRateForm(false);
       setEditingRateId(null);
       setRateForm(defaultRateForm);
-      await loadData();
-    } else {
-      showToast(result.error || 'Failed to save tax rate', 'error');
+      if (res.success) await loadData();
     }
     setSaving(false);
   };
@@ -172,14 +182,21 @@ function TaxPage(): React.ReactElement {
       return;
     }
     setSaving(true);
-    const result = await service.createTaxClass({ name: newClassName });
-    if (result.success) {
-      showToast('Tax class created', 'success');
+    const res = await mutateApi(
+      'create_tax_class',
+      { name: newClassName },
+      currentStore!.id,
+      () => service.createTaxClass({ name: newClassName }),
+      (msg) => showToast(msg, 'error'),
+      'Failed to create tax class'
+    );
+    if (res.queued || res.success) {
+      if (res.success) {
+        showToast('Tax class created', 'success');
+        await loadData();
+      }
       setShowClassForm(false);
       setNewClassName('');
-      await loadData();
-    } else {
-      showToast(result.error || 'Failed to create tax class', 'error');
     }
     setSaving(false);
   };
@@ -189,24 +206,36 @@ function TaxPage(): React.ReactElement {
     if (!service) return;
     setDeleting(true);
 
-    if (deleteConfirm.type === 'rate' && deleteConfirm.id) {
-      const result = await service.deleteTaxRate(deleteConfirm.id);
-      if (result.success) {
-        showToast('Tax rate deleted', 'success');
-      } else {
-        showToast(result.error || 'Failed to delete', 'error');
-      }
-    } else if (deleteConfirm.type === 'class' && deleteConfirm.slug) {
-      const result = await service.deleteTaxClass(deleteConfirm.slug);
-      if (result.success) {
-        showToast('Tax class deleted', 'success');
-      } else {
-        showToast(result.error || 'Failed to delete', 'error');
-      }
+    const { id, slug } = deleteConfirm;
+    let queued = false;
+    if (deleteConfirm.type === 'rate' && id) {
+      const res = await mutateApi(
+        'delete_tax_rate',
+        { id },
+        currentStore!.id,
+        () => service.deleteTaxRate(id),
+        (msg) => showToast(msg, 'error'),
+        'Failed to delete'
+      );
+      queued = res.queued;
+      if (res.queued) setTaxRates((prev) => prev.filter((r) => r.id !== id));
+      if (res.success) showToast('Tax rate deleted', 'success');
+    } else if (deleteConfirm.type === 'class' && slug) {
+      const res = await mutateApi(
+        'delete_tax_class',
+        { slug },
+        currentStore!.id,
+        () => service.deleteTaxClass(slug),
+        (msg) => showToast(msg, 'error'),
+        'Failed to delete'
+      );
+      queued = res.queued;
+      if (res.queued) setTaxClasses((prev) => prev.filter((c) => c.slug !== slug));
+      if (res.success) showToast('Tax class deleted', 'success');
     }
 
     setDeleteConfirm({ isOpen: false, type: 'rate', id: null, slug: null });
-    await loadData();
+    if (!queued) await loadData();
     setDeleting(false);
   };
 

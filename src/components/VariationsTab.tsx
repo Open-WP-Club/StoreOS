@@ -8,6 +8,7 @@ import React, {
   ChangeEvent,
 } from 'react';
 import { Plus, Trash2, Save, Loader2, ChevronDown, ChevronUp, Layers } from 'lucide-react';
+import { useOfflineMutation } from '../hooks/useOfflineMutation';
 import WooCommerceService from '../services/woocommerce';
 import { formatPrice } from '../utils/currency';
 import type {
@@ -66,6 +67,8 @@ function VariationsTab({ product, storeConfig }: VariationsTabProps): ReactEleme
     [product.attributes]
   );
   const [addForm, setAddForm] = useState<VariationFormData>(emptyForm(product.attributes));
+
+  const { mutate, mutateApi, isOnline } = useOfflineMutation();
 
   const service = useMemo(() => new WooCommerceService(storeConfig), [storeConfig]);
 
@@ -129,21 +132,40 @@ function VariationsTab({ product, storeConfig }: VariationsTabProps): ReactEleme
           changes.stock_quantity === '' ? null : parseInt(changes.stock_quantity as string);
       }
 
-      const result = await service.updateProductVariation(product.id, variation.id, updatePayload);
-      if (result.success) {
-        setVariations((prev) => prev.map((v) => (v.id === variation.id ? result.data : v)));
+      let updated: ProductVariation | null = null;
+      const res = await mutate({
+        operationType: 'update_variation',
+        queueData: { productId: product.id, id: variation.id, ...updatePayload },
+        storeId: storeConfig.id,
+        execute: async () => {
+          const result = await service.updateProductVariation(
+            product.id,
+            variation.id,
+            updatePayload
+          );
+          if (!result.success) throw new Error(result.error || 'Update failed');
+          updated = result.data;
+        },
+        onError: (msg) => showMessage(msg, 'error'),
+      });
+      if (res.queued || res.success) {
+        setVariations((prev) =>
+          prev.map((v) =>
+            v.id === variation.id
+              ? (updated ?? ({ ...v, ...updatePayload } as ProductVariation))
+              : v
+          )
+        );
         setEditData((prev) => {
           const next = { ...prev };
           delete next[variation.id];
           return next;
         });
-        showMessage('Variation updated', 'success');
-      } else {
-        showMessage(result.error || 'Update failed', 'error');
+        if (res.success) showMessage('Variation updated', 'success');
       }
       setSaving(false);
     },
-    [editData, service, product.id, showMessage]
+    [editData, service, product.id, showMessage, mutate, storeConfig.id]
   );
 
   // Delete a variation
@@ -152,16 +174,21 @@ function VariationsTab({ product, storeConfig }: VariationsTabProps): ReactEleme
       if (!confirm('Delete this variation? This cannot be undone.')) return;
 
       setDeletingId(variationId);
-      const result = await service.deleteProductVariation(product.id, variationId);
-      if (result.success) {
+      const res = await mutateApi(
+        'delete_variation',
+        { productId: product.id, id: variationId },
+        storeConfig.id,
+        () => service.deleteProductVariation(product.id, variationId),
+        (msg) => showMessage(msg, 'error'),
+        'Delete failed'
+      );
+      if (res.queued || res.success) {
         setVariations((prev) => prev.filter((v) => v.id !== variationId));
-        showMessage('Variation deleted', 'success');
-      } else {
-        showMessage(result.error || 'Delete failed', 'error');
+        if (res.success) showMessage('Variation deleted', 'success');
       }
       setDeletingId(null);
     },
-    [service, product.id, showMessage]
+    [service, product.id, showMessage, mutateApi, storeConfig.id]
   );
 
   // Create a new variation
@@ -185,21 +212,36 @@ function VariationsTab({ product, storeConfig }: VariationsTabProps): ReactEleme
       attributes: addForm.attributes.filter((a) => a.option !== ''),
     };
 
-    const result = await service.createProductVariation(product.id, payload);
-    if (result.success) {
-      setVariations((prev) => [...prev, result.data]);
+    let created: ProductVariation | null = null;
+    const res = await mutate({
+      operationType: 'create_variation',
+      queueData: { productId: product.id, ...payload },
+      storeId: storeConfig.id,
+      execute: async () => {
+        const result = await service.createProductVariation(product.id, payload);
+        if (!result.success) throw new Error(result.error || 'Create failed');
+        created = result.data;
+      },
+      onError: (msg) => showMessage(msg, 'error'),
+    });
+    if (res.queued || res.success) {
+      // queued creates have no server id yet: they appear after the next sync
+      if (created) setVariations((prev) => [...prev, created as ProductVariation]);
       setAddForm(emptyForm(product.attributes));
       setShowAddForm(false);
-      showMessage('Variation created', 'success');
-    } else {
-      showMessage(result.error || 'Create failed', 'error');
+      if (res.success) showMessage('Variation created', 'success');
     }
     setSaving(false);
-  }, [addForm, service, product.id, product.attributes, showMessage]);
+  }, [addForm, service, product.id, product.attributes, showMessage, mutate, storeConfig.id]);
 
   // Generate all missing attribute combinations
   const handleGenerateAll = useCallback(async (): Promise<void> => {
     if (variationAttrs.length === 0) return;
+    // Batch creates have no idempotency key, so they are not queued offline.
+    if (!isOnline) {
+      showMessage('Generating variations requires a connection', 'error');
+      return;
+    }
 
     // Build all possible combinations
     const optionSets = variationAttrs.map((attr) =>
@@ -251,7 +293,7 @@ function VariationsTab({ product, storeConfig }: VariationsTabProps): ReactEleme
       showMessage(('error' in result && result.error) || 'Batch create failed', 'error');
     }
     setGenerating(false);
-  }, [variationAttrs, variations, service, product.id, showMessage]);
+  }, [variationAttrs, variations, service, product.id, showMessage, isOnline]);
 
   // Get display value for a field (edited or original)
   const getFieldValue = useCallback(

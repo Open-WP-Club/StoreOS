@@ -1,5 +1,15 @@
 import { replayPosSale, type PosSaleOpData } from './posOfflineSale';
 import { batchErrorIds } from './batchResult';
+import {
+  createProductOnce,
+  createCouponOnce,
+  createCategoryOnce,
+  createAttributeOnce,
+  createTermOnce,
+  createTaxRateOnce,
+  createTaxClassOnce,
+  createVariationOnce,
+} from './offlineCreates';
 import type { ApiResponse, BatchOperationResponse, PendingOperation } from '../types';
 import type WooCommerceService from '../services/woocommerce';
 
@@ -41,7 +51,7 @@ const okIfGone = (r: Result): Result =>
 /**
  * Replay one queued operation. `service` must belong to `operation.storeId`.
  * Refunds are deliberately NOT queueable: a replay after a lost response would refund twice.
- * Create types are only queued with a client-id guard (POS sale) or a unique SKU (CSV import).
+ * Every create replay is guarded: lookup by client id (POS sale, product, variation), SKU, code, or name/slug.
  */
 export async function replayOperation(
   service: WooCommerceService,
@@ -56,7 +66,7 @@ export async function replayOperation(
     case 'update_order':
       return service.updateOrder(d.id as number, d);
     case 'create_product':
-      return service.createProduct(d);
+      return createProductOnce(service, d, operation.timestamp);
     case 'update_product':
       return service.updateProduct(d.id as number, d);
     case 'update_stock':
@@ -72,13 +82,70 @@ export async function replayOperation(
     case 'batch_orders':
       return runBatch((ops) => service.batchOrders(ops as never), d as BatchOps);
     case 'create_coupon':
-      return service.createCoupon(d);
+      return createCouponOnce(service, d);
     case 'update_coupon':
       return service.updateCoupon(d.id as number, d);
     case 'delete_coupon':
       return okIfGone(await service.deleteCoupon(d.id as number));
     case 'batch_coupons':
       return runBatch((ops) => service.batchCoupons(ops as never), d as BatchOps);
+    case 'create_category':
+      return createCategoryOnce(service, d);
+    case 'update_category':
+      return okIfGone(await service.updateProductCategory(d.id as number, d));
+    case 'delete_category':
+      return okIfGone(await service.deleteProductCategory(d.id as number));
+    case 'create_attribute':
+      return createAttributeOnce(service, d);
+    case 'update_attribute':
+      return okIfGone(await service.updateProductAttribute(d.id as number, d));
+    case 'delete_attribute':
+      return okIfGone(await service.deleteProductAttribute(d.id as number));
+    case 'create_attribute_term':
+      return createTermOnce(service, d);
+    case 'update_attribute_term':
+      return okIfGone(
+        await service.updateAttributeTerm(d.attributeId as number, d.id as number, d)
+      );
+    case 'delete_attribute_term':
+      return okIfGone(await service.deleteAttributeTerm(d.attributeId as number, d.id as number));
+    case 'create_tax_rate':
+      return createTaxRateOnce(service, d);
+    case 'update_tax_rate':
+      return okIfGone(await service.updateTaxRate(d.id as number, d));
+    case 'delete_tax_rate':
+      return okIfGone(await service.deleteTaxRate(d.id as number));
+    case 'create_tax_class':
+      return createTaxClassOnce(service, d);
+    case 'delete_tax_class':
+      return okIfGone(await service.deleteTaxClass(d.slug as string));
+    case 'update_review':
+      return okIfGone(await service.updateReview(d.id as number, d));
+    case 'delete_review':
+      return okIfGone(await service.deleteReview(d.id as number));
+    case 'batch_reviews': {
+      const res = await service.batchUpdateReviews(d.update as never);
+      if (!res.success) return okIfGone(res);
+      const failed = batchErrorIds(res.data, 'update').length;
+      return failed
+        ? { success: false, error: `${failed} batch item(s) failed` }
+        : { success: true };
+    }
+    case 'create_variation':
+      return createVariationOnce(service, d);
+    case 'update_variation':
+      return okIfGone(
+        await service.updateProductVariation(d.productId as number, d.id as number, d)
+      );
+    case 'delete_variation':
+      return okIfGone(await service.deleteProductVariation(d.productId as number, d.id as number));
+    case 'batch_variations': {
+      const { productId, ...ops } = d;
+      return runBatch(
+        (o) => service.batchProductVariations(productId as number, o as never),
+        ops as BatchOps
+      );
+    }
     default:
       return { success: false, error: 'Unknown operation type' };
   }

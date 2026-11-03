@@ -171,6 +171,7 @@ export interface VariationCreateData {
   dimensions?: Partial<ProductDimensions>;
   description?: string;
   attributes?: VariationAttribute[];
+  meta_data?: Array<{ key: string; value: unknown }>;
 }
 
 export interface VariationUpdateData extends VariationCreateData {

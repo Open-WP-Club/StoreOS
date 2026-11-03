@@ -1,9 +1,10 @@
 import useCache from '../stores/cacheStore';
 import useStoreConfig from '../stores/storeConfigStore';
+import { CLIENT_ID_META } from './offlineCreates';
 import type { ApiResponse, WooCommerceOrder, WooCommerceProduct } from '../types';
 
 /** Order meta key carrying the client-generated sale UUID (idempotency key). */
-export const CLIENT_ID_META = '_storeos_client_id';
+export { CLIENT_ID_META };
 export const RECENT_TRANSACTIONS_KEY = 'pos_recent_transactions';
 export const POS_TX_EVENT = 'pos-transactions-changed';
 

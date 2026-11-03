@@ -419,6 +419,23 @@ function OrdersPage(): React.ReactElement {
   const handleBulkDelete = async (): Promise<void> => {
     if (selectedOrderIds.length === 0 || !currentStore) return;
 
+    if (!isOnline) {
+      // Offline: queue one batch_orders delete (already-gone ids count as success on replay)
+      const ids = selectedOrderIds;
+      const res = await offlineMutate({
+        operationType: 'batch_orders',
+        queueData: { delete: ids },
+        storeId: currentStore.id,
+        execute: async () => undefined, // never runs: only reached when offline
+      });
+      if (!res.queued) return;
+      const remaining = orders.filter((o) => !ids.includes(o.id));
+      setOrders(remaining);
+      await setCachedData('orders', remaining);
+      setSelectedOrderIds([]);
+      return;
+    }
+
     try {
       setBulkProcessing(true);
       const service = new WooCommerceService(currentStore);

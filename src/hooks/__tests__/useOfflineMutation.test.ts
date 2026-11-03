@@ -74,4 +74,49 @@ describe('useOfflineMutation', () => {
     expect(addPendingOperation).toHaveBeenCalledWith('updateOrderStatus', { id: 1 }, 's1');
     expect(showToast).toHaveBeenCalledWith(expect.stringContaining('offline'), 'warning');
   });
+
+  it('offline create_product/create_variation get a client id meta; others do not', async () => {
+    online = false;
+    const { result } = renderHook(() => useOfflineMutation());
+    await act(async () => {
+      await result.current.mutate({
+        ...base,
+        operationType: 'create_product',
+        queueData: { name: 'x' },
+        execute: vi.fn(),
+      });
+      await result.current.mutate({
+        ...base,
+        operationType: 'create_category',
+        queueData: { name: 'x' },
+        execute: vi.fn(),
+      });
+    });
+    const [productCall, categoryCall] = addPendingOperation.mock.calls;
+    expect(productCall![1].meta_data[0]).toMatchObject({ key: '_storeos_client_id' });
+    expect(categoryCall![1]).toEqual({ name: 'x' });
+  });
+
+  it('mutateApi queues offline and throws on failed ApiResponse online', async () => {
+    const { result } = renderHook(() => useOfflineMutation());
+    const onError = vi.fn();
+    let res;
+    await act(async () => {
+      res = await result.current.mutateApi(
+        'delete_review',
+        { id: 1 },
+        's1',
+        async () => ({ success: false, error: 'boom' }),
+        onError
+      );
+    });
+    expect(res).toEqual({ queued: false, success: false, error: 'boom' });
+    expect(onError).toHaveBeenCalledWith('boom');
+    online = false;
+    const { result: r2 } = renderHook(() => useOfflineMutation());
+    await act(async () => {
+      res = await r2.current.mutateApi('delete_review', { id: 1 }, 's1', vi.fn());
+    });
+    expect(res).toEqual({ queued: true, success: false });
+  });
 });
