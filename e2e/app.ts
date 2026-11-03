@@ -119,3 +119,35 @@ export async function seedStore(page: Page, url: string, ck: string, cs: string)
   );
   await page.reload();
 }
+
+/** Seed several stores (first one is current) and reload. */
+export async function seedStores(
+  page: Page,
+  stores: Array<{ id: string; name: string; url: string; ck: string; cs: string }>
+) {
+  await page.evaluate((list) => {
+    localStorage.setItem(
+      'woocommerce-stores',
+      JSON.stringify({
+        state: {
+          stores: list.map((s) => ({
+            id: s.id,
+            name: s.name,
+            url: s.url,
+            consumerKey: s.ck,
+            consumerSecret: s.cs,
+            createdAt: new Date().toISOString(),
+            loadingSettings: {},
+          })),
+          currentStoreId: list[0]?.id,
+        },
+        version: 0,
+      })
+    );
+  }, stores);
+  await page.reload();
+}
+
+/** Flip the app's offline flag (the `offline`/`online` window events drive useOffline). */
+export const setOffline = (page: Page, offline: boolean) =>
+  page.evaluate((o) => window.dispatchEvent(new Event(o ? 'offline' : 'online')), offline);

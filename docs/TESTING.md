@@ -15,6 +15,8 @@ pnpm run test:e2e         # Playwright against the packaged app (macOS arm64; ru
 
 Vitest does not type-check. Run `pnpm run typecheck` and `pnpm run lint` separately.
 
+Manual checks for features the automated tests cannot cover (printers, OS dialogs, real stores): see [MANUAL_TEST.md](MANUAL_TEST.md).
+
 ## Configuration
 
 `vitest.config.ts` + `vitest.setup.ts` (localStorage/IndexedDB/matchMedia style mocks):

@@ -185,7 +185,7 @@ StoreOS/
 │   ├── hooks/ utils/ types/ constants/ contexts/
 │   ├── App.tsx, main.tsx, index.css
 ├── e2e/               # Playwright tests against the packaged Electron app
-├── docs/              # TESTING.md, SECURITY_RELEASE.md
+├── docs/              # TESTING.md, MANUAL_TEST.md (manual checklist), SECURITY_RELEASE.md
 ├── scripts/           # Packaging helpers (adhocSign.cjs)
 ├── electron.vite.config.ts, vitest.config.ts, eslint.config.js, tsconfig.json
 └── package.json

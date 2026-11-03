@@ -98,7 +98,7 @@ StoreOS/
 │   ├── App.tsx, main.tsx, index.css
 │   └── __test_utils__/        # Shared test fixtures/mock factories
 ├── e2e/                       # Playwright e2e (packaged Electron app) + mock Woo server
-├── docs/                      # TESTING.md, SECURITY_RELEASE.md
+├── docs/                      # TESTING.md, MANUAL_TEST.md (manual checklist), SECURITY_RELEASE.md
 ├── scripts/adhocSign.cjs      # electron-builder afterSign hook
 ├── electron.vite.config.ts    # Main/preload/renderer build config + path aliases + manualChunks
 ├── vitest.config.ts / vitest.setup.ts
