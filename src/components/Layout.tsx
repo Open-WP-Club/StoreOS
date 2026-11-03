@@ -1,3 +1,4 @@
+import { isStockAtOrBelow } from '../utils/stock';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -151,7 +152,7 @@ function Layout(): React.ReactElement {
             products.filter(
               (p) =>
                 p.stock_quantity !== null &&
-                p.stock_quantity <= lowStockThreshold &&
+                isStockAtOrBelow(p.stock_quantity, lowStockThreshold) &&
                 p.stock_quantity > 0
             ).length + products.filter((p) => p.stock_status === 'outofstock').length;
 

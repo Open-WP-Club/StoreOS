@@ -1,3 +1,4 @@
+import { isStockAtOrBelow } from './stock';
 /**
  * KPI Calculator Engine
  *
@@ -293,7 +294,9 @@ export function calculateInventoryKPIs(
   const currentLowStock =
     products.filter(
       (p) =>
-        p.stock_quantity !== null && p.stock_quantity > 0 && p.stock_quantity <= lowStockThreshold
+        p.stock_quantity !== null &&
+        p.stock_quantity > 0 &&
+        isStockAtOrBelow(p.stock_quantity, lowStockThreshold)
     ).length + products.filter((p) => p.stock_status === 'outofstock').length;
 
   // Inventory doesn't have a previous period value (it's a snapshot), so set previous = current

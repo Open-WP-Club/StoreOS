@@ -1,5 +1,6 @@
 import { memo, useState, useEffect } from 'react';
 import { Printer, RefreshCw } from 'lucide-react';
+import NumberInput from '../NumberInput';
 import { t } from '../../utils/i18n';
 import type { Language } from '../../utils/i18n';
 
@@ -9,6 +10,8 @@ interface SettingsPrinterProps {
   setDefaultPrinter: (p: string | null) => void;
   autoPrintReceipt: boolean;
   setAutoPrintReceipt: (v: boolean) => void;
+  receiptVatRate: number;
+  setReceiptVatRate: (v: number) => void;
   openCashDrawer: boolean;
   setOpenCashDrawer: (v: boolean) => void;
 }
@@ -19,6 +22,8 @@ const SettingsPrinter = memo(function SettingsPrinter({
   setDefaultPrinter,
   autoPrintReceipt,
   setAutoPrintReceipt,
+  receiptVatRate,
+  setReceiptVatRate,
   openCashDrawer,
   setOpenCashDrawer,
 }: SettingsPrinterProps) {
@@ -90,6 +95,19 @@ const SettingsPrinter = memo(function SettingsPrinter({
           {language === 'bg'
             ? 'Автоматичен печат на бележка (80мм) при продажба'
             : 'Auto-print 80mm receipt on POS checkout'}
+        </label>
+        <label className="flex items-center gap-3">
+          <NumberInput
+            min={0}
+            max={100}
+            fallback={20}
+            value={receiptVatRate}
+            onValueChange={setReceiptVatRate}
+            className="w-20 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white text-center"
+          />
+          {language === 'bg'
+            ? 'ДДС % в бележката (включен в цените; 0 скрива реда)'
+            : 'Receipt VAT % (included in prices; 0 hides the line)'}
         </label>
         <label className="flex items-center gap-3">
           <input

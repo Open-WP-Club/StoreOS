@@ -47,6 +47,7 @@ describe('BulkGenerateCouponsModal', () => {
   ])('clamps count input %j to %i', (raw, expected) => {
     renderModal();
     type(/number of coupons/i, raw);
+    fireEvent.blur(screen.getByLabelText(/number of coupons/i));
     // '' and '0' leave the previous value / 1; assert the button reflects the clamped count
     expect(generateBtn()).toHaveTextContent(`Generate ${expected} Coupons`);
   });

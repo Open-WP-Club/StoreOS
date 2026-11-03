@@ -1,3 +1,4 @@
+import { isStockAtOrBelow } from './stock';
 import type { Order, Product } from '../types';
 
 export const UNASSIGNED_SUPPLIER = 'Unassigned';
@@ -75,7 +76,7 @@ export function buildReorderReport(
     const sold30d = sold.get(p.id) ?? 0;
     const dailyVelocity = sold30d / VELOCITY_WINDOW_DAYS;
     const daysLeft = dailyVelocity > 0 ? Math.round((stock / dailyVelocity) * 10) / 10 : null;
-    const low = stock <= opts.lowStockThreshold;
+    const low = isStockAtOrBelow(stock, opts.lowStockThreshold);
     const fast = daysLeft !== null && daysLeft < targetDays;
     if (!low && !fast) continue;
     rows.push({

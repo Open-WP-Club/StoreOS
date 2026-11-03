@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { Bell, Volume2, Trash2 } from 'lucide-react';
+import NumberInput from '../NumberInput';
 import type { Language } from '../../utils/i18n';
 
 interface SettingsNotificationsProps {
@@ -118,16 +119,16 @@ const SettingsNotifications = memo(function SettingsNotifications({
               {language === 'bg' ? 'Праг за нисък запас' : 'Low stock threshold'}
               <span className="block text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                 {language === 'bg'
-                  ? 'Продукти с наличност под тази стойност се маркират като "нисък запас"'
-                  : 'Products with stock below this value are flagged as low stock'}
+                  ? 'Продукти с наличност на или под тази стойност се маркират като "нисък запас"'
+                  : 'Products with stock at or below this value are flagged as low stock'}
               </span>
             </label>
-            <input
-              type="number"
+            <NumberInput
               min={1}
               max={100}
+              fallback={5}
               value={lowStockThreshold}
-              onChange={(e) => setLowStockThreshold(parseInt(e.target.value) || 5)}
+              onValueChange={setLowStockThreshold}
               className="w-20 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white text-center"
             />
             <span className="text-sm text-gray-500 dark:text-gray-400 shrink-0">
@@ -143,12 +144,12 @@ const SettingsNotifications = memo(function SettingsNotifications({
                   : 'Orders within this period are shown as recent in the dashboard'}
               </span>
             </label>
-            <input
-              type="number"
+            <NumberInput
               min={1}
               max={90}
+              fallback={7}
               value={orderSplitDays}
-              onChange={(e) => setOrderSplitDays(parseInt(e.target.value) || 7)}
+              onValueChange={setOrderSplitDays}
               className="w-20 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white text-center"
             />
             <span className="text-sm text-gray-500 dark:text-gray-400 shrink-0">

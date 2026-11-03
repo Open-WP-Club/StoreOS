@@ -159,6 +159,7 @@ export function usePOSCheckout(
           tendered: paymentMethod === 'cash' ? amountTendered : undefined,
           change: getChange(),
           orderId,
+          vatRate: app.receiptVatRate,
         });
         void printReceipt(receipt, {
           printer: app.defaultPrinter,

@@ -1,3 +1,4 @@
+import { isStockAtOrBelow } from './stock';
 import { calculateRevenueKPIs, filterOrdersByPeriod } from './kpiCalculator';
 import type { Order, Product } from '../types';
 
@@ -10,6 +11,20 @@ export interface StoreComparisonRow {
   lowStock: number;
   /** Set when the store failed to load; metrics are then excluded from the total. */
   error: string | null;
+  currency: string;
+  symbol: string;
+  /** Orders that count toward revenue/AOV (internal, for weighted combined AOV). */
+  revenueOrders: number;
+}
+
+/** Totals for stores sharing one currency; currencies are never summed together. */
+export interface CurrencyTotal {
+  currency: string;
+  symbol: string;
+  revenue: number;
+  orders: number;
+  aov: number;
+  lowStock: number;
 }
 
 export interface StoreComparisonInput {
@@ -18,6 +33,8 @@ export interface StoreComparisonInput {
   orders: Order[];
   products: Product[];
   error: string | null;
+  currency?: string;
+  symbol?: string;
 }
 
 /** Revenue/orders/AOV for the last `days` days (KPI rules: refunded/failed/cancelled excluded). */
@@ -25,59 +42,58 @@ export function compareStores(
   inputs: StoreComparisonInput[],
   days: number,
   lowStockThreshold: number
-): { rows: StoreComparisonRow[]; total: Omit<StoreComparisonRow, 'storeId' | 'name' | 'error'> } {
+): { rows: StoreComparisonRow[]; totals: CurrencyTotal[] } {
   const rows = inputs.map((s): StoreComparisonRow => {
+    const base = {
+      storeId: s.storeId,
+      name: s.name,
+      currency: s.currency ?? '',
+      symbol: s.symbol ?? '',
+    };
     if (s.error) {
       return {
-        storeId: s.storeId,
-        name: s.name,
+        ...base,
         revenue: 0,
         orders: 0,
         aov: 0,
         lowStock: 0,
+        revenueOrders: 0,
         error: s.error,
       };
     }
     const { current } = filterOrdersByPeriod(s.orders, days);
     const kpis = calculateRevenueKPIs({ current, previous: [] });
-    const lowStock = s.products.filter(
-      (p) =>
-        p.stock_quantity !== null &&
-        p.stock_quantity !== undefined &&
-        p.stock_quantity <= lowStockThreshold
-    ).length;
     return {
-      storeId: s.storeId,
-      name: s.name,
+      ...base,
       revenue: kpis.totalRevenue.current,
       orders: current.length,
       aov: kpis.averageOrderValue.current,
-      lowStock,
+      lowStock: s.products.filter((p) => isStockAtOrBelow(p.stock_quantity, lowStockThreshold))
+        .length,
+      revenueOrders: current.filter(
+        (o) => !['refunded', 'failed', 'cancelled', 'trash', 'checkout-draft'].includes(o.status)
+      ).length,
       error: null,
     };
   });
 
-  // Combined AOV = combined revenue / combined revenue-orders, not an average of averages.
-  const ok = rows.filter((r) => !r.error);
-  const revenue = ok.reduce((a, r) => a + r.revenue, 0);
-  const orders = ok.reduce((a, r) => a + r.orders, 0);
-  const revenueOrders = inputs
-    .filter((s) => !s.error)
-    .reduce(
-      (a, s) =>
-        a +
-        filterOrdersByPeriod(s.orders, days).current.filter(
-          (o) => !['refunded', 'failed', 'cancelled', 'trash', 'checkout-draft'].includes(o.status)
-        ).length,
-      0
-    );
-  return {
-    rows,
-    total: {
+  // One combined row per currency; combined AOV = revenue / revenue-orders, not an average of averages.
+  const groups = new Map<string, StoreComparisonRow[]>();
+  for (const r of rows) {
+    if (r.error) continue;
+    groups.set(r.currency, [...(groups.get(r.currency) ?? []), r]);
+  }
+  const totals = [...groups.entries()].map(([currency, rs]): CurrencyTotal => {
+    const revenue = rs.reduce((a, r) => a + r.revenue, 0);
+    const revenueOrders = rs.reduce((a, r) => a + r.revenueOrders, 0);
+    return {
+      currency,
+      symbol: rs[0]?.symbol ?? '',
       revenue,
-      orders,
+      orders: rs.reduce((a, r) => a + r.orders, 0),
       aov: revenueOrders > 0 ? revenue / revenueOrders : 0,
-      lowStock: ok.reduce((a, r) => a + r.lowStock, 0),
-    },
-  };
+      lowStock: rs.reduce((a, r) => a + r.lowStock, 0),
+    };
+  });
+  return { rows, totals };
 }

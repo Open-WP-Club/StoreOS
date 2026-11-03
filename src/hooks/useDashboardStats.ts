@@ -1,3 +1,4 @@
+import { isStockAtOrBelow } from '../utils/stock';
 import { useState } from 'react';
 import { getCurrencyCode } from '../utils/currency';
 import useSettings from '../stores/settingsStore';
@@ -182,7 +183,7 @@ export function useDashboardStats(): UseDashboardStatsReturn {
     setInventoryValue(totalInventoryValue);
 
     const lowStockProducts = productsData.filter(
-      (p) => p.stock_quantity !== null && p.stock_quantity <= lowStockThreshold
+      (p) => p.stock_quantity !== null && isStockAtOrBelow(p.stock_quantity, lowStockThreshold)
     );
 
     setStats({

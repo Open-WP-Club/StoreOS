@@ -1,3 +1,4 @@
+import { isStockAtOrBelow } from '../utils/stock';
 import React, { useState, useDeferredValue, ChangeEvent, KeyboardEvent } from 'react';
 import { useStoreConfig, useCache, useActivityLog, useSettings } from '../stores';
 import WooCommerceService from '../services/woocommerce';
@@ -150,7 +151,7 @@ const InventoryPage: React.FC = (): React.ReactElement => {
         (p) =>
           p.stock_quantity !== null &&
           p.stock_quantity !== undefined &&
-          p.stock_quantity <= lowStockThreshold
+          isStockAtOrBelow(p.stock_quantity, lowStockThreshold)
       );
     } else if (filter === 'out') {
       filtered = filtered.filter((p) => p.stock_status === 'outofstock');
@@ -420,7 +421,7 @@ const InventoryPage: React.FC = (): React.ReactElement => {
       (p) =>
         p.stock_quantity !== null &&
         p.stock_quantity !== undefined &&
-        p.stock_quantity <= lowStockThreshold &&
+        isStockAtOrBelow(p.stock_quantity, lowStockThreshold) &&
         p.stock_quantity > 0
     ).length,
     outOfStock: products.filter((p) => p.stock_status === 'outofstock').length,
@@ -593,7 +594,7 @@ const InventoryPage: React.FC = (): React.ReactElement => {
                     const isLowStock =
                       product.stock_quantity !== null &&
                       product.stock_quantity !== undefined &&
-                      product.stock_quantity <= lowStockThreshold &&
+                      isStockAtOrBelow(product.stock_quantity, lowStockThreshold) &&
                       product.stock_quantity > 0;
                     const isOutOfStock = product.stock_status === 'outofstock';
 

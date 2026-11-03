@@ -48,6 +48,8 @@ describe('SettingsNotifications', () => {
     expect(p.setOrderSplitDays).toHaveBeenCalledWith(30);
     fireEvent.change(low!, { target: { value: '' } });
     fireEvent.change(days!, { target: { value: '' } });
+    fireEvent.blur(low!);
+    fireEvent.blur(days!);
     expect(p.setLowStockThreshold).toHaveBeenLastCalledWith(5);
     expect(p.setOrderSplitDays).toHaveBeenLastCalledWith(7);
   });

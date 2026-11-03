@@ -22,6 +22,7 @@ export interface AppSettingsState {
   // Printer
   defaultPrinter: string | null;
   autoPrintReceipt: boolean; // POS: print on checkout
+  receiptVatRate: number; // Receipt: VAT % included in prices; 0 hides the VAT line
   openCashDrawer: boolean; // POS: ESC/POS kick with the receipt (needs a named printer)
 
   // PIN Lock
@@ -45,6 +46,7 @@ export interface AppSettingsActions {
   // Printer
   setDefaultPrinter: (printer: string | null) => void;
   setAutoPrintReceipt: (v: boolean) => void;
+  setReceiptVatRate: (v: number) => void;
   setOpenCashDrawer: (v: boolean) => void;
 
   // PIN Lock
@@ -97,6 +99,7 @@ const useAppSettings = create<AppSettingsStore>()(
       language: 'bg',
       defaultPrinter: null,
       autoPrintReceipt: false,
+      receiptVatRate: 20,
       openCashDrawer: false,
       pinEnabled: false,
       pinCode: null,
@@ -135,6 +138,7 @@ const useAppSettings = create<AppSettingsStore>()(
         set({ defaultPrinter: printer });
       },
       setAutoPrintReceipt: (v: boolean) => set({ autoPrintReceipt: v }),
+      setReceiptVatRate: (v: number) => set({ receiptVatRate: v }),
       setOpenCashDrawer: (v: boolean) => set({ openCashDrawer: v }),
 
       // PIN Lock
@@ -216,6 +220,7 @@ const useAppSettings = create<AppSettingsStore>()(
           language: 'bg',
           defaultPrinter: null,
           autoPrintReceipt: false,
+          receiptVatRate: 20,
           openCashDrawer: false,
           pinEnabled: false,
           pinCode: null,
@@ -235,6 +240,7 @@ const useAppSettings = create<AppSettingsStore>()(
         language: state.language,
         defaultPrinter: state.defaultPrinter,
         autoPrintReceipt: state.autoPrintReceipt,
+        receiptVatRate: state.receiptVatRate,
         openCashDrawer: state.openCashDrawer,
         pinEnabled: state.pinEnabled,
         pinCode: state.pinCode,

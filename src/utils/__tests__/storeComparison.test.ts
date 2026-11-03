@@ -16,6 +16,7 @@ describe('compareStores', () => {
     error: null,
   };
   const b = { storeId: 'b', name: 'B', orders: [order('30')], products: [product(0)], error: null };
+  const eur = { ...b, storeId: 'c', name: 'C', currency: 'EUR', symbol: '€' };
 
   it('computes per-store revenue, orders, AOV, low stock for the period', () => {
     const { rows } = compareStores([a, b], 30, 5);
@@ -24,18 +25,27 @@ describe('compareStores', () => {
   });
 
   it('combined AOV is weighted, not an average of averages', () => {
-    const { total } = compareStores([a, b], 30, 5);
-    expect(total).toMatchObject({ revenue: 180, orders: 4, lowStock: 2 });
-    expect(total.aov).toBe(60);
+    const { totals } = compareStores([a, b], 30, 5);
+    expect(totals).toHaveLength(1);
+    expect(totals[0]).toMatchObject({ revenue: 180, orders: 4, lowStock: 2 });
+    expect(totals[0]?.aov).toBe(60);
+  });
+
+  it('never sums different currencies', () => {
+    const { totals } = compareStores([{ ...a, currency: 'USD', symbol: '$' }, eur], 30, 5);
+    expect(totals.map((t) => [t.currency, t.revenue])).toEqual([
+      ['USD', 150],
+      ['EUR', 30],
+    ]);
   });
 
   it('excludes errored stores from the total', () => {
-    const { rows, total } = compareStores([a, { ...b, error: 'boom' }], 30, 5);
+    const { rows, totals } = compareStores([a, { ...b, error: 'boom' }], 30, 5);
     expect(rows[1]?.error).toBe('boom');
-    expect(total.revenue).toBe(150);
+    expect(totals[0]?.revenue).toBe(150);
   });
 
   it('handles no orders', () => {
-    expect(compareStores([], 7, 5).total).toEqual({ revenue: 0, orders: 0, aov: 0, lowStock: 0 });
+    expect(compareStores([], 7, 5).totals).toEqual([]);
   });
 });
