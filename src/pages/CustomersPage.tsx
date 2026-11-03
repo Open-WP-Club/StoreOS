@@ -23,7 +23,15 @@ import LoadingIndicator from '../components/LoadingIndicator';
 import { useToast } from '../hooks/useToast';
 import { useProgressiveLoading } from '../hooks/useProgressiveLoading';
 import { RefreshCw, Search, Mail, Phone, ShoppingBag, DollarSign, User, X } from 'lucide-react';
-import type { Customer, WooCommerceOrder } from '../types';
+import { ColumnsMenu, SortableTh } from '../components/ListViewControls';
+import {
+  CUSTOMER_COLUMNS,
+  CUSTOMER_SORT,
+  normalizeHidden,
+  normalizeSort,
+  sortItems,
+} from '../utils/listView';
+import type { Customer, FilterPreset, SortState, WooCommerceOrder } from '../types';
 import { EMPTY_CUSTOMERS } from '../constants';
 import StatCard from '../components/StatCard';
 import PageHeader from '../components/PageHeader';
@@ -37,6 +45,14 @@ interface CustomerStats {
 }
 
 const NOT_SYNCED = Symbol('not-synced');
+
+function Th({ children }: { children: React.ReactNode }): React.ReactElement {
+  return (
+    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+      {children}
+    </th>
+  );
+}
 
 function CustomersPage(): React.ReactElement {
   const navigate = useNavigate();
@@ -58,13 +74,26 @@ function CustomersPage(): React.ReactElement {
   const [customerOrders, setCustomerOrders] = useState<WooCommerceOrder[]>([]);
   const [loadingOrders, setLoadingOrders] = useState<boolean>(false);
 
+  const [sort, setSort] = useState<SortState | null>(null);
+  const [hiddenColumns, setHiddenColumns] = useState<string[]>([]);
+  const show = (k: string): boolean => !hiddenColumns.includes(k);
+  const visibleCols = 2 + CUSTOMER_COLUMNS.filter((c) => show(c.key)).length;
+
   const { loadingState } = useProgressiveLoading();
 
-  useApplySavedView((preset) => {
+  const applyView = useCallback((preset: FilterPreset): void => {
     setSearchTerm(preset.search ?? '');
     if (preset.pageSize) setPageSize(preset.pageSize);
+    setSort(normalizeSort(preset.sort, Object.keys(CUSTOMER_SORT)));
+    setHiddenColumns(
+      normalizeHidden(
+        preset.hiddenColumns,
+        CUSTOMER_COLUMNS.map((c) => c.key)
+      )
+    );
     setCurrentPage(1);
-  });
+  }, []);
+  useApplySavedView(applyView);
 
   // Load customers from cache or API
   useEffect(() => {
@@ -140,11 +169,16 @@ function CustomersPage(): React.ReactElement {
     );
   }, [customers, deferredSearch]);
 
+  const sortedCustomers = useMemo(
+    () => sortItems(searchedCustomers, sort, CUSTOMER_SORT),
+    [searchedCustomers, sort]
+  );
+
   // Pagination
   const paginatedCustomers = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
-    return searchedCustomers.slice(startIndex, startIndex + pageSize);
-  }, [searchedCustomers, currentPage, pageSize]);
+    return sortedCustomers.slice(startIndex, startIndex + pageSize);
+  }, [sortedCustomers, currentPage, pageSize]);
   const {
     scrollContainer,
     enabled: virtualized,
@@ -313,13 +347,18 @@ function CustomersPage(): React.ReactElement {
             currentFilters={{}}
             currentSearch={searchTerm}
             currentPageSize={pageSize}
+            currentSort={sort}
+            currentHiddenColumns={hiddenColumns}
             onApplyPreset={(_f, preset) => {
-              setSearchTerm(preset.search ?? '');
+              applyView(preset);
               setSearchParams(preset.search ? { search: preset.search } : {});
-              if (preset.pageSize) setPageSize(preset.pageSize);
-              setCurrentPage(1);
             }}
             onSaveSuccess={(preset) => showToast(`View "${preset.name}" saved`, 'success')}
+          />
+          <ColumnsMenu
+            columns={CUSTOMER_COLUMNS}
+            hidden={hiddenColumns}
+            onChange={setHiddenColumns}
           />
           <ExportMenu onExportCSV={handleExportCSV} onExportPDF={handleExportPDF} />
           <button
@@ -360,27 +399,24 @@ function CustomersPage(): React.ReactElement {
                 className={`bg-gray-50 dark:bg-gray-700${virtualized ? ' sticky top-0 z-10' : ''}`}
               >
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Customer
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Phone
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Orders
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Total Spent
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Registered
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <SortableTh label="Customer" sortKey="name" sort={sort} onSort={setSort} />
+                  {show('email') && <Th>Email</Th>}
+                  {show('phone') && <Th>Phone</Th>}
+                  {show('orders') && (
+                    <SortableTh label="Orders" sortKey="orders" sort={sort} onSort={setSort} />
+                  )}
+                  {show('spent') && (
+                    <SortableTh label="Total Spent" sortKey="spent" sort={sort} onSort={setSort} />
+                  )}
+                  {show('registered') && (
+                    <SortableTh
+                      label="Registered"
+                      sortKey="registered"
+                      sort={sort}
+                      onSort={setSort}
+                    />
+                  )}
+                  <Th>Actions</Th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -392,7 +428,7 @@ function CustomersPage(): React.ReactElement {
                 {paginatedCustomers.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={7}
+                      colSpan={visibleCols}
                       className="px-6 py-8 text-center text-gray-500 dark:text-gray-400"
                     >
                       No customers found
@@ -430,39 +466,49 @@ function CustomersPage(): React.ReactElement {
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        <a
-                          href={`mailto:${customer.email}`}
-                          className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Mail className="w-4 h-4" />
-                          {customer.email}
-                        </a>
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {customer.billing?.phone ? (
+                      {show('email') && (
+                        <td className="px-4 py-4 whitespace-nowrap">
                           <a
-                            href={`tel:${customer.billing.phone}`}
-                            className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-300"
+                            href={`mailto:${customer.email}`}
+                            className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <Phone className="w-4 h-4" />
-                            {customer.billing.phone}
+                            <Mail className="w-4 h-4" />
+                            {customer.email}
                           </a>
-                        ) : (
-                          'N/A'
-                        )}
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {customer.orders_count || 0}
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                        {formatPrice(customer.total_spent || '0')}
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {new Date(customer.date_created).toLocaleDateString()}
-                      </td>
+                        </td>
+                      )}
+                      {show('phone') && (
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {customer.billing?.phone ? (
+                            <a
+                              href={`tel:${customer.billing.phone}`}
+                              className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-300"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Phone className="w-4 h-4" />
+                              {customer.billing.phone}
+                            </a>
+                          ) : (
+                            'N/A'
+                          )}
+                        </td>
+                      )}
+                      {show('orders') && (
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                          {customer.orders_count || 0}
+                        </td>
+                      )}
+                      {show('spent') && (
+                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                          {formatPrice(customer.total_spent || '0')}
+                        </td>
+                      )}
+                      {show('registered') && (
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {new Date(customer.date_created).toLocaleDateString()}
+                        </td>
+                      )}
                       <td className="px-4 py-4 whitespace-nowrap text-sm">
                         <button
                           onClick={(e) => {

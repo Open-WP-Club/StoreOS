@@ -1,4 +1,4 @@
-import type { Order, Product, SortState } from '../types';
+import type { Customer, Order, Product, SortState } from '../types';
 
 /** Optional (hideable) columns per list. Identity columns (id/name/actions) are always shown. */
 export const ORDER_COLUMNS = [
@@ -13,6 +13,13 @@ export const PRODUCT_COLUMNS = [
   { key: 'stockStatus', label: 'Stock Status' },
   { key: 'stockQty', label: 'Stock Qty' },
 ] as const;
+export const CUSTOMER_COLUMNS = [
+  { key: 'email', label: 'Email' },
+  { key: 'phone', label: 'Phone' },
+  { key: 'orders', label: 'Orders' },
+  { key: 'spent', label: 'Total Spent' },
+  { key: 'registered', label: 'Registered' },
+] as const;
 
 type Getter<T> = (item: T) => string | number;
 
@@ -25,6 +32,12 @@ export const PRODUCT_SORT: Record<string, Getter<Product>> = {
   name: (p) => p.name.toLowerCase(),
   price: (p) => parseFloat(p.price) || 0,
   stock: (p) => (p.manage_stock ? (p.stock_quantity ?? 0) : -1),
+};
+export const CUSTOMER_SORT: Record<string, Getter<Customer>> = {
+  name: (c) => `${c.first_name} ${c.last_name}`.trim().toLowerCase(),
+  orders: (c) => c.orders_count || 0,
+  spent: (c) => parseFloat(c.total_spent || '0') || 0,
+  registered: (c) => Date.parse(c.date_created) || 0,
 };
 
 /** none -> asc -> desc -> none */
