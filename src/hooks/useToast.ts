@@ -9,7 +9,7 @@ export interface ToastAction {
 /**
  * Toast notification object
  */
-export interface ToastNotification {
+interface ToastNotification {
   id: string;
   message: string;
   type: ToastType;

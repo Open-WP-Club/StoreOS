@@ -1,14 +1,14 @@
 import { isStockAtOrBelow } from './stock';
 import type { Order, Product } from '../types';
 
-export const UNASSIGNED_SUPPLIER = 'Unassigned';
+const UNASSIGNED_SUPPLIER = 'Unassigned';
 export const DEFAULT_TARGET_DAYS = 30;
-export const VELOCITY_WINDOW_DAYS = 30;
+const VELOCITY_WINDOW_DAYS = 30;
 const SUPPLIER_KEYS = ['supplier', '_supplier', 'supplier_name', '_supplier_name'];
 // Orders that represent real demand (cancelled/refunded/failed/pending/trash excluded).
 const COUNTED_STATUSES = new Set(['processing', 'completed', 'on-hold']);
 
-export interface ReorderRow {
+interface ReorderRow {
   id: number;
   name: string;
   sku: string;

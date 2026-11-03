@@ -21,7 +21,7 @@ export interface SearchOptions {
   minScore?: number;
 }
 
-export interface SearchResult extends Record<string, unknown> {
+interface SearchResult extends Record<string, unknown> {
   _searchScore: number;
   _matchedField: string | null;
 }
@@ -48,11 +48,7 @@ export type {
  * OPTIMIZED: Uses single-row DP and early termination
  * Returns Infinity if distance exceeds maxDistance (for performance)
  */
-export function boundedLevenshteinDistance(
-  str1: string,
-  str2: string,
-  maxDistance: number
-): number {
+function boundedLevenshteinDistance(str1: string, str2: string, maxDistance: number): number {
   let s1 = str1;
   let s2 = str2;
 

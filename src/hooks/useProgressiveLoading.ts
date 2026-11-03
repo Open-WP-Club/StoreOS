@@ -14,7 +14,7 @@ export interface LoadingState {
 /**
  * Return type for useProgressiveLoading hook
  */
-export interface UseProgressiveLoadingReturn {
+interface UseProgressiveLoadingReturn {
   loadingState: LoadingState;
   startLoading: (dataType: 'orders' | 'products', total?: number) => void;
   updateProgress: (loaded: number, total: number) => void;

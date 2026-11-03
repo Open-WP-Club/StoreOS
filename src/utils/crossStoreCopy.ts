@@ -14,7 +14,7 @@ import type {
 
 export type CollisionMode = 'skip' | 'update';
 
-export const COPY_CHUNK_SIZE = 25;
+const COPY_CHUNK_SIZE = 25;
 
 export const norm = (s: string | undefined | null): string => (s ?? '').trim().toLowerCase();
 
@@ -25,7 +25,7 @@ export function chunk<T>(arr: T[], size = COPY_CHUNK_SIZE): T[][] {
 }
 
 /** Target-side lookup tables used to remap source references. */
-export interface TargetContext {
+interface TargetContext {
   /** category slug (lowercase) -> target id */
   categoryIdBySlug: Map<string, number>;
   /** global attribute name (lowercase) -> target attribute id */
@@ -55,7 +55,7 @@ export function buildTargetContext(input: {
   return ctx;
 }
 
-export interface ProductPayloadResult {
+interface ProductPayloadResult {
   payload: ProductUpdateData;
   warnings: string[];
 }
@@ -168,7 +168,7 @@ export function buildVariationPayload(v: ProductVariation): VariationCreateData 
   } as VariationCreateData;
 }
 
-export interface PlannedCategory {
+interface PlannedCategory {
   srcId: number;
   /** source id of the parent that is also being created (undefined: top-level or existing parent) */
   parentSrcId?: number;
@@ -179,7 +179,7 @@ export interface PlannedCategory {
   depth: number;
 }
 
-export interface CategoryPlan {
+interface CategoryPlan {
   /** Categories to create, parents always before children. */
   toCreate: PlannedCategory[];
   /** source category id -> target id for categories that already exist in the target */
@@ -284,7 +284,7 @@ export async function fetchAllCategories(
  * target id in ctx.categoryIdBySlug for payload remapping. Failures become warnings; children
  * of a failed parent are not created.
  */
-export async function applyCategoryPlan(
+async function applyCategoryPlan(
   plan: CategoryPlan,
   sourceCats: CatLike[],
   target: WooCommerceService,
@@ -489,7 +489,7 @@ export async function runBatches<P>(
   }
 }
 
-export interface ProductCopyOptions {
+interface ProductCopyOptions {
   source: WooCommerceService;
   target: WooCommerceService;
   products: Product[];
@@ -639,7 +639,7 @@ export async function executeProductCopy(opts: ProductCopyOptions): Promise<Copy
   return result;
 }
 
-export interface CouponCopyOptions {
+interface CouponCopyOptions {
   source: WooCommerceService;
   target: WooCommerceService;
   coupons: WooCommerceCoupon[];

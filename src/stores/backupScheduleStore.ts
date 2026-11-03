@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export interface BackupScheduleState {
+interface BackupScheduleState {
   enabled: boolean;
   frequency: 'daily' | 'weekly';
   time: string; // HH:MM

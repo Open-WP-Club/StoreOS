@@ -2,7 +2,7 @@ import type { WooCommerceMetaData } from '../types';
 
 export const TRACKING_META_KEY = '_storeos_tracking';
 /** wc-shipment-tracking plugin meta shape */
-export const WC_SHIPMENT_TRACKING_KEY = '_wc_shipment_tracking_items';
+const WC_SHIPMENT_TRACKING_KEY = '_wc_shipment_tracking_items';
 
 type MetaWrite = { id?: number; key: string; value: WooCommerceMetaData['value'] };
 

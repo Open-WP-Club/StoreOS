@@ -11,7 +11,7 @@ const num = (v: string | number | undefined): number => {
   return Number.isFinite(n) ? n : 0;
 };
 
-export interface RefundableItem {
+interface RefundableItem {
   item: OrderLineItem;
   remainingQty: number;
   remainingTotal: number;
@@ -64,7 +64,7 @@ export function defaultRefundAmount(row: RefundableItem, quantity: number): numb
   return share(row.remainingTotal, quantity, row.remainingQty);
 }
 
-export type RefundBuildResult =
+type RefundBuildResult =
   { ok: true; request: CreateRefundRequest; total: number } | { ok: false; error: string };
 
 /** Validate selections against remaining refundable amounts and build the API payload. */

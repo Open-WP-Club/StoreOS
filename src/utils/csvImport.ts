@@ -4,7 +4,7 @@
  */
 import type { Product } from '../types';
 
-export type ImportField =
+type ImportField =
   'sku' | 'name' | 'regular_price' | 'sale_price' | 'stock_quantity' | 'stock_status' | 'status';
 
 export const IMPORT_FIELDS: { field: ImportField; label: string; aliases: string[] }[] = [
@@ -74,13 +74,13 @@ export function autoMapHeaders(headers: string[]): ColumnMapping {
 
 export type ImportAction = 'create' | 'update' | 'unchanged' | 'invalid';
 
-export interface FieldChange {
+interface FieldChange {
   field: ImportField;
   from: string;
   to: string;
 }
 
-export interface ImportRow {
+interface ImportRow {
   /** 1-based line number in the file (header = 1) */
   line: number;
   sku: string;

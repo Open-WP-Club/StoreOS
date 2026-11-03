@@ -24,7 +24,7 @@ export interface PaginatedFetchOptions {
   cancelCheck?: () => boolean;
 }
 
-export interface WooCommerceApiError {
+interface WooCommerceApiError {
   code?: string;
   response?: {
     status?: number;
@@ -36,7 +36,7 @@ export interface WooCommerceApiError {
   message?: string;
 }
 
-export interface WooCommerceRestApiInstance {
+interface WooCommerceRestApiInstance {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   get: (endpoint: string, params?: any) => Promise<any>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

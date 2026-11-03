@@ -136,7 +136,7 @@ interface UseCouponFormOptions {
   }) => void;
 }
 
-export interface UseCouponFormReturn {
+interface UseCouponFormReturn {
   formData: CouponFormData;
   formErrors: CouponFormErrors;
   saving: boolean;

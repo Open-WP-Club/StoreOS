@@ -8,7 +8,7 @@ export interface CartItem {
   price: number; // Actual price (sale or regular)
 }
 
-export interface POSState {
+interface POSState {
   // Cart
   cart: CartItem[];
 

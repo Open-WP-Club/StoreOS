@@ -2,7 +2,7 @@ import { useStoreConfig } from '../stores';
 import { exportToCSV, type CSVColumn } from '../utils/csvExport';
 import { exportReportToPDF, type PDFColumn, type ReportSummaryMetric } from '../utils/pdfExport';
 
-export interface ReportConfig<T extends Record<string, unknown>> {
+interface ReportConfig<T extends Record<string, unknown>> {
   reportName: string;
   filenamePrefix: string;
   summaryMetrics: ReportSummaryMetric[];

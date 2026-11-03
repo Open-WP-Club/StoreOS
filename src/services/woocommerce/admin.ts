@@ -3,7 +3,7 @@ import { type WooCommerceApiResponse } from './base';
 import { WooCommerceServiceTaxReviews } from './tax-reviews';
 
 // Loose shapes: these endpoints are consumed read-only by health/analytics views.
-export interface WooCommerceSalesReport {
+interface WooCommerceSalesReport {
   total_sales: string;
   net_sales: string;
   average_sales: string;
@@ -16,7 +16,7 @@ export interface WooCommerceSalesReport {
   totals_grouped_by: string;
   totals: Record<string, Record<string, unknown>>;
 }
-export interface WooCommerceTopSeller {
+interface WooCommerceTopSeller {
   title: string;
   product_id: number;
   quantity: number;
@@ -39,7 +39,7 @@ export interface WooCommerceWebhook {
   topic: string;
   delivery_url: string;
 }
-export interface WooCommerceSettingGroup {
+interface WooCommerceSettingGroup {
   id: string;
   label: string;
   description: string;

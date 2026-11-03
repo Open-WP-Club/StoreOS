@@ -19,7 +19,7 @@ export const SUPPORTED_LANGUAGES = ['bg', 'en'] as const;
 export type Language = (typeof SUPPORTED_LANGUAGES)[number];
 
 // Language metadata for UI display
-export interface LanguageInfo {
+interface LanguageInfo {
   code: Language;
   name: string; // Native name
   englishName: string;
@@ -52,7 +52,7 @@ export const LANGUAGE_INFO: Record<Language, LanguageInfo> = {
 // ============================================
 
 // Base translation keys - all languages must implement these
-export interface TranslationStrings {
+interface TranslationStrings {
   // Common
   save: string;
   cancel: string;
@@ -198,7 +198,7 @@ export interface TranslationStrings {
   invalidBackupFile: string;
 }
 
-export type TranslationKey = keyof TranslationStrings;
+type TranslationKey = keyof TranslationStrings;
 
 // ============================================
 // Translations

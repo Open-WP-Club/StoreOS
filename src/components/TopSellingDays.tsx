@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Calendar } from 'lucide-react';
 import type { WooCommerceOrder } from '../types';
 
-export interface DayData {
+interface DayData {
   date: string;
   revenue: number;
   orders: number;

@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 /**
  * Options for keyboard shortcut hook
  */
-export interface KeyboardShortcutOptions {
+interface KeyboardShortcutOptions {
   enabled?: boolean;
   preventDefault?: boolean;
 }
@@ -11,7 +11,7 @@ export interface KeyboardShortcutOptions {
 /**
  * Callback type for keyboard events
  */
-export type KeyboardCallback = (event: KeyboardEvent) => void;
+type KeyboardCallback = (event: KeyboardEvent) => void;
 
 /**
  * Hook to register keyboard shortcuts

@@ -12,7 +12,7 @@ export interface CSVColumn<T = unknown> {
   format?: (value: unknown, item: T) => string;
 }
 
-export interface ExportResult {
+interface ExportResult {
   success: boolean;
   message: string;
 }

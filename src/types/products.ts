@@ -1,11 +1,11 @@
 import type { WooCommerceMetaData } from './common';
 
-export type ProductStatus = 'draft' | 'pending' | 'private' | 'publish';
-export type ProductType = 'simple' | 'variable' | 'grouped' | 'external';
+type ProductStatus = 'draft' | 'pending' | 'private' | 'publish';
+type ProductType = 'simple' | 'variable' | 'grouped' | 'external';
 export type StockStatus = 'instock' | 'outofstock' | 'onbackorder';
 export type CatalogVisibility = 'visible' | 'catalog' | 'search' | 'hidden';
 export type TaxStatus = 'taxable' | 'shipping' | 'none';
-export type BackorderStatus = 'no' | 'notify' | 'yes';
+type BackorderStatus = 'no' | 'notify' | 'yes';
 
 export interface ProductCategory {
   id: number;
@@ -13,7 +13,7 @@ export interface ProductCategory {
   slug: string;
 }
 
-export interface ProductTag {
+interface ProductTag {
   id: number;
   name: string;
   slug: string;
@@ -36,7 +36,7 @@ export interface ProductDimensions {
   height: string;
 }
 
-export interface ProductDownload {
+interface ProductDownload {
   id: string;
   name: string;
   file: string;
@@ -51,7 +51,7 @@ export interface ProductAttribute {
   options: string[];
 }
 
-export interface ProductDefaultAttribute {
+interface ProductDefaultAttribute {
   id: number;
   name: string;
   option: string;

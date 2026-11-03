@@ -24,7 +24,7 @@ export interface PDFColumn<T = unknown> {
   width?: number;
 }
 
-export interface TablePDFOptions {
+interface TablePDFOptions {
   title?: string;
   filename?: string;
   orientation?: 'portrait' | 'landscape';
@@ -397,7 +397,7 @@ export interface ReportSummaryMetric {
   value: string;
 }
 
-export interface ReportPDFOptions {
+interface ReportPDFOptions {
   title?: string;
   storeName?: string;
   timeRange?: string;

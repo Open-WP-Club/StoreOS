@@ -2,7 +2,7 @@ import React, { ReactElement } from 'react';
 import { X, Check } from 'lucide-react';
 import Modal from './Modal';
 
-export interface NumpadProps {
+interface NumpadProps {
   value: string;
   onChange: (value: string) => void;
   onClose: () => void;

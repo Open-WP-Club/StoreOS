@@ -11,7 +11,7 @@ interface ColorStyle {
 }
 
 // Static color classes for Tailwind CSS (dynamic classes don't work with Tailwind's JIT)
-export const STAT_CARD_COLORS: Record<ColorKey, ColorStyle> = {
+const STAT_CARD_COLORS: Record<ColorKey, ColorStyle> = {
   blue: {
     icon: 'text-blue-600 dark:text-blue-400',
     value: 'text-blue-600 dark:text-blue-400',

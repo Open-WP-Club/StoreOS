@@ -15,44 +15,44 @@ import type { WooCommerceOrder, WooCommerceProduct } from '../types';
 
 export type KPIDirection = 'up' | 'down' | 'flat';
 
-export interface KPIValue {
+interface KPIValue {
   current: number;
   previous: number;
   changePercent: number;
   direction: KPIDirection;
 }
 
-export interface RevenueKPIs {
+interface RevenueKPIs {
   totalRevenue: KPIValue;
   averageOrderValue: KPIValue;
   revenueGrowthRate: number;
 }
 
-export interface CustomerKPIs {
+interface CustomerKPIs {
   repeatPurchaseRate: KPIValue;
   avgItemsPerOrder: KPIValue;
   customerLifetimeValue: KPIValue;
 }
 
-export interface OperationsKPIs {
+interface OperationsKPIs {
   refundRate: KPIValue;
   orderCompletionRate: KPIValue;
   avgProcessingTimeDays: KPIValue;
 }
 
-export interface InventoryKPIs {
+interface InventoryKPIs {
   stockTurnoverRate: KPIValue;
   inventoryValue: KPIValue;
   lowStockCount: KPIValue;
 }
 
-export interface ParetoProduct {
+interface ParetoProduct {
   name: string;
   revenue: number;
   percentage: number;
 }
 
-export interface ConcentrationKPIs {
+interface ConcentrationKPIs {
   top20RevenueShare: number;
   paretoProducts: ParetoProduct[];
 }

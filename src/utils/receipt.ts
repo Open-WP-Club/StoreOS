@@ -1,6 +1,6 @@
 import { formatPrice } from './currency';
 
-export interface ReceiptInput {
+interface ReceiptInput {
   storeName: string;
   items: Array<{ name: string; quantity: number; price: number }>;
   /** Discount amount (positive). */
