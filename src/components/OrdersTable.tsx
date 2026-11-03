@@ -1,8 +1,13 @@
 import React, { ChangeEvent } from 'react';
 import Pagination from './Pagination';
 import OrderTableRow from './OrderTableRow';
-import type { Order } from '../types';
+import { SortableTh } from './ListViewControls';
+import type { Order, SortState } from '../types';
 import { useVirtualRows } from '../hooks/useVirtualRows';
+
+const NO_HIDDEN: string[] = [];
+const TH =
+  'px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider';
 
 interface OrdersTableProps {
   paginatedOrders: Order[];
@@ -15,6 +20,9 @@ interface OrdersTableProps {
   pageSize: number;
   onPageChange: (page: number) => void;
   onPageSizeChange: (newPageSize: number) => void;
+  sort?: SortState | null;
+  onSort?: (s: SortState | null) => void;
+  hiddenColumns?: string[];
 }
 
 function OrdersTable({
@@ -28,6 +36,9 @@ function OrdersTable({
   pageSize,
   onPageChange,
   onPageSizeChange,
+  sort = null,
+  onSort,
+  hiddenColumns = NO_HIDDEN,
 }: OrdersTableProps): React.ReactElement {
   const {
     scrollContainer,
@@ -37,6 +48,13 @@ function OrdersTable({
     padBottom,
   } = useVirtualRows(paginatedOrders);
   const selectedSet = new Set(selectedOrderIds);
+  const show = (k: string): boolean => !hiddenColumns.includes(k);
+  const sortTh = (label: string, key: string): React.ReactElement =>
+    onSort ? (
+      <SortableTh label={label} sortKey={key} sort={sort} onSort={onSort} />
+    ) : (
+      <th className={TH}>{label}</th>
+    );
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-colors">
       <div
@@ -61,18 +79,10 @@ function OrdersTable({
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Order ID
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Customer
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Date
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Total
-              </th>
+              {show('customer') && <th className={TH}>Customer</th>}
+              {show('date') && sortTh('Date', 'date')}
+              {show('status') && sortTh('Status', 'status')}
+              {show('total') && sortTh('Total', 'total')}
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Actions
               </th>
@@ -86,7 +96,7 @@ function OrdersTable({
             )}
             {paginatedOrders.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                <td colSpan={99} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                   No orders found
                 </td>
               </tr>
@@ -98,6 +108,7 @@ function OrdersTable({
                   isSelected={selectedSet.has(order.id)}
                   onSelect={onSelectOrder}
                   onStatusChange={onStatusChange}
+                  hiddenColumns={hiddenColumns}
                 />
               ))
             )}

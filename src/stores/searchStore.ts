@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { SEARCH } from '../constants/config';
-import type { RecentSearch, FilterPreset } from '../types';
+import type { RecentSearch, FilterPreset, SortState } from '../types';
 
 // ============================================
 // Types
@@ -23,6 +23,8 @@ interface NewFilterPresetInput {
   filters?: Record<string, unknown>;
   search?: string;
   pageSize?: number;
+  sort?: SortState | null;
+  hiddenColumns?: string[];
   storeId?: string | null;
 }
 
@@ -146,7 +148,7 @@ const useSearch = create<SearchStore>()(
        * Add a new filter preset
        */
       addFilterPreset: (preset: NewFilterPresetInput): FilterPreset => {
-        const { name, type, filters, storeId, search, pageSize } = preset;
+        const { name, type, filters, storeId, search, pageSize, sort, hiddenColumns } = preset;
 
         const presetItem: FilterPreset = {
           id: crypto.randomUUID(),
@@ -155,6 +157,8 @@ const useSearch = create<SearchStore>()(
           filters: filters || {},
           ...(search ? { search } : {}),
           ...(pageSize ? { pageSize } : {}),
+          ...(sort ? { sort } : {}),
+          ...(hiddenColumns?.length ? { hiddenColumns } : {}),
           storeId: storeId || null,
           createdAt: new Date().toISOString(),
         };

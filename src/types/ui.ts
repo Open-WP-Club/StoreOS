@@ -17,6 +17,11 @@ export interface RecentSearch {
   timestamp: string;
 }
 
+export interface SortState {
+  key: string;
+  dir: 'asc' | 'desc';
+}
+
 export interface FilterPreset {
   id: string;
   name: string;
@@ -25,6 +30,9 @@ export interface FilterPreset {
   /** Saved-view extras (optional so legacy presets still load) */
   search?: string;
   pageSize?: number;
+  /** Orders/products lists only; missing => default sort / all columns shown */
+  sort?: SortState;
+  hiddenColumns?: string[];
   storeId: string | null;
   createdAt: string;
   updatedAt?: string;

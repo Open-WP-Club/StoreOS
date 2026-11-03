@@ -56,4 +56,20 @@ describe('saved views (search store)', () => {
         .map((p) => p.name)
     ).toEqual(['mine', 'global']);
   });
+
+  it('persists sort/hiddenColumns, omitting them when default', () => {
+    const v = useSearch.getState().addFilterPreset({
+      name: 'S',
+      type: 'orders',
+      sort: { key: 'total', dir: 'desc' },
+      hiddenColumns: ['customer'],
+    });
+    expect(v.sort).toEqual({ key: 'total', dir: 'desc' });
+    expect(v.hiddenColumns).toEqual(['customer']);
+    const d = useSearch
+      .getState()
+      .addFilterPreset({ name: 'D', type: 'orders', sort: null, hiddenColumns: [] });
+    expect(d).not.toHaveProperty('sort');
+    expect(d).not.toHaveProperty('hiddenColumns');
+  });
 });

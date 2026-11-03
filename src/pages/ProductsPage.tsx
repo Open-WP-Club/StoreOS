@@ -22,6 +22,7 @@ import { useProductExport } from '../hooks/useProductExport';
 import { Trash2, Edit, Copy, ImageOff } from 'lucide-react';
 import type { Product, StockStatus, BatchProductUpdate } from '../types';
 import Modal from '../components/Modal';
+import { SortableTh } from '../components/ListViewControls';
 import { useVirtualRows } from '../hooks/useVirtualRows';
 import { EMPTY_PRODUCTS } from '../constants';
 
@@ -59,6 +60,7 @@ function ProductsPage(): React.ReactElement {
   const exportHook = useProductExport();
   const [importOpen, setImportOpen] = React.useState(false);
   const [copyOpen, setCopyOpen] = React.useState(false);
+  const show = (k: string): boolean => !filtersHook.hiddenColumns.includes(k);
 
   if (!currentStore) {
     return (
@@ -113,6 +115,9 @@ function ProductsPage(): React.ReactElement {
         totalProductsCount={products.length}
         onClearAllFilters={filtersHook.clearAllFilters}
         pageSize={filtersHook.pageSize}
+        sort={filtersHook.sort}
+        hiddenColumns={filtersHook.hiddenColumns}
+        onHiddenColumnsChange={filtersHook.setHiddenColumns}
         onApplyPreset={(presetFilters, preset) =>
           filtersHook.handleApplyPreset(presetFilters, showToast, preset)
         }
@@ -163,21 +168,39 @@ function ProductsPage(): React.ReactElement {
                       className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                     />
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Product
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    SKU
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Price
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Stock Status
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-24">
-                    Stock Qty
-                  </th>
+                  <SortableTh
+                    label="Product"
+                    sortKey="name"
+                    sort={filtersHook.sort}
+                    onSort={filtersHook.setSort}
+                  />
+                  {show('sku') && (
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      SKU
+                    </th>
+                  )}
+                  {show('price') && (
+                    <SortableTh
+                      label="Price"
+                      sortKey="price"
+                      sort={filtersHook.sort}
+                      onSort={filtersHook.setSort}
+                    />
+                  )}
+                  {show('stockStatus') && (
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Stock Status
+                    </th>
+                  )}
+                  {show('stockQty') && (
+                    <SortableTh
+                      label="Stock Qty"
+                      sortKey="stock"
+                      sort={filtersHook.sort}
+                      onSort={filtersHook.setSort}
+                      className="w-24"
+                    />
+                  )}
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Actions
                   </th>
@@ -192,7 +215,7 @@ function ProductsPage(): React.ReactElement {
                 {filtersHook.paginatedProducts.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={7}
+                      colSpan={99}
                       className="px-6 py-8 text-center text-gray-500 dark:text-gray-400"
                     >
                       No products found
@@ -257,88 +280,100 @@ function ProductsPage(): React.ReactElement {
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {product.sku || 'N/A'}
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                          {actions.quickEditId === product.id ? (
-                            <div className="flex items-center space-x-2">
-                              <input
-                                type="number"
-                                step="0.01"
-                                value={actions.quickEditPrice}
-                                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                  actions.setQuickEditPrice(e.target.value)
-                                }
-                                onKeyPress={(e: KeyboardEvent<HTMLInputElement>) => {
-                                  if (e.key === 'Enter') {
-                                    actions.handleQuickEditPrice(product.id, products, setProducts);
+                        {show('sku') && (
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {product.sku || 'N/A'}
+                          </td>
+                        )}
+                        {show('price') && (
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                            {actions.quickEditId === product.id ? (
+                              <div className="flex items-center space-x-2">
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  value={actions.quickEditPrice}
+                                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                                    actions.setQuickEditPrice(e.target.value)
                                   }
-                                }}
-                                className="w-24 px-2 py-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded text-center"
-                                disabled={actions.updating}
-                              />
-                              <button
-                                onClick={() =>
-                                  actions.handleQuickEditPrice(product.id, products, setProducts)
-                                }
-                                className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 text-xs"
-                                disabled={actions.updating}
-                              >
-                                Save
-                              </button>
+                                  onKeyPress={(e: KeyboardEvent<HTMLInputElement>) => {
+                                    if (e.key === 'Enter') {
+                                      actions.handleQuickEditPrice(
+                                        product.id,
+                                        products,
+                                        setProducts
+                                      );
+                                    }
+                                  }}
+                                  className="w-24 px-2 py-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded text-center"
+                                  disabled={actions.updating}
+                                />
+                                <button
+                                  onClick={() =>
+                                    actions.handleQuickEditPrice(product.id, products, setProducts)
+                                  }
+                                  className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 text-xs"
+                                  disabled={actions.updating}
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    actions.setQuickEditId(null);
+                                    actions.setQuickEditPrice('');
+                                  }}
+                                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300 text-xs"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
                               <button
                                 onClick={() => {
-                                  actions.setQuickEditId(null);
-                                  actions.setQuickEditPrice('');
+                                  actions.setQuickEditId(product.id);
+                                  actions.setQuickEditPrice(product.regular_price || product.price);
                                 }}
-                                className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300 text-xs"
+                                className="text-left hover:text-blue-600 dark:hover:text-blue-400"
                               >
-                                Cancel
+                                {formatPrice(product.price)}
                               </button>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => {
-                                actions.setQuickEditId(product.id);
-                                actions.setQuickEditPrice(product.regular_price || product.price);
-                              }}
-                              className="text-left hover:text-blue-600 dark:hover:text-blue-400"
-                            >
-                              {formatPrice(product.price)}
-                            </button>
-                          )}
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap">
-                          <span
-                            className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                              product.stock_status === 'instock'
-                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                : product.stock_status === 'outofstock'
-                                  ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                            }`}
-                          >
-                            {product.stock_status}
-                          </span>
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                          {product.manage_stock ? (
+                            )}
+                          </td>
+                        )}
+                        {show('stockStatus') && (
+                          <td className="px-4 py-4 whitespace-nowrap">
                             <span
-                              className={
-                                isLowStock
-                                  ? 'text-yellow-600 dark:text-yellow-400 font-semibold'
-                                  : isOut
-                                    ? 'text-red-600 dark:text-red-400 font-semibold'
-                                    : ''
-                              }
+                              className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                product.stock_status === 'instock'
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                  : product.stock_status === 'outofstock'
+                                    ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                    : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                              }`}
                             >
-                              {product.stock_quantity}
+                              {product.stock_status}
                             </span>
-                          ) : (
-                            'Not managed'
-                          )}
-                        </td>
+                          </td>
+                        )}
+                        {show('stockQty') && (
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                            {product.manage_stock ? (
+                              <span
+                                className={
+                                  isLowStock
+                                    ? 'text-yellow-600 dark:text-yellow-400 font-semibold'
+                                    : isOut
+                                      ? 'text-red-600 dark:text-red-400 font-semibold'
+                                      : ''
+                                }
+                              >
+                                {product.stock_quantity}
+                              </span>
+                            ) : (
+                              'Not managed'
+                            )}
+                          </td>
+                        )}
                         <td className="px-4 py-4 whitespace-nowrap text-sm space-x-2">
                           <Link
                             to={`/products/${product.id}`}
