@@ -6,6 +6,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import PageHeader from '../components/PageHeader';
 import EmptyState from '../components/EmptyState';
 import { useToast } from '../hooks/useToast';
+import { useOfflineMutation } from '../hooks/useOfflineMutation';
 import ToastContainer from '../components/ToastContainer';
 import {
   RefreshCw,
@@ -56,6 +57,8 @@ function CategoriesPage(): React.ReactElement {
     id: null,
   });
   const [deleting, setDeleting] = useState(false);
+
+  const { mutateApi } = useOfflineMutation();
 
   const service = useMemo(
     () => (currentStore ? new WooCommerceService(currentStore) : null),
@@ -181,18 +184,32 @@ function CategoriesPage(): React.ReactElement {
       display: formData.display,
     };
 
-    const result = editingId
-      ? await service.updateProductCategory(editingId, data)
-      : await service.createProductCategory(data);
+    const res = await mutateApi(
+      editingId ? 'update_category' : 'create_category',
+      editingId ? { id: editingId, ...data } : { ...data },
+      currentStore!.id,
+      () =>
+        editingId
+          ? service.updateProductCategory(editingId, data)
+          : service.createProductCategory(data),
+      (msg) => showToast(msg, 'error'),
+      'Failed to save category'
+    );
 
-    if (result.success) {
-      showToast(editingId ? 'Category updated' : 'Category created', 'success');
+    if (res.queued || res.success) {
+      if (res.success) showToast(editingId ? 'Category updated' : 'Category created', 'success');
+      else if (editingId) {
+        // optimistic: show the edit locally until the queue replays
+        setCategories((prev) =>
+          prev.map((c) =>
+            c.id === editingId ? { ...c, ...formData, slug: formData.slug || c.slug } : c
+          )
+        );
+      }
       setShowForm(false);
       setEditingId(null);
       setFormData(defaultFormData);
-      await loadCategories();
-    } else {
-      showToast(result.error || 'Failed to save category', 'error');
+      if (res.success) await loadCategories();
     }
     setSaving(false);
   };
@@ -200,13 +217,22 @@ function CategoriesPage(): React.ReactElement {
   const handleDelete = async () => {
     if (!service || !deleteConfirm.id) return;
     setDeleting(true);
-    const result = await service.deleteProductCategory(deleteConfirm.id);
-    if (result.success) {
-      showToast('Category deleted', 'success');
+    const id = deleteConfirm.id;
+    const res = await mutateApi(
+      'delete_category',
+      { id },
+      currentStore!.id,
+      () => service.deleteProductCategory(id),
+      (msg) => showToast(msg, 'error'),
+      'Failed to delete category'
+    );
+    if (res.queued) setCategories((prev) => prev.filter((c) => c.id !== id));
+    if (res.queued || res.success) {
+      if (res.success) {
+        showToast('Category deleted', 'success');
+        await loadCategories();
+      }
       setDeleteConfirm({ isOpen: false, id: null });
-      await loadCategories();
-    } else {
-      showToast(result.error || 'Failed to delete category', 'error');
     }
     setDeleting(false);
   };

@@ -6,6 +6,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import PageHeader from '../components/PageHeader';
 import EmptyState from '../components/EmptyState';
 import { useToast } from '../hooks/useToast';
+import { useOfflineMutation } from '../hooks/useOfflineMutation';
 import ToastContainer from '../components/ToastContainer';
 import {
   RefreshCw,
@@ -85,6 +86,8 @@ function AttributesPage(): React.ReactElement {
     termId: number | null;
   }>({ isOpen: false, type: 'attribute', attrId: null, termId: null });
   const [deleting, setDeleting] = useState(false);
+
+  const { mutateApi } = useOfflineMutation();
 
   const service = useMemo(
     () => (currentStore ? new WooCommerceService(currentStore) : null),
@@ -166,18 +169,29 @@ function AttributesPage(): React.ReactElement {
       has_archives: attrForm.has_archives,
     };
 
-    const result = editingAttrId
-      ? await service.updateProductAttribute(editingAttrId, data)
-      : await service.createProductAttribute(data);
-
-    if (result.success) {
-      showToast(editingAttrId ? 'Attribute updated' : 'Attribute created', 'success');
+    const res = await mutateApi(
+      editingAttrId ? 'update_attribute' : 'create_attribute',
+      editingAttrId ? { id: editingAttrId, ...data } : { ...data },
+      currentStore!.id,
+      () =>
+        editingAttrId
+          ? service.updateProductAttribute(editingAttrId, data)
+          : service.createProductAttribute(data),
+      (msg) => showToast(msg, 'error'),
+      'Failed to save attribute'
+    );
+    if (res.queued || res.success) {
+      if (res.success)
+        showToast(editingAttrId ? 'Attribute updated' : 'Attribute created', 'success');
+      else if (editingAttrId) {
+        setAttributes((prev) =>
+          prev.map((a) => (a.id === editingAttrId ? { ...a, ...attrForm, slug: a.slug } : a))
+        );
+      }
       setShowAttrForm(false);
       setEditingAttrId(null);
       setAttrForm(defaultAttrForm);
-      await loadAttributes();
-    } else {
-      showToast(result.error || 'Failed to save attribute', 'error');
+      if (res.success) await loadAttributes();
     }
     setSaving(false);
   };
@@ -213,18 +227,33 @@ function AttributesPage(): React.ReactElement {
       description: termForm.description || undefined,
     };
 
-    const result = editingTermId
-      ? await service.updateAttributeTerm(termAttrId, editingTermId, data)
-      : await service.createAttributeTerm(termAttrId, data);
-
-    if (result.success) {
-      showToast(editingTermId ? 'Term updated' : 'Term created', 'success');
+    const res = await mutateApi(
+      editingTermId ? 'update_attribute_term' : 'create_attribute_term',
+      editingTermId
+        ? { attributeId: termAttrId, id: editingTermId, ...data }
+        : { attributeId: termAttrId, ...data },
+      currentStore!.id,
+      () =>
+        editingTermId
+          ? service.updateAttributeTerm(termAttrId, editingTermId, data)
+          : service.createAttributeTerm(termAttrId, data),
+      (msg) => showToast(msg, 'error'),
+      'Failed to save term'
+    );
+    if (res.queued || res.success) {
+      if (res.success) showToast(editingTermId ? 'Term updated' : 'Term created', 'success');
+      else if (editingTermId) {
+        setTermsMap((prev) => ({
+          ...prev,
+          [termAttrId]: (prev[termAttrId] ?? []).map((t) =>
+            t.id === editingTermId ? { ...t, ...termForm, slug: termForm.slug || t.slug } : t
+          ),
+        }));
+      }
       setShowTermForm(false);
       setEditingTermId(null);
       setTermForm(defaultTermForm);
-      await loadTerms(termAttrId);
-    } else {
-      showToast(result.error || 'Failed to save term', 'error');
+      if (res.success) await loadTerms(termAttrId);
     }
     setSaving(false);
   };
@@ -234,21 +263,39 @@ function AttributesPage(): React.ReactElement {
     if (!service) return;
     setDeleting(true);
 
-    if (deleteConfirm.type === 'attribute' && deleteConfirm.attrId) {
-      const result = await service.deleteProductAttribute(deleteConfirm.attrId);
-      if (result.success) {
+    const { attrId, termId } = deleteConfirm;
+    if (deleteConfirm.type === 'attribute' && attrId) {
+      const res = await mutateApi(
+        'delete_attribute',
+        { id: attrId },
+        currentStore!.id,
+        () => service.deleteProductAttribute(attrId),
+        (msg) => showToast(msg, 'error'),
+        'Failed to delete'
+      );
+      if (res.queued) setAttributes((prev) => prev.filter((a) => a.id !== attrId));
+      if (res.success) {
         showToast('Attribute deleted', 'success');
         await loadAttributes();
-      } else {
-        showToast(result.error || 'Failed to delete', 'error');
       }
-    } else if (deleteConfirm.type === 'term' && deleteConfirm.attrId && deleteConfirm.termId) {
-      const result = await service.deleteAttributeTerm(deleteConfirm.attrId, deleteConfirm.termId);
-      if (result.success) {
+    } else if (deleteConfirm.type === 'term' && attrId && termId) {
+      const res = await mutateApi(
+        'delete_attribute_term',
+        { attributeId: attrId, id: termId },
+        currentStore!.id,
+        () => service.deleteAttributeTerm(attrId, termId),
+        (msg) => showToast(msg, 'error'),
+        'Failed to delete'
+      );
+      if (res.queued) {
+        setTermsMap((prev) => ({
+          ...prev,
+          [attrId]: (prev[attrId] ?? []).filter((t) => t.id !== termId),
+        }));
+      }
+      if (res.success) {
         showToast('Term deleted', 'success');
-        await loadTerms(deleteConfirm.attrId);
-      } else {
-        showToast(result.error || 'Failed to delete', 'error');
+        await loadTerms(attrId);
       }
     }
 

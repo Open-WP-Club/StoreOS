@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import useOffline from '../stores/offlineStore';
 import useOnlineStatus from './useOnlineStatus';
 import { useToast } from './useToast';
+import { CLIENT_ID_META, CLIENT_ID_TYPES } from '../utils/offlineCreates';
 import type { PendingOperationType } from '../types';
 
 interface MutationOptions<T> {
@@ -41,7 +42,16 @@ export function useOfflineMutation() {
       const { operationType, queueData, storeId, execute, onSuccess, onError } = options;
 
       if (!isOnline) {
-        addPendingOperation(operationType, queueData, storeId);
+        const data = CLIENT_ID_TYPES.includes(operationType)
+          ? {
+              ...queueData,
+              meta_data: [
+                ...((queueData.meta_data as unknown[]) ?? []),
+                { key: CLIENT_ID_META, value: crypto.randomUUID() },
+              ],
+            }
+          : queueData;
+        addPendingOperation(operationType, data, storeId);
         showToast('You are offline. This change will sync when you reconnect.', 'warning');
         return { queued: true, success: false };
       }
@@ -59,5 +69,28 @@ export function useOfflineMutation() {
     [isOnline, addPendingOperation, showToast]
   );
 
-  return { mutate, isOnline };
+  /** Queue-or-run an ApiResponse-returning call (the service layer returns, never throws). */
+  const mutateApi = useCallback(
+    (
+      operationType: PendingOperationType,
+      queueData: Record<string, unknown>,
+      storeId: string,
+      call: () => Promise<{ success: boolean; error?: string }>,
+      onError?: (error: string) => void,
+      fallback = 'Operation failed'
+    ) =>
+      mutate({
+        operationType,
+        queueData,
+        storeId,
+        execute: async () => {
+          const r = await call();
+          if (!r.success) throw new Error(r.error || fallback);
+        },
+        onError,
+      }),
+    [mutate]
+  );
+
+  return { mutate, mutateApi, isOnline };
 }
