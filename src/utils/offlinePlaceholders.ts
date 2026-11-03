@@ -6,6 +6,7 @@ import type {
   ProductVariation,
   WooCommerceAttributeTerm,
   WooCommerceCoupon,
+  WooCommerceOrder,
   WooCommerceProduct,
   WooCommerceProductAttribute,
   WooCommerceProductCategory,
@@ -23,12 +24,43 @@ type D = Record<string, unknown>;
 interface KindDef {
   create: PendingOperationType;
   update?: PendingOperationType;
-  delete: PendingOperationType;
+  delete?: PendingOperationType;
   batch?: PendingOperationType;
   defaults: D;
 }
 
 const KINDS = {
+  // Orders are created offline by the POS; they can't be deleted one by one (only via batch_orders).
+  order: {
+    create: 'create_order',
+    update: 'update_order',
+    batch: 'batch_orders',
+    defaults: {
+      parent_id: 0,
+      number: '',
+      status: 'pending',
+      currency: '',
+      discount_total: '0',
+      shipping_total: '0',
+      total: '0',
+      total_tax: '0',
+      customer_id: 0,
+      customer_note: '',
+      billing: {},
+      shipping: {},
+      payment_method: '',
+      payment_method_title: '',
+      date_paid: null,
+      date_completed: null,
+      meta_data: [],
+      line_items: [],
+      tax_lines: [],
+      shipping_lines: [],
+      fee_lines: [],
+      coupon_lines: [],
+      refunds: [],
+    },
+  },
   product: {
     create: 'create_product',
     update: 'update_product',
@@ -190,6 +222,7 @@ export const stripPending = <T extends { _pending?: boolean }>(items: T[]): T[] 
 interface ItemMap {
   product: WooCommerceProduct;
   coupon: WooCommerceCoupon;
+  order: WooCommerceOrder;
   category: WooCommerceProductCategory;
   attribute: WooCommerceProductAttribute;
   term: WooCommerceAttributeTerm;
@@ -199,16 +232,22 @@ interface ItemMap {
 }
 type Item<K extends Kind> = ItemMap[K];
 
+const isPosOp = (op: PendingOperation): boolean =>
+  typeof op.data.clientId === 'string' && typeof op.data.order === 'object' && !!op.data.order;
+
 function build(kind: Kind, op: PendingOperation): unknown {
   const now = new Date(op.timestamp).toISOString();
   const slug = kind === 'tax_class' ? slugify(String(op.data.name ?? '')) : undefined;
+  // POS sales are queued as { clientId, order }: show the order payload.
+  const payload = kind === 'order' && isPosOp(op) ? (op.data.order as D) : op.data;
   return {
     ...KINDS[kind].defaults,
-    ...op.data,
+    ...payload,
     ...(slug !== undefined && { slug }),
     id: tempIdFor(op.id),
     date_created: now,
     date_modified: now,
+    ...(kind === 'order' && { date_created_gmt: now, date_modified_gmt: now }),
     _pending: true,
   };
 }
@@ -245,16 +284,28 @@ const findCreate = (kind: Kind, id: unknown, storeId: string): PendingOperation 
 
 /** Merge an update (data.id = temp id) into the queued create it targets. */
 function mergeInto(create: PendingOperation, data: D): void {
-  const merged: D = { ...create.data, ...data };
+  // POS sales keep their order payload under `order` (replay reads it from there).
+  if (isPosOp(create)) {
+    const inner = mergeData(create.data.order as D, data);
+    useOffline
+      .getState()
+      .updatePendingOperation(create.id, { data: { ...create.data, order: inner } });
+    return;
+  }
+  useOffline.getState().updatePendingOperation(create.id, { data: mergeData(create.data, data) });
+}
+
+function mergeData(target: D, data: D): D {
+  const merged: D = { ...target, ...data };
   delete merged.id;
   // Keep the queued create's meta (client id); append any new entries.
   const meta = [
-    ...((create.data.meta_data as unknown[]) ?? []),
+    ...((target.meta_data as unknown[]) ?? []),
     ...(Array.isArray(data.meta_data) ? data.meta_data : []),
   ];
   if (meta.length) merged.meta_data = meta;
   else delete merged.meta_data;
-  useOffline.getState().updatePendingOperation(create.id, { data: merged });
+  return merged;
 }
 
 /**
@@ -266,12 +317,27 @@ export function mutatePlaceholder(
   data: D,
   storeId: string
 ): Outcome | null {
-  const kind = kindOf((k) => k.update, type) ?? kindOf((k) => k.delete, type);
-  if (!kind || !isPlaceholderId(data.id)) return null;
-  const create = findCreate(kind, data.id, storeId);
+  // A stock edit of a pending product just sets its stock fields on the queued create.
+  const stock = type === 'update_stock';
+  const kind: Kind | undefined = stock
+    ? 'product'
+    : (kindOf((k) => k.update, type) ?? kindOf((k) => k.delete, type));
+  const id = stock ? (data.productId ?? data.id) : data.id;
+  if (!kind || !isPlaceholderId(id)) return null;
+  const create = findCreate(kind, id, storeId);
   if (!create) return { queued: false, success: false, error: SYNCED };
-  if (type === KINDS[kind].delete) useOffline.getState().removePendingOperation(create.id);
-  else mergeInto(create, data);
+  if (type === (KINDS[kind] as KindDef).delete)
+    useOffline.getState().removePendingOperation(create.id);
+  else if (stock) {
+    const { quantity, stockStatus, stock_quantity, stock_status } = data;
+    const qty = quantity ?? stock_quantity;
+    const status = stockStatus ?? stock_status;
+    mergeInto(create, {
+      manage_stock: true,
+      ...(qty !== undefined && { stock_quantity: qty }),
+      ...(status !== undefined && { stock_status: status }),
+    });
+  } else mergeInto(create, data);
   return { queued: true, success: false };
 }
 

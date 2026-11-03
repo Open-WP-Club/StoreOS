@@ -175,7 +175,7 @@ describe('offline placeholders', () => {
       expect(interceptBatch('batch_products', { delete: [1, 2] }, S)).toBeNull();
       expect(interceptBatch('batch_products', { update: [{ id: 1 }] }, S)).toBeNull();
       expect(interceptBatch('update_product', { id: -3 }, S)).toBeNull();
-      expect(interceptBatch('batch_orders', { delete: [-3] }, S)).toBeNull();
+      expect(interceptBatch('batch_reviews', { delete: [-3] }, S)).toBeNull();
     });
 
     it('delete: cancels queued creates and keeps only real ids', () => {
@@ -253,5 +253,120 @@ describe('offline placeholders', () => {
     ]) {
       expect((await replayOperation(service, op)).success).toBe(false);
     }
+  });
+});
+
+describe('order placeholders', () => {
+  beforeEach(() => {
+    useOffline.setState({ pendingOperations: [] });
+  });
+
+  it('derives a pending order from a queued create_order (plain payload)', () => {
+    const { tempId } = queue('create_order', { status: 'processing', total: '12.00' });
+    const orders = placeholdersFor('order', ops(), S);
+    expect(orders[0]).toMatchObject({
+      id: tempId,
+      status: 'processing',
+      total: '12.00',
+      _pending: true,
+      line_items: [],
+    });
+  });
+
+  it('shows the order payload of a POS sale ({ clientId, order })', () => {
+    queue('create_order', { clientId: 'c1', order: { status: 'completed', total: '5.00' } });
+    expect(placeholdersFor('order', ops(), S)[0]).toMatchObject({
+      status: 'completed',
+      total: '5.00',
+    });
+  });
+
+  it('a status update of a pending order merges into the create', () => {
+    const { tempId } = queue('create_order', { status: 'pending', total: '9.00' });
+    expect(mutatePlaceholder('update_order', { id: tempId, status: 'completed' }, S)).toEqual({
+      queued: true,
+      success: false,
+    });
+    expect(ops()).toHaveLength(1);
+    expect(ops()[0]!.data).toMatchObject({ status: 'completed', total: '9.00' });
+  });
+
+  it('merges into a POS sale payload without breaking its { clientId, order } shape', () => {
+    const { tempId } = queue('create_order', { clientId: 'c1', order: { status: 'pending' } });
+    mutatePlaceholder('update_order', { id: tempId, status: 'completed' }, S);
+    expect(ops()[0]!.data).toEqual({ clientId: 'c1', order: { status: 'completed' } });
+  });
+
+  it('bulk delete / status update via batch_orders act on pending orders', () => {
+    const a = queue('create_order', { status: 'pending' });
+    const b = queue('create_order', { status: 'pending' });
+    const r = interceptBatch(
+      'batch_orders',
+      { update: [{ id: a.tempId, status: 'completed' }], delete: [b.tempId, 5] },
+      S
+    );
+    expect(r).toEqual({ data: { delete: [5] } });
+    expect(ops()).toHaveLength(1);
+    expect(ops()[0]!.data).toMatchObject({ status: 'completed' });
+  });
+
+  it('a placeholder for an order that already synced reports an error', () => {
+    expect(mutatePlaceholder('update_order', { id: -7, status: 'completed' }, S)).toMatchObject({
+      queued: false,
+      error: expect.stringContaining('already synced'),
+    });
+  });
+});
+
+describe('update_stock on a placeholder', () => {
+  beforeEach(() => {
+    useOffline.setState({ pendingOperations: [] });
+  });
+
+  it('is applied to the queued create_product, nothing else is queued', () => {
+    const { tempId } = queue('create_product', { name: 'Hat' });
+    const r = mutatePlaceholder(
+      'update_stock',
+      { id: tempId, stock_quantity: 7, stock_status: 'instock' },
+      S
+    );
+    expect(r).toEqual({ queued: true, success: false });
+    expect(ops()).toHaveLength(1);
+    expect(ops()[0]!.type).toBe('create_product');
+    expect(ops()[0]!.data).toMatchObject({
+      name: 'Hat',
+      manage_stock: true,
+      stock_quantity: 7,
+      stock_status: 'instock',
+    });
+    expect(ops()[0]!.data.id).toBeUndefined();
+  });
+
+  it('understands the productId / quantity / stockStatus form', () => {
+    const { tempId } = queue('create_product', { name: 'Hat' });
+    mutatePlaceholder(
+      'update_stock',
+      { productId: tempId, quantity: 0, stockStatus: 'outofstock' },
+      S
+    );
+    expect(ops()[0]!.data).toMatchObject({ stock_quantity: 0, stock_status: 'outofstock' });
+  });
+
+  it('does not overwrite stock_status when the edit has none', () => {
+    const { tempId } = queue('create_product', { name: 'Hat', stock_status: 'onbackorder' });
+    mutatePlaceholder('update_stock', { id: tempId, stock_quantity: 3 }, S);
+    expect(ops()[0]!.data.stock_status).toBe('onbackorder');
+  });
+
+  it('a synced (missing) placeholder errors instead of queueing', () => {
+    expect(mutatePlaceholder('update_stock', { id: -9, stock_quantity: 1 }, S)).toMatchObject({
+      queued: false,
+      error: expect.stringContaining('already synced'),
+    });
+    expect(ops()).toHaveLength(0);
+  });
+
+  it('a real product id is not intercepted', () => {
+    expect(mutatePlaceholder('update_stock', { id: 5, stock_quantity: 1 }, S)).toBeNull();
   });
 });

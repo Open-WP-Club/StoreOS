@@ -4,6 +4,7 @@ import { ChevronDown, Loader2 } from 'lucide-react';
 import { formatPrice } from '../utils/currency';
 import { formatDate } from '../utils/dateTime';
 import { getOrderStatusColor } from '../constants';
+import PendingBadge from './PendingBadge';
 import type { WooCommerceOrder, OrderStatus } from '../types';
 
 const ORDER_STATUSES: Array<{ value: OrderStatus; label: string }> = [
@@ -85,12 +86,19 @@ const OrderTableRow = memo(function OrderTableRow({
         />
       </td>
       <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
-        <Link
-          to={`/orders/${order.id}`}
-          className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
-        >
-          #{order.id}
-        </Link>
+        {order._pending ? (
+          <span className="text-gray-700 dark:text-gray-200">
+            New order
+            <PendingBadge />
+          </span>
+        ) : (
+          <Link
+            to={`/orders/${order.id}`}
+            className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
+          >
+            #{order.id}
+          </Link>
+        )}
       </td>
       {!hiddenColumns.includes('customer') && (
         <td className="px-4 py-4 whitespace-nowrap">

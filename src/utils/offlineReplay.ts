@@ -11,6 +11,7 @@ import {
   createTaxClassOnce,
   createVariationOnce,
   createOrderOnce,
+  dropExistingCreates,
 } from './offlineCreates';
 import { detectConflict, splitBatch } from './offlineConflicts';
 import type {
@@ -58,6 +59,21 @@ async function runBatch(
   return failed > 0
     ? { success: false, error: `${failed} batch item(s) failed` }
     : { success: true };
+}
+
+/** Batch whose create items are first checked for an existing SKU/code (replay-safe). */
+async function batchUnique(
+  service: WooCommerceService,
+  kind: 'products' | 'coupons',
+  d: Record<string, unknown>,
+  call: Parameters<typeof runBatch>[0]
+): Promise<Result> {
+  const r = await dropExistingCreates(service, kind, d);
+  if (!r.success) return r;
+  const ops = r.data as BatchOps;
+  // Everything already existed: nothing left to send.
+  if (!ops.create?.length && !ops.update?.length && !ops.delete?.length) return { success: true };
+  return runBatch(call, ops);
 }
 
 const okIfGone = (r: Result): Result =>
@@ -121,7 +137,7 @@ export async function replayOperation(
     case 'delete_product':
       return okIfGone(await service.deleteProduct(d.id as number));
     case 'batch_products':
-      return runBatch((ops) => service.batchProducts(ops as never), d as BatchOps);
+      return batchUnique(service, 'products', d, (ops) => service.batchProducts(ops as never));
     case 'batch_orders':
       return runBatch((ops) => service.batchOrders(ops as never), d as BatchOps);
     case 'create_coupon':
@@ -131,7 +147,7 @@ export async function replayOperation(
     case 'delete_coupon':
       return okIfGone(await service.deleteCoupon(d.id as number));
     case 'batch_coupons':
-      return runBatch((ops) => service.batchCoupons(ops as never), d as BatchOps);
+      return batchUnique(service, 'coupons', d, (ops) => service.batchCoupons(ops as never));
     case 'create_category':
       return createCategoryOnce(service, d);
     case 'update_category':

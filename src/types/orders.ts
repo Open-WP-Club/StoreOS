@@ -196,6 +196,8 @@ export interface WooCommerceOrder {
   fee_lines: OrderFeeLine[];
   coupon_lines: OrderCouponLine[];
   refunds: OrderRefund[];
+  /** UI-only: queued offline, not synced yet (see utils/offlinePlaceholders) */
+  _pending?: boolean;
 }
 
 export interface OrderUpdateData {

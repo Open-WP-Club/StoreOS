@@ -191,10 +191,50 @@ describe('captureBase for new types', () => {
     expect(captureBase('update_category', { id: 4, name: 'N' }, 'other', cur)).toBeUndefined();
   });
 
-  it('untimed: a second queued edit of the same item is not snapshotted', () => {
-    const cur = [{ id: 4, name: 'Old' }];
+  it('untimed: a second queued edit keeps the first edit server baseline', () => {
+    // The UI already shows my 1st edit ("A"); the server value is still "Old".
+    const cur = [{ id: 4, name: 'A', slug: 's' }];
+    const first = { modified: '', prev: { name: 'Old' } };
+    useOffline.getState().addPendingOperation('update_category', { id: 4, name: 'A' }, 's1', first);
+    expect(captureBase('update_category', { id: 4, name: 'B' }, 's1', cur)).toEqual(first);
+    // A field the 1st edit didn't touch is taken from the item as shown.
+    expect(
+      captureBase('update_category', { id: 4, name: 'B', slug: 'z' }, 's1', cur)?.prev
+    ).toEqual({ name: 'Old', slug: 's' });
+  });
+
+  it('untimed: a second edit after a legacy first edit (no baseline) stays unchecked', () => {
     useOffline.getState().addPendingOperation('update_category', { id: 4, name: 'A' }, 's1');
-    expect(captureBase('update_category', { id: 4, name: 'B' }, 's1', cur)).toBeUndefined();
+    expect(
+      captureBase('update_category', { id: 4, name: 'B' }, 's1', [{ id: 4, name: 'A' }])
+    ).toBeUndefined();
+  });
+
+  it('untimed: the 2nd edit still detects a server change against the original baseline', async () => {
+    const cur = [{ id: 4, name: 'A' }];
+    useOffline.getState().addPendingOperation('update_category', { id: 4, name: 'A' }, 's1', {
+      modified: '',
+      prev: { name: 'Old' },
+    });
+    const base = captureBase('update_category', { id: 4, name: 'B' }, 's1', cur);
+    const s = svc();
+    s.getProductCategory.mockResolvedValue({ success: true, data: { id: 4, name: 'Theirs' } });
+    const r = await run(s, op('update_category', { id: 4, name: 'B' }, base));
+    expect(r.conflict?.fields).toEqual(['name']);
+    expect(s.updateProductCategory).not.toHaveBeenCalled();
+  });
+
+  it('batch_reviews snapshots (untimed, from supplied current items)', () => {
+    const b = captureBase('batch_reviews', { update: [{ id: 8, status: 'approved' }] }, 's1', [
+      { id: 8, status: 'hold' },
+    ]);
+    expect(b?.items?.['8']).toEqual({ modified: '', prev: { status: 'hold' } });
+  });
+
+  it('batch delete snapshots timed items only', () => {
+    expect(captureBase('batch_products', { delete: [5] }, 's1')?.items).toEqual({
+      '5': { modified: OLD, prev: {} },
+    });
   });
 
   it('timed variation needs a modified date', () => {
@@ -226,7 +266,7 @@ describe('captureBase for new types', () => {
     expect(
       captureBase('batch_products', { update: [{ id: 99, name: 'y' }] }, 's1')
     ).toBeUndefined();
-    expect(captureBase('batch_products', { delete: [5] }, 's1')).toBeUndefined();
+    expect(captureBase('batch_products', { delete: [99] }, 's1')).toBeUndefined();
     expect(
       captureBase('batch_coupons', { update: [{ id: 3, amount: '1' }] }, 's1')?.items?.['3']?.prev
     ).toEqual({ amount: '10' });

@@ -101,6 +101,13 @@ describe('OrderTableRow', () => {
     expect(screen.getByRole('checkbox')).toBeChecked();
   });
 
+  it('offline-created (pending) order shows a badge instead of a detail link', () => {
+    renderRow({ id: -5, _pending: true });
+    expect(screen.getByText('Pending sync')).toBeInTheDocument();
+    expect(screen.getByText('New order')).toBeInTheDocument();
+    expect(screen.queryByText('#-5')).not.toBeInTheDocument();
+  });
+
   it('checkbox is unchecked when isSelected is false', () => {
     renderRow({}, false);
     expect(screen.getByRole('checkbox')).not.toBeChecked();

@@ -19,7 +19,11 @@ type Resource =
   | 'reviews'
   | 'variations';
 
-/** Single-item update ops that get conflict detection. (Tax classes have no update op.) */
+/**
+ * Single-item update ops that get conflict detection.
+ * Tax classes have no update op: the WooCommerce REST API only lists, creates and deletes them
+ * (`/wc/v3/taxes/classes` has no PUT), so there is nothing to conflict.
+ */
 const SINGLE: Record<string, Resource> = {
   update_product: 'products',
   update_stock: 'products',
@@ -32,8 +36,13 @@ const SINGLE: Record<string, Resource> = {
   update_review: 'reviews',
   update_variation: 'variations',
 };
-/** Batch ops: detection is per `update` item. (batch_reviews is not covered.) */
+/**
+ * Batch ops: detection is per `update` item, and per `delete` id for resources with a modified
+ * timestamp (a delete is held when the item changed on the server since queue time).
+ * batch_variations has no UI caller (Generate all creates online only); its path is API-only.
+ */
 const BATCH: Record<string, Resource> = {
+  batch_reviews: 'reviews',
   batch_products: 'products',
   batch_coupons: 'coupons',
   batch_orders: 'orders',
@@ -107,16 +116,31 @@ export function captureBase(
   const pool = [...asList(current), ...cached];
   if (SINGLE[type]) {
     const id = itemId({ type, data });
-    // UI lists are patched optimistically, so a 2nd queued edit would snapshot my own 1st edit.
-    const queued = useOffline
-      .getState()
-      .pendingOperations.some((o) => o.type === type && o.storeId === storeId && o.data.id === id);
-    if (UNTIMED.has(r) && queued) return undefined;
-    return snapshot(
+    const edit = editedFields({ type, data });
+    const snap = snapshot(
       r,
       pool.find((i) => i.id === id),
-      editedFields({ type, data })
+      edit
     );
+    if (!UNTIMED.has(r) || !snap) return snap;
+    // UI lists are patched optimistically, so the item may already show my own queued 1st edit.
+    // Keep the 1st edit's server baseline for the fields it covers (re-queue-safe: fields the 1st
+    // edit didn't touch still hold their server values in the UI).
+    const first = useOffline
+      .getState()
+      .pendingOperations.find(
+        (o) =>
+          o.type === type &&
+          o.storeId === storeId &&
+          (type === 'update_attribute_term' ? o.data.attributeId === data.attributeId : true) &&
+          o.data.id === id
+      );
+    if (!first) return snap;
+    if (!first.base) return undefined; // legacy op without a baseline: stay unchecked
+    for (const f of Object.keys(snap.prev)) {
+      if (f in first.base.prev) snap.prev[f] = first.base.prev[f];
+    }
+    return snap;
   }
   const items: Record<string, Snap> = {};
   for (const u of (data.update as Item[] | undefined) ?? []) {
@@ -126,6 +150,17 @@ export function captureBase(
       itemFields(u, false)
     );
     if (snap) items[String(u.id)] = snap;
+  }
+  // Deleting something edited elsewhere meanwhile is a conflict too (timed resources only).
+  if (!UNTIMED.has(r)) {
+    for (const id of (data.delete as number[] | undefined) ?? []) {
+      const snap = snapshot(
+        r,
+        pool.find((i) => i.id === id),
+        {}
+      );
+      if (snap) items[String(id)] = snap;
+    }
   }
   return Object.keys(items).length ? { modified: '', prev: {}, items } : undefined;
 }
@@ -208,6 +243,8 @@ export async function splitBatch(
   if (!r || !snaps) return null;
   const keep: Item[] = [];
   const held: Item[] = [];
+  const keepDel: number[] = [];
+  const heldDel: number[] = [];
   const items: NonNullable<OperationConflict['items']> = [];
   const heldSnaps: Record<string, Snap> = {};
   for (const u of (op.data.update as Item[] | undefined) ?? []) {
@@ -222,24 +259,48 @@ export async function splitBatch(
     heldSnaps[String(u.id)] = snap;
     items.push({ id: u.id as number, fields, server: pick(server, fields) });
   }
-  if (!held.length) return null;
+  // A delete is held when the item was modified on the server after the queue-time snapshot.
+  for (const id of (op.data.delete as number[] | undefined) ?? []) {
+    const snap = snaps[String(id)];
+    const server = snap?.modified ? await fetchItem(service, r, id, op.data) : null;
+    if (!server || !snap || !isNewer(modifiedOf(server), snap.modified)) {
+      keepDel.push(id);
+      continue;
+    }
+    heldDel.push(id);
+    heldSnaps[String(id)] = snap;
+    items.push({ id, fields: ['deleted'], server: { deleted: false } });
+  }
+  if (!held.length && !heldDel.length) return null;
   const rest = { ...op.data };
   delete rest.create;
+  delete rest.update;
   delete rest.delete;
   return {
-    clean: { ...op.data, update: keep },
+    clean: withLists(op.data, keep, keepDel),
     held: {
-      data: { ...rest, update: held },
+      data: withLists(rest, held, heldDel),
       base: { modified: '', prev: {}, items: heldSnaps },
       conflict: { fields: [], server: {}, items },
     },
   };
 }
 
+/** Batch data with its update/delete lists replaced; empty lists are dropped. */
+function withLists(data: Record<string, unknown>, update: Item[], del: number[]) {
+  const out = { ...data };
+  delete out.update;
+  delete out.delete;
+  if (update.length) out.update = update;
+  if (del.length) out.delete = del;
+  return out;
+}
+
 /** Batch op containing only update item `id` (no snapshot, so it is not re-checked). */
 export function singleItemOp(op: PendingOperation, id: number): PendingOperation {
   const update = ((op.data.update as Item[] | undefined) ?? []).filter((u) => u.id === id);
-  return { ...op, data: { ...op.data, update }, base: undefined, conflict: undefined };
+  const del = ((op.data.delete as number[] | undefined) ?? []).filter((d) => d === id);
+  return { ...op, data: withLists(op.data, update, del), base: undefined, conflict: undefined };
 }
 
 /**
@@ -255,10 +316,11 @@ export function withoutHeldItem(
   const snaps = { ...op.base?.items };
   delete snaps[String(id)];
   return {
-    data: {
-      ...op.data,
-      update: ((op.data.update as Item[] | undefined) ?? []).filter((u) => u.id !== id),
-    },
+    data: withLists(
+      op.data,
+      ((op.data.update as Item[] | undefined) ?? []).filter((u) => u.id !== id),
+      ((op.data.delete as number[] | undefined) ?? []).filter((d) => d !== id)
+    ),
     base: { modified: '', prev: {}, items: snaps },
     conflict: { fields: [], server: {}, items },
   };

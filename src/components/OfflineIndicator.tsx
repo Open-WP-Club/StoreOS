@@ -64,6 +64,7 @@ function ConflictPanel({
     </table>
   );
   const heldUpdates = (op.data.update as Array<Record<string, unknown>> | undefined) ?? [];
+  const heldDeletes = (op.data.delete as number[] | undefined) ?? [];
   return (
     <div className="mt-1 space-y-1" data-testid="conflict-panel">
       <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
@@ -75,7 +76,9 @@ function ConflictPanel({
             <p className="text-xs font-medium text-gray-800 dark:text-gray-100">Item #{it.id}</p>
             {diff(
               it.fields,
-              itemFields(heldUpdates.find((u) => u.id === it.id) ?? {}, false),
+              heldDeletes.includes(it.id)
+                ? { deleted: true }
+                : itemFields(heldUpdates.find((u) => u.id === it.id) ?? {}, false),
               it.server
             )}
             <div className="flex flex-wrap gap-1">

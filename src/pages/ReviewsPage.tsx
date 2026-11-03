@@ -269,6 +269,7 @@ function ReviewsPage(): React.ReactElement {
       const res = await mutate({
         operationType: 'batch_reviews',
         queueData: { update: updates },
+        current: pendingReviews as unknown as Record<string, unknown>[],
         storeId: currentStore.id,
         execute: async () => {
           const result = await service.batchUpdateReviews(updates);
