@@ -97,7 +97,7 @@ hr { border: 0; border-top: 1px dashed #000; margin: 6px 0; }
 <div class="c">${order}</div>
 <hr>${lines}<hr>
 ${r.discount > 0 ? row('Междинна сума', money(r.subtotal)) + row('Отстъпка', '-' + money(r.discount)) : ''}
-${row(`ДДС ${escapeHtml(r.vatRate)}% (вкл.)`, money(r.vat))}
+${r.vatRate > 0 ? row(`ДДС ${escapeHtml(r.vatRate)}% (вкл.)`, money(r.vat)) : ''}
 <div class="row total"><span>ОБЩО</span><span>${money(r.total)}</span></div>
 <hr>
 ${row('Плащане', escapeHtml(r.paymentMethod))}

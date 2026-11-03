@@ -39,6 +39,7 @@ export function POSRecentTransactionsModal({
       change: tx.change,
       orderId: tx.id,
       date: tx.timestamp,
+      vatRate: useAppSettings.getState().receiptVatRate,
     });
     const ok = await printReceipt(receipt, {
       printer: defaultPrinter,

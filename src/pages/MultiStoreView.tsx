@@ -1,3 +1,4 @@
+import { isStockAtOrBelow } from '../utils/stock';
 import React, { useEffect, useState, useCallback, ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useStoreConfig, useCache, useSettings } from '../stores';
@@ -116,7 +117,7 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
             (p) =>
               p.stock_quantity !== null &&
               p.stock_quantity !== undefined &&
-              p.stock_quantity <= lowStockThreshold
+              isStockAtOrBelow(p.stock_quantity, lowStockThreshold)
           );
 
           const recentOrders = orders.slice(0, 5); // Get 5 most recent
@@ -313,6 +314,8 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
       orders: d.orders,
       products: d.products,
       error: d.error,
+      currency: d.store.currency,
+      symbol: d.store.currencySymbol,
     })),
     periodDays,
     lowStockThreshold
@@ -421,26 +424,30 @@ const MultiStoreView: React.FC = (): React.ReactElement => {
                   </td>
                 ) : (
                   <>
-                    <td className="py-1 text-right">{formatPrice(r.revenue)}</td>
+                    <td className="py-1 text-right">{formatPrice(r.revenue, r.symbol)}</td>
                     <td className="py-1 text-right">{r.orders}</td>
-                    <td className="py-1 text-right">{formatPrice(r.aov)}</td>
+                    <td className="py-1 text-right">{formatPrice(r.aov, r.symbol)}</td>
                     <td className="py-1 text-right">{r.lowStock}</td>
                   </>
                 )}
               </tr>
             ))}
-            <tr className="border-t-2 border-gray-300 dark:border-gray-600 font-semibold">
-              <td className="py-1">Combined</td>
-              <td className="py-1 text-right">{formatPrice(comparison.total.revenue)}</td>
-              <td className="py-1 text-right">{comparison.total.orders}</td>
-              <td className="py-1 text-right">{formatPrice(comparison.total.aov)}</td>
-              <td className="py-1 text-right">{comparison.total.lowStock}</td>
-            </tr>
+            {comparison.totals.map((t) => (
+              <tr
+                key={t.currency}
+                className="border-t-2 border-gray-300 dark:border-gray-600 font-semibold"
+              >
+                <td className="py-1">Combined{t.currency ? ` (${t.currency})` : ''}</td>
+                <td className="py-1 text-right">{formatPrice(t.revenue, t.symbol)}</td>
+                <td className="py-1 text-right">{t.orders}</td>
+                <td className="py-1 text-right">{formatPrice(t.aov, t.symbol)}</td>
+                <td className="py-1 text-right">{t.lowStock}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-          Sums mix store currencies as-is. Refunded, failed and cancelled orders are excluded from
-          revenue and AOV.
+          Refunded, failed and cancelled orders are excluded from revenue and AOV.
         </p>
       </div>
 

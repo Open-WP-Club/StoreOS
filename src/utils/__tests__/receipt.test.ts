@@ -62,3 +62,13 @@ describe('receipt settings', () => {
     expect(useAppSettings.getState().autoPrintReceipt).toBe(false);
   });
 });
+
+describe('receipt VAT rate', () => {
+  it('uses the given rate and hides the VAT line at 0', () => {
+    expect(renderReceiptHtml(buildReceipt({ ...base, vatRate: 9 }))).toContain('ДДС 9%');
+    expect(renderReceiptHtml(buildReceipt({ ...base, vatRate: 0 }))).not.toContain('ДДС');
+  });
+  it('defaults receiptVatRate to 20', () => {
+    expect(useAppSettings.getState().receiptVatRate).toBe(20);
+  });
+});

@@ -1,3 +1,4 @@
+import { isStockAtOrBelow } from './stock';
 import type { WooCommerceProduct } from '../types';
 
 export function isLowStock(p: WooCommerceProduct, threshold: number): boolean {
@@ -6,7 +7,7 @@ export function isLowStock(p: WooCommerceProduct, threshold: number): boolean {
     p.stock_quantity !== null &&
     p.stock_quantity !== undefined &&
     p.stock_quantity > 0 &&
-    p.stock_quantity <= threshold
+    isStockAtOrBelow(p.stock_quantity, threshold)
   );
 }
 

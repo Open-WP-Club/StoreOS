@@ -14,6 +14,7 @@ import {
   Code2,
 } from 'lucide-react';
 import type { WooCommerceStore } from '../types';
+import NumberInput from '../components/NumberInput';
 import appIcon from '../../assets/icon.svg';
 
 interface FormData {
@@ -489,17 +490,13 @@ function SetupPage(): React.ReactElement {
                       Секунди преди повторен опит при неуспешна заявка
                     </p>
                     <div className="flex items-center gap-3">
-                      <input
+                      <NumberInput
                         id="retry-delay"
-                        type="number"
-                        min="15"
-                        max="300"
+                        min={15}
+                        max={300}
+                        fallback={60}
                         value={editRetryDelaySeconds}
-                        onChange={(e) =>
-                          setEditRetryDelaySeconds(
-                            Math.max(15, Math.min(300, parseInt(e.target.value) || 60))
-                          )
-                        }
+                        onValueChange={setEditRetryDelaySeconds}
                         className="w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                       />
                       <span className="text-sm text-gray-500 dark:text-gray-400">секунди</span>

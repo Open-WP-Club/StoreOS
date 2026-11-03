@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import Modal from './Modal';
+import NumberInput from './NumberInput';
 import { X, Zap } from 'lucide-react';
 import type { CouponDiscountType, CouponUpdateData, Coupon } from '../types';
 import WooCommerceService from '../services/woocommerce';
@@ -341,17 +342,13 @@ function BulkGenerateCouponsModal({
                 >
                   Number of Coupons *
                 </label>
-                <input
+                <NumberInput
                   id="bulk-count"
-                  type="number"
                   min={1}
                   max={100}
+                  fallback={1}
                   value={formData.count}
-                  onChange={(e) =>
-                    updateFormData({
-                      count: Math.min(100, Math.max(1, parseInt(e.target.value) || 1)),
-                    })
-                  }
+                  onValueChange={(count) => updateFormData({ count })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>

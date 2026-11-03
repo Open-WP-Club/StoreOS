@@ -1,3 +1,4 @@
+import { isStockAtOrBelow } from '../utils/stock';
 import React, { useCallback, ChangeEvent, KeyboardEvent } from 'react';
 import { Link } from 'react-router-dom';
 import DOMPurify from 'dompurify';
@@ -200,7 +201,7 @@ function ProductsPage(): React.ReactElement {
                   visibleRows.map((product) => {
                     const isLowStock =
                       product.stock_quantity !== null &&
-                      product.stock_quantity <= lowStockThreshold &&
+                      isStockAtOrBelow(product.stock_quantity, lowStockThreshold) &&
                       product.stock_quantity > 0;
                     const isOutOfStock = product.stock_status === 'outofstock';
 

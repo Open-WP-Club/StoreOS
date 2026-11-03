@@ -1,3 +1,4 @@
+import { isStockAtOrBelow } from '../utils/stock';
 import React, { useState, useCallback, useMemo } from 'react';
 import { useCache, useTheme, useSettings } from '../stores';
 import { getCurrencyCode } from '../utils/currency';
@@ -100,7 +101,7 @@ const ProductAnalyticsPage: React.FC = (): React.ReactElement => {
         (p) =>
           p.stock_quantity !== null &&
           p.stock_quantity !== undefined &&
-          p.stock_quantity <= lowStockThreshold &&
+          isStockAtOrBelow(p.stock_quantity, lowStockThreshold) &&
           p.stock_quantity > 0
       ).length;
       const outOfStock = products.filter((p) => p.stock_status === 'outofstock').length;

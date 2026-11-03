@@ -1,3 +1,4 @@
+import { isStockAtOrBelow } from '../../utils/stock';
 import type {
   WooCommerceProduct,
   ProductQueryParams,
@@ -220,7 +221,9 @@ export class WooCommerceServiceProducts extends WooCommerceServiceOrders {
       if (!result.success) return result;
       return {
         success: true,
-        data: result.data.filter((p) => p.stock_quantity !== null && p.stock_quantity <= threshold),
+        data: result.data.filter(
+          (p) => p.stock_quantity !== null && isStockAtOrBelow(p.stock_quantity, threshold)
+        ),
       };
     } catch (error) {
       return this.fail(error);
