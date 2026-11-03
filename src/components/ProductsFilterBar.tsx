@@ -2,7 +2,9 @@ import React, { ChangeEvent, ReactElement } from 'react';
 import { RefreshCw, Filter, X, Trash2, Edit, Copy } from 'lucide-react';
 import FilterPresetManager from './FilterPresetManager';
 import ExportMenu from './ExportMenu';
-import type { FilterPreset } from '../types';
+import { ColumnsMenu } from './ListViewControls';
+import { PRODUCT_COLUMNS } from '../utils/listView';
+import type { FilterPreset, SortState } from '../types';
 import type { ProductFilters } from '../hooks/useProductFilters';
 
 interface ProductsFilterBarProps {
@@ -19,6 +21,9 @@ interface ProductsFilterBarProps {
   onClearAllFilters: () => void;
   onApplyPreset: (presetFilters: Record<string, unknown>, preset: FilterPreset) => void;
   pageSize?: number;
+  sort?: SortState | null;
+  hiddenColumns?: string[];
+  onHiddenColumnsChange?: (cols: string[]) => void;
   onExportCSV: () => void;
   onExportPDF: () => void;
   onImport?: () => void;
@@ -49,6 +54,9 @@ export function ProductsFilterBar({
   onClearAllFilters,
   onApplyPreset,
   pageSize,
+  sort,
+  hiddenColumns = [],
+  onHiddenColumnsChange,
   onExportCSV,
   onExportPDF,
   onImport,
@@ -101,11 +109,20 @@ export function ProductsFilterBar({
             currentFilters={filters as unknown as Record<string, unknown>}
             currentSearch={searchTerm}
             currentPageSize={pageSize}
+            currentSort={sort}
+            currentHiddenColumns={hiddenColumns}
             onApplyPreset={onApplyPreset}
             onSaveSuccess={(preset: FilterPreset) =>
               showToast(`Preset "${preset.name}" saved`, 'success')
             }
           />
+          {onHiddenColumnsChange && (
+            <ColumnsMenu
+              columns={PRODUCT_COLUMNS}
+              hidden={hiddenColumns}
+              onChange={onHiddenColumnsChange}
+            />
+          )}
           <ExportMenu onExportCSV={onExportCSV} onExportPDF={onExportPDF} onImport={onImport} />
           <button
             onClick={onRefresh}

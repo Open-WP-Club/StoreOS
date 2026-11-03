@@ -11,6 +11,14 @@ import { exportTableToPDF } from '../utils/pdfExport';
 import ExportMenu from '../components/ExportMenu';
 import { searchOrders, applyOrderFilters } from '../utils/searchService';
 import FilterPresetManager from '../components/FilterPresetManager';
+import { ColumnsMenu } from '../components/ListViewControls';
+import {
+  ORDER_COLUMNS,
+  ORDER_SORT,
+  normalizeHidden,
+  normalizeSort,
+  sortItems,
+} from '../utils/listView';
 import { useApplySavedView } from '../hooks/useApplySavedView';
 import ToastContainer from '../components/ToastContainer';
 import LoadingIndicator from '../components/LoadingIndicator';
@@ -20,7 +28,7 @@ import OrdersTable from '../components/OrdersTable';
 import { useToast } from '../hooks/useToast';
 import { useProgressiveLoading } from '../hooks/useProgressiveLoading';
 import { useOfflineMutation } from '../hooks/useOfflineMutation';
-import type { Order, OrderStatus, OrderFilters, FilterPreset } from '../types';
+import type { Order, OrderStatus, OrderFilters, FilterPreset, SortState } from '../types';
 import { EMPTY_ORDERS } from '../constants';
 import StatCard from '../components/StatCard';
 import PageHeader from '../components/PageHeader';
@@ -53,6 +61,8 @@ function OrdersPage(): React.ReactElement {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(25);
+  const [sort, setSort] = useState<SortState | null>(null);
+  const [hiddenColumns, setHiddenColumns] = useState<string[]>([]);
   const [selectedOrderIds, setSelectedOrderIds] = useState<number[]>([]);
   const [bulkProcessing, setBulkProcessing] = useState<boolean>(false);
 
@@ -499,8 +509,8 @@ function OrdersPage(): React.ReactElement {
   // is correct and this only forgoes the extra compiler-level optimization.
   // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const filteredOrders = useMemo(() => {
-    return applyOrderFilters(searchedOrders, filters);
-  }, [searchedOrders, filters]);
+    return sortItems(applyOrderFilters(searchedOrders, filters), sort, ORDER_SORT);
+  }, [searchedOrders, filters, sort]);
 
   // Memoized stats - only recalculates when orders change
   const stats = useMemo<OrderStats>(() => {
@@ -534,6 +544,13 @@ function OrdersPage(): React.ReactElement {
     setFilters(preset.filters as unknown as OrderFilters);
     setSearchTerm(preset.search ?? '');
     if (preset.pageSize) setPageSize(preset.pageSize);
+    setSort(normalizeSort(preset.sort, Object.keys(ORDER_SORT)));
+    setHiddenColumns(
+      normalizeHidden(
+        preset.hiddenColumns,
+        ORDER_COLUMNS.map((c) => c.key)
+      )
+    );
     setCurrentPage(1);
   };
   useApplySavedView(applyView);
@@ -630,10 +647,17 @@ function OrdersPage(): React.ReactElement {
               currentFilters={filters as unknown as Record<string, unknown>}
               currentSearch={searchTerm}
               currentPageSize={pageSize}
+              currentSort={sort}
+              currentHiddenColumns={hiddenColumns}
               onApplyPreset={handleApplyPreset}
               onSaveSuccess={(preset: FilterPreset) =>
                 showToast(`Preset "${preset.name}" saved`, 'success')
               }
+            />
+            <ColumnsMenu
+              columns={ORDER_COLUMNS}
+              hidden={hiddenColumns}
+              onChange={setHiddenColumns}
             />
             <ExportMenu onExportCSV={handleExportCSV} onExportPDF={handleExportPDF} />
             <button
@@ -696,6 +720,12 @@ function OrdersPage(): React.ReactElement {
           pageSize={pageSize}
           onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}
+          sort={sort}
+          onSort={(s) => {
+            setSort(s);
+            setCurrentPage(1);
+          }}
+          hiddenColumns={hiddenColumns}
         />
       )}
     </div>

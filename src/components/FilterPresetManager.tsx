@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Pencil, Save, Star, Trash2, X } from 'lucide-react';
 import { useStoreConfig, useSearch } from '../stores';
 import Modal from './Modal';
-import type { FilterPreset } from '../types';
+import type { FilterPreset, SortState } from '../types';
 
 type FilterType = 'products' | 'orders' | 'customers';
 
@@ -11,6 +11,8 @@ interface FilterPresetManagerProps {
   currentFilters: Record<string, unknown>;
   currentSearch?: string;
   currentPageSize?: number;
+  currentSort?: SortState | null;
+  currentHiddenColumns?: string[];
   onApplyPreset?: (filters: Record<string, unknown>, preset: FilterPreset) => void;
   onSaveSuccess?: (preset: FilterPreset) => void;
 }
@@ -23,6 +25,8 @@ function FilterPresetManager({
   currentFilters,
   currentSearch,
   currentPageSize,
+  currentSort,
+  currentHiddenColumns,
   onApplyPreset,
   onSaveSuccess,
 }: FilterPresetManagerProps): React.ReactElement {
@@ -50,6 +54,8 @@ function FilterPresetManager({
       filters: currentFilters,
       search: currentSearch,
       pageSize: currentPageSize,
+      sort: currentSort,
+      hiddenColumns: currentHiddenColumns,
       storeId: saveAsGlobal ? 'all' : (currentStore?.id ?? null),
     });
 

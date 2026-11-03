@@ -4,7 +4,14 @@ import { useSearchParams } from 'react-router-dom';
 import { searchProducts, applyProductFilters } from '../utils/searchService';
 import useSettings from '../stores/settingsStore';
 import { useApplySavedView } from './useApplySavedView';
-import type { FilterPreset, Product } from '../types';
+import {
+  PRODUCT_COLUMNS,
+  PRODUCT_SORT,
+  normalizeHidden,
+  normalizeSort,
+  sortItems,
+} from '../utils/listView';
+import type { FilterPreset, Product, SortState } from '../types';
 
 export interface ProductFilters {
   stockStatus: string;
@@ -38,6 +45,10 @@ interface UseProductFiltersResult {
   handlePageChange: (page: number) => void;
   handlePageSizeChange: (size: number) => void;
   clearAllFilters: () => void;
+  sort: SortState | null;
+  setSort: (s: SortState | null) => void;
+  hiddenColumns: string[];
+  setHiddenColumns: (cols: string[]) => void;
   handleApplyPreset: (
     presetFilters: Record<string, unknown>,
     showToast: (msg: string, type: 'success' | 'error' | 'info') => void,
@@ -58,6 +69,12 @@ export function useProductFilters(products: Product[]): UseProductFiltersResult 
   const [showAdvancedFilters, setShowAdvancedFilters] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(25);
+  const [sort, setSortState] = useState<SortState | null>(null);
+  const [hiddenColumns, setHiddenColumns] = useState<string[]>([]);
+  const setSort = useCallback((s: SortState | null) => {
+    setSortState(s);
+    setCurrentPage(1);
+  }, []);
 
   const [filters, setFilters] = useState<ProductFilters>({
     stockStatus: 'all',
@@ -93,8 +110,8 @@ export function useProductFilters(products: Product[]): UseProductFiltersResult 
   }, [products, deferredSearch]);
 
   const filteredProducts = useMemo(() => {
-    return applyProductFilters(searchedProducts, filters);
-  }, [searchedProducts, filters]);
+    return sortItems(applyProductFilters(searchedProducts, filters), sort, PRODUCT_SORT);
+  }, [searchedProducts, filters, sort]);
 
   const hasActiveFilters = useMemo(() => {
     return Object.values(filters).some((value) => value !== '' && value !== 'all');
@@ -127,9 +144,20 @@ export function useProductFilters(products: Product[]): UseProductFiltersResult 
     setSearchTerm('');
   };
 
+  const applyViewExtras = (preset: FilterPreset): void => {
+    setSortState(normalizeSort(preset.sort, Object.keys(PRODUCT_SORT)));
+    setHiddenColumns(
+      normalizeHidden(
+        preset.hiddenColumns,
+        PRODUCT_COLUMNS.map((c) => c.key)
+      )
+    );
+  };
+
   useApplySavedView((preset) => {
     setFilters(preset.filters as unknown as ProductFilters);
     if (preset.pageSize) handlePageSizeChange(preset.pageSize);
+    applyViewExtras(preset);
   });
 
   const handleApplyPreset = (
@@ -139,6 +167,7 @@ export function useProductFilters(products: Product[]): UseProductFiltersResult 
   ): void => {
     setFilters(presetFilters as unknown as ProductFilters);
     if (preset?.pageSize) handlePageSizeChange(preset.pageSize);
+    if (preset) applyViewExtras(preset);
     if (preset?.search !== undefined) setSearchTerm(preset.search);
     showToast('Filter preset applied', 'success');
   };
@@ -159,6 +188,10 @@ export function useProductFilters(products: Product[]): UseProductFiltersResult 
     handlePageChange,
     handlePageSizeChange,
     clearAllFilters,
+    sort,
+    setSort,
+    hiddenColumns,
+    setHiddenColumns,
     handleApplyPreset,
     searchParams,
     setSearchParams,

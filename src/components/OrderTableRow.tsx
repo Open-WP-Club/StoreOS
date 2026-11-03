@@ -16,11 +16,14 @@ const ORDER_STATUSES: Array<{ value: OrderStatus; label: string }> = [
   { value: 'failed', label: 'Failed' },
 ];
 
+const NO_HIDDEN: string[] = [];
+
 interface OrderTableRowProps {
   order: WooCommerceOrder;
   isSelected: boolean;
   onSelect: (orderId: number) => void;
   onStatusChange?: (orderId: number, newStatus: string) => Promise<void>;
+  hiddenColumns?: string[];
 }
 
 const OrderTableRow = memo(function OrderTableRow({
@@ -28,6 +31,7 @@ const OrderTableRow = memo(function OrderTableRow({
   isSelected,
   onSelect,
   onStatusChange,
+  hiddenColumns = NO_HIDDEN,
 }: OrderTableRowProps): React.ReactElement {
   const [open, setOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
@@ -88,61 +92,69 @@ const OrderTableRow = memo(function OrderTableRow({
           #{order.id}
         </Link>
       </td>
-      <td className="px-4 py-4 whitespace-nowrap">
-        <div className="text-sm text-gray-900 dark:text-white">
-          {order.billing.first_name} {order.billing.last_name}
-        </div>
-        <div className="text-sm text-gray-500 dark:text-gray-400">{order.billing.email}</div>
-      </td>
-      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-        {formatDate(order.date_created)}
-      </td>
-      <td className="px-4 py-4 whitespace-nowrap">
-        {onStatusChange ? (
-          <div className="relative inline-block" ref={dropdownRef}>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setOpen((v) => !v);
-              }}
-              disabled={updating}
-              className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs leading-5 font-semibold rounded-full cursor-pointer transition-opacity ${getOrderStatusColor(optimisticStatus)} ${updating ? 'opacity-60' : 'hover:opacity-80'}`}
-            >
-              {updating ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
-              {optimisticStatus}
-              <ChevronDown className="w-3 h-3" />
-            </button>
-            {open && (
-              <div className="absolute z-50 mt-1 left-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg min-w-[160px]">
-                {ORDER_STATUSES.map((s) => (
-                  <button
-                    key={s.value}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void handleStatusSelect(s.value);
-                    }}
-                    className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 ${s.value === optimisticStatus ? 'font-semibold' : ''}`}
-                  >
-                    <span
-                      className={`inline-block w-2 h-2 rounded-full ${getOrderStatusColor(s.value).split(' ')[0]}`}
-                    />
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-            )}
+      {!hiddenColumns.includes('customer') && (
+        <td className="px-4 py-4 whitespace-nowrap">
+          <div className="text-sm text-gray-900 dark:text-white">
+            {order.billing.first_name} {order.billing.last_name}
           </div>
-        ) : (
-          <span
-            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getOrderStatusColor(order.status)}`}
-          >
-            {order.status}
-          </span>
-        )}
-      </td>
-      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-        {formatPrice(order.total, order.currency_symbol)}
-      </td>
+          <div className="text-sm text-gray-500 dark:text-gray-400">{order.billing.email}</div>
+        </td>
+      )}
+      {!hiddenColumns.includes('date') && (
+        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+          {formatDate(order.date_created)}
+        </td>
+      )}
+      {!hiddenColumns.includes('status') && (
+        <td className="px-4 py-4 whitespace-nowrap">
+          {onStatusChange ? (
+            <div className="relative inline-block" ref={dropdownRef}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpen((v) => !v);
+                }}
+                disabled={updating}
+                className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs leading-5 font-semibold rounded-full cursor-pointer transition-opacity ${getOrderStatusColor(optimisticStatus)} ${updating ? 'opacity-60' : 'hover:opacity-80'}`}
+              >
+                {updating ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                {optimisticStatus}
+                <ChevronDown className="w-3 h-3" />
+              </button>
+              {open && (
+                <div className="absolute z-50 mt-1 left-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg min-w-[160px]">
+                  {ORDER_STATUSES.map((s) => (
+                    <button
+                      key={s.value}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void handleStatusSelect(s.value);
+                      }}
+                      className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 ${s.value === optimisticStatus ? 'font-semibold' : ''}`}
+                    >
+                      <span
+                        className={`inline-block w-2 h-2 rounded-full ${getOrderStatusColor(s.value).split(' ')[0]}`}
+                      />
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <span
+              className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getOrderStatusColor(order.status)}`}
+            >
+              {order.status}
+            </span>
+          )}
+        </td>
+      )}
+      {!hiddenColumns.includes('total') && (
+        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+          {formatPrice(order.total, order.currency_symbol)}
+        </td>
+      )}
       <td className="px-4 py-4 whitespace-nowrap text-sm">
         <Link
           to={`/orders/${order.id}`}
