@@ -36,6 +36,10 @@ import { EMPTY_CUSTOMERS } from '../constants';
 import StatCard from '../components/StatCard';
 import PageHeader from '../components/PageHeader';
 import EmptyState from '../components/EmptyState';
+import CustomerProfileExtras from '../components/CustomerProfileExtras';
+import DuplicateCustomersModal from '../components/DuplicateCustomersModal';
+import useCustomerNotes from '../stores/customerNotesStore';
+import { findDuplicateGroups } from '../utils/customerProfile';
 
 interface CustomerStats {
   total: number;
@@ -45,6 +49,7 @@ interface CustomerStats {
 }
 
 const NOT_SYNCED = Symbol('not-synced');
+const EMPTY_ORDERS: WooCommerceOrder[] = [];
 
 function Th({ children }: { children: React.ReactNode }): React.ReactElement {
   return (
@@ -63,6 +68,10 @@ function CustomersPage(): React.ReactElement {
   const clearCacheForType = useCache((state) => state.clearCacheForType);
   const customersFromCache = useCache((state) => state.cache.customers?.data || EMPTY_CUSTOMERS);
   const currentStore = getCurrentStore();
+  const cachedOrders = useCache((state) => state.cache.orders?.data) ?? EMPTY_ORDERS;
+  const notesByStore = useCustomerNotes((s) => s.byStore);
+  const [tagFilter, setTagFilter] = useState('');
+  const [showDuplicates, setShowDuplicates] = useState(false);
   const { toasts, showToast, removeToast } = useToast();
 
   const [customers, setCustomers] = useState<Customer[]>(customersFromCache);
@@ -156,10 +165,24 @@ function CustomersPage(): React.ReactElement {
 
   // Search customers
   const deferredSearch = useDeferredValue(searchTerm);
+  const storeNotes = notesByStore[currentStore?.id ?? ''];
+  const allTags = useMemo(
+    () => [...new Set(Object.values(storeNotes ?? {}).flatMap((n) => n.tags))].sort(),
+    [storeNotes]
+  );
+  const taggedCustomers = useMemo(
+    () =>
+      tagFilter ? customers.filter((c) => storeNotes?.[c.id]?.tags.includes(tagFilter)) : customers,
+    [customers, tagFilter, storeNotes]
+  );
+  const duplicateGroups = useMemo(
+    () => (showDuplicates ? findDuplicateGroups(customers) : []),
+    [customers, showDuplicates]
+  );
   const searchedCustomers = useMemo(() => {
-    if (deferredSearch.trim() === '') return customers;
+    if (deferredSearch.trim() === '') return taggedCustomers;
     const term = deferredSearch.toLowerCase();
-    return customers.filter(
+    return taggedCustomers.filter(
       (c) =>
         c.email?.toLowerCase().includes(term) ||
         c.first_name?.toLowerCase().includes(term) ||
@@ -167,7 +190,7 @@ function CustomersPage(): React.ReactElement {
         `${c.first_name} ${c.last_name}`.toLowerCase().includes(term) ||
         c.billing?.phone?.includes(term)
     );
-  }, [customers, deferredSearch]);
+  }, [taggedCustomers, deferredSearch]);
 
   const sortedCustomers = useMemo(
     () => sortItems(searchedCustomers, sort, CUSTOMER_SORT),
@@ -355,6 +378,31 @@ function CustomersPage(): React.ReactElement {
             }}
             onSaveSuccess={(preset) => showToast(`View "${preset.name}" saved`, 'success')}
           />
+          {allTags.length > 0 && (
+            <select
+              aria-label="Filter by tag"
+              value={tagFilter}
+              onChange={(e) => {
+                setTagFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="px-2 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md"
+            >
+              <option value="">All tags</option>
+              {allTags.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          )}
+          <button
+            type="button"
+            onClick={() => setShowDuplicates(true)}
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
+          >
+            Find duplicates
+          </button>
           <ColumnsMenu
             columns={CUSTOMER_COLUMNS}
             hidden={hiddenColumns}
@@ -544,6 +592,14 @@ function CustomersPage(): React.ReactElement {
         </div>
       )}
 
+      {showDuplicates && (
+        <DuplicateCustomersModal
+          groups={duplicateGroups}
+          storeId={currentStore.id}
+          onClose={() => setShowDuplicates(false)}
+        />
+      )}
+
       {/* Customer Detail Modal */}
       {selectedCustomer && (
         <Modal
@@ -613,6 +669,12 @@ function CustomersPage(): React.ReactElement {
                 <p className="text-sm text-gray-600 dark:text-gray-400">Avg Order</p>
               </div>
             </div>
+
+            <CustomerProfileExtras
+              customer={selectedCustomer}
+              storeId={currentStore.id}
+              orders={cachedOrders}
+            />
 
             {/* Contact Info */}
             <div className="mb-6">
