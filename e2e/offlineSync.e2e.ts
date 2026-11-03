@@ -19,8 +19,17 @@ test('POS sale made offline is queued, then synced exactly once', async () => {
   await page.getByRole('button', { name: 'Карта' }).click();
 
   await setOffline(page, true);
-  // The fixed offline badge overlaps this button at the default window size, so dispatch the click.
-  await page.getByRole('button', { name: 'Завърши' }).dispatchEvent('click');
+  const finish = page.getByRole('button', { name: 'Завърши' });
+  // Regression: the offline badge must not sit on top of the checkout button.
+  await expect
+    .poll(() =>
+      finish.evaluate((el) => {
+        const r = el.getBoundingClientRect();
+        return el.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2));
+      })
+    )
+    .toBe(true);
+  await finish.click();
   await expect(page.getByText(/Офлайн: продажбата е запазена/)).toBeVisible({ timeout: 10_000 });
   await page.waitForTimeout(3000);
   expect(mock.created.orders).toHaveLength(0);
