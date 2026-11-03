@@ -28,10 +28,18 @@ const DashboardTopProducts = React.memo(function DashboardTopProducts({
         <table className="w-full">
           <thead>
             <tr className="text-left text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
-              <th className="pb-2 font-medium">#</th>
-              <th className="pb-2 font-medium">Product</th>
-              <th className="pb-2 font-medium text-right">Qty Sold</th>
-              <th className="pb-2 font-medium text-right">Revenue</th>
+              <th scope="col" className="pb-2 font-medium">
+                #
+              </th>
+              <th scope="col" className="pb-2 font-medium">
+                Product
+              </th>
+              <th scope="col" className="pb-2 font-medium text-right">
+                Qty Sold
+              </th>
+              <th scope="col" className="pb-2 font-medium text-right">
+                Revenue
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-700">

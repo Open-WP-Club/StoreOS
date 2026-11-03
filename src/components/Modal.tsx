@@ -1,4 +1,4 @@
-import { useEffect, type ReactElement, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactElement, type ReactNode } from 'react';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -16,6 +16,9 @@ interface ModalProps {
   children: ReactNode;
 }
 
+const FOCUSABLE =
+  'a[href],button:not([disabled]),input:not([disabled]):not([type=hidden]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+
 /** Shared modal shell: dimmed backdrop + dialog panel, Escape/backdrop to close. */
 export default function Modal({
   onClose,
@@ -27,6 +30,20 @@ export default function Modal({
   children,
   ...aria
 }: ModalProps): ReactElement {
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // Initial focus (first autofocus/focusable, else the panel) + restore focus on close.
+  useEffect(() => {
+    const prev = document.activeElement as HTMLElement | null;
+    const panel = panelRef.current;
+    if (panel && !panel.contains(document.activeElement)) {
+      (panel.querySelector<HTMLElement>('[autofocus],[data-autofocus]') ?? panel).focus();
+    }
+    return () => {
+      if (prev?.isConnected) prev.focus();
+    };
+  }, []);
+
   useEffect(() => {
     if (!closeOnEscape) return;
     const onKey = (e: KeyboardEvent): void => {
@@ -50,8 +67,28 @@ export default function Modal({
         role="dialog"
         aria-modal="true"
         tabIndex={-1}
+        ref={panelRef}
         onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          e.stopPropagation();
+          if (e.key !== 'Tab') return;
+          // Focus trap: cycle Tab / Shift+Tab inside the dialog.
+          const items = Array.from(e.currentTarget.querySelectorAll<HTMLElement>(FOCUSABLE));
+          const first = items[0];
+          const last = items[items.length - 1];
+          if (!first || !last) {
+            e.preventDefault();
+            return;
+          }
+          const active = document.activeElement;
+          if (e.shiftKey && (active === first || active === e.currentTarget)) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && active === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }}
         aria-label={title}
         {...aria}
       >

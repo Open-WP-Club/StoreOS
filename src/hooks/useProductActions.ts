@@ -345,7 +345,8 @@ export function useProductActions(
     const service = new WooCommerceService(currentStore);
     const ids = selectedProductIds;
     const applyDeleted = async (deletedIds: number[]): Promise<void> => {
-      const updatedProducts = products.filter((p) => !deletedIds.includes(p.id));
+      const deletedSet = new Set(deletedIds);
+      const updatedProducts = products.filter((p) => !deletedSet.has(p.id));
       setProducts(updatedProducts);
       await setCachedData('products', updatedProducts);
       logActivity({
@@ -464,7 +465,8 @@ export function useProductActions(
   };
 
   const getSelectedProducts = (products: Product[]): Product[] => {
-    return products.filter((p) => selectedProductIds.includes(p.id));
+    const sel = new Set(selectedProductIds);
+    return products.filter((p) => sel.has(p.id));
   };
 
   return {

@@ -48,7 +48,10 @@ const NOT_SYNCED = Symbol('not-synced');
 
 function Th({ children }: { children: React.ReactNode }): React.ReactElement {
   return (
-    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+    <th
+      scope="col"
+      className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+    >
       {children}
     </th>
   );

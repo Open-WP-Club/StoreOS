@@ -224,7 +224,8 @@ function OrdersPage(): React.ReactElement {
 
   // Get selected orders objects
   const selectedOrders = useMemo(() => {
-    return orders.filter((order) => selectedOrderIds.includes(order.id));
+    const sel = new Set(selectedOrderIds);
+    return orders.filter((order) => sel.has(order.id));
   }, [orders, selectedOrderIds]);
 
   // Offline: queue one batch_orders status update (replayed in order on reconnect) and apply it locally.
@@ -238,7 +239,8 @@ function OrdersPage(): React.ReactElement {
       execute: async () => undefined, // never runs: only reached when offline
     });
     if (!res.queued) return;
-    const updatedOrders = orders.map((o) => (ids.includes(o.id) ? { ...o, status } : o));
+    const idSet = new Set(ids);
+    const updatedOrders = orders.map((o) => (idSet.has(o.id) ? { ...o, status } : o));
     setOrders(updatedOrders);
     await setCachedData('orders', updatedOrders);
     setSelectedOrderIds([]);
@@ -272,8 +274,9 @@ function OrdersPage(): React.ReactElement {
         return;
       }
 
+      const okSet = new Set(succeededIds);
       const updatedOrders = orders.map((order) =>
-        succeededIds.includes(order.id) ? { ...order, status: newStatus } : order
+        okSet.has(order.id) ? { ...order, status: newStatus } : order
       );
       setOrders(updatedOrders);
       await setCachedData('orders', updatedOrders);
@@ -359,8 +362,9 @@ function OrdersPage(): React.ReactElement {
       }
 
       if (succeededIds.length > 0) {
+        const okSet = new Set(succeededIds);
         const updatedOrders = orders.map((o) =>
-          succeededIds.includes(o.id) ? { ...o, status: 'completed' as OrderStatus } : o
+          okSet.has(o.id) ? { ...o, status: 'completed' as OrderStatus } : o
         );
         setOrders(updatedOrders);
         await setCachedData('orders', updatedOrders);
@@ -439,7 +443,8 @@ function OrdersPage(): React.ReactElement {
         execute: async () => undefined, // never runs: only reached when offline
       });
       if (!res.queued) return;
-      const remaining = orders.filter((o) => !ids.includes(o.id));
+      const idSet = new Set(ids);
+      const remaining = orders.filter((o) => !idSet.has(o.id));
       setOrders(remaining);
       await setCachedData('orders', remaining);
       setSelectedOrderIds([]);
@@ -463,7 +468,8 @@ function OrdersPage(): React.ReactElement {
       }
 
       // Update local state
-      const remainingOrders = orders.filter((order) => !deletedIds.includes(order.id));
+      const deletedSet = new Set(deletedIds);
+      const remainingOrders = orders.filter((order) => !deletedSet.has(order.id));
       setOrders(remainingOrders);
       await setCachedData('orders', remainingOrders);
       logActivity({
