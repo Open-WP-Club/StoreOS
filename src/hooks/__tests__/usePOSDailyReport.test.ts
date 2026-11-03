@@ -2,6 +2,7 @@ import { vi, Mock } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { usePOSDailyReport } from '../usePOSDailyReport';
 import { useStoreConfig } from '../../stores';
+import { summarizePayments } from '../../utils/payments';
 import { usePOSStore } from '../../stores/posStore';
 import WooCommerceService from '../../services/woocommerce';
 import { createMockStore } from '../../__test_utils__';
@@ -45,6 +46,9 @@ describe('usePOSDailyReport', () => {
       amountTendered: 0,
       getDiscountAmount: () => 0,
       getChange: () => 0,
+      getLineDiscountAmount: () => 0,
+      getTotals: () => ({ lines: [{ discountCents: 0 }] }),
+      getPaymentSummary: () => summarizePayments([{ method: 'cash', amount: 20 }], 20),
     });
 
     (WooCommerceService as Mock).mockImplementation(function () {
@@ -253,6 +257,9 @@ describe('usePOSDailyReport', () => {
       amountTendered: 0,
       getDiscountAmount: () => 0,
       getChange: () => 0,
+      getLineDiscountAmount: () => 0,
+      getTotals: () => ({ lines: [{ discountCents: 0 }] }),
+      getPaymentSummary: () => summarizePayments([{ method: 'card', amount: 15 }], 15),
     });
 
     const { result } = renderHook(() => usePOSDailyReport());

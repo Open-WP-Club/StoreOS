@@ -15,6 +15,9 @@ import { usePOSProducts } from '../hooks/usePOSProducts';
 import { usePOSCheckout } from '../hooks/usePOSCheckout';
 import { usePOSDailyReport } from '../hooks/usePOSDailyReport';
 import { usePOSVariants } from '../hooks/usePOSVariants';
+import { useToast } from '../contexts/ToastContext';
+import { useBarcodeScanner } from '../hooks/useBarcodeScanner';
+import { findProductByCode } from '../utils/barcodeScanner';
 import { storeCurrencySymbol } from '../utils/currency';
 import Numpad from '../components/Numpad';
 import POSProductGrid from '../components/POSProductGrid';
@@ -54,6 +57,11 @@ export default function POSPage(): ReactElement {
     getDiscountAmount,
     getTotal,
     getChange,
+    setLineDiscount,
+    getLineDiscountAmount,
+    splitPayments,
+    setSplitPayments,
+    getPaymentSummary,
     getItemCount,
   } = posStore;
 
@@ -62,6 +70,16 @@ export default function POSPage(): ReactElement {
   const checkout = usePOSCheckout(dailyReport.saveRecentTransaction);
   const productsHook = usePOSProducts(addToCart);
   const variants = usePOSVariants(addToCart);
+
+  // Hardware barcode scanner: fast keyboard burst + Enter, looked up by SKU / barcode meta
+  const toast = useToast();
+  const { products: scanProducts } = productsHook;
+  const { handleProductClick } = variants;
+  useBarcodeScanner((code) => {
+    const product = findProductByCode(scanProducts, code);
+    if (product) void handleProductClick(product);
+    else toast.warning(`Няма продукт с код ${code}`);
+  }, !checkout.showCheckout);
 
   // Numpad state
   const [numpadOpen, setNumpadOpen] = useState(false);
@@ -159,10 +177,7 @@ export default function POSPage(): ReactElement {
         }
         if (e.key === 'F4' || (e.key === 'Enter' && !isInputField)) {
           e.preventDefault();
-          if (
-            !checkout.processingOrder &&
-            (paymentMethod !== 'cash' || amountTendered >= getTotal())
-          ) {
+          if (!checkout.processingOrder && getPaymentSummary().valid) {
             checkout.handleCheckout();
           }
         }
@@ -173,16 +188,7 @@ export default function POSPage(): ReactElement {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [
-    cart,
-    checkout,
-    productsHook,
-    paymentMethod,
-    amountTendered,
-    updateQuantity,
-    setPaymentMethod,
-    getTotal,
-  ]);
+  }, [cart, checkout, productsHook, updateQuantity, setPaymentMethod, getPaymentSummary]);
 
   if (!currentStore) {
     return (
@@ -334,6 +340,11 @@ export default function POSPage(): ReactElement {
           getDiscountAmount={getDiscountAmount}
           getTotal={getTotal}
           getChange={getChange}
+          setLineDiscount={setLineDiscount}
+          getLineDiscountAmount={getLineDiscountAmount}
+          splitPayments={splitPayments}
+          setSplitPayments={setSplitPayments}
+          getPaymentSummary={getPaymentSummary}
           getItemCount={getItemCount}
           showCheckout={checkout.showCheckout}
           setShowCheckout={checkout.setShowCheckout}

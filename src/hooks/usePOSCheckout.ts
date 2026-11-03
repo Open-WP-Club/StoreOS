@@ -14,6 +14,8 @@ import {
   isOfflineFailure,
   type PosSaleOpData,
 } from '../utils/posOfflineSale';
+import { buildDiscountOrderParts } from '../utils/posPricing';
+import { PAYMENTS_META, paymentTitle } from '../utils/payments';
 import type { WooCommerceCustomer } from '../types';
 
 interface UsePOSCheckoutResult {
@@ -47,13 +49,13 @@ export function usePOSCheckout(
   const {
     cart,
     clearCart,
-    paymentMethod,
     discountType,
     discountValue,
     getDiscountAmount,
+    getLineDiscountAmount,
+    getTotals,
     getTotal,
-    getChange,
-    amountTendered,
+    getPaymentSummary,
   } = usePOSStore();
 
   const checkoutInFlight = useRef(false);
@@ -115,31 +117,36 @@ export function usePOSCheckout(
       setProcessingOrder(true);
       const service = new WooCommerceService(currentStore);
 
-      const lineItems = cart.map((item) => ({
-        product_id: item.product.id,
-        quantity: item.quantity,
-      }));
+      const totals = getTotals();
+      const parts = buildDiscountOrderParts(
+        cart.map((i) => ({
+          productId: i.product.id,
+          quantity: i.quantity,
+          price: i.price,
+          discount: i.discount,
+        })),
+        { type: discountType, value: discountValue },
+        totals
+      );
+      const pay = getPaymentSummary();
+      const payTitle = paymentTitle(pay.applied);
+      const methods = new Set(pay.applied.map((p) => p.method));
+      const totalDiscount = getDiscountAmount() + getLineDiscountAmount();
 
       // Idempotency key: one per sale, travels with the order whether it is sent now or replayed
       const clientId = crypto.randomUUID();
       const orderData = {
-        meta_data: [{ key: CLIENT_ID_META, value: clientId }],
+        meta_data: [
+          { key: CLIENT_ID_META, value: clientId },
+          { key: PAYMENTS_META, value: JSON.stringify(pay.applied) },
+        ],
         status: 'completed' as const,
-        payment_method: paymentMethod,
-        payment_method_title:
-          paymentMethod === 'cash' ? 'Каса' : paymentMethod === 'card' ? 'Карта' : 'Друго',
+        payment_method: methods.size === 1 ? [...methods][0] : 'split',
+        payment_method_title: payTitle,
         set_paid: true,
-        line_items: lineItems,
+        ...parts,
         ...(selectedCustomer && {
           customer_id: selectedCustomer.id,
-        }),
-        ...(discountValue > 0 && {
-          fee_lines: [
-            {
-              name: discountType === 'percent' ? `Отстъпка ${discountValue}%` : 'Отстъпка',
-              total: (-getDiscountAmount()).toString(),
-            },
-          ],
         }),
         ...(orderNote.trim() && {
           customer_note: orderNote.trim(),
@@ -152,18 +159,24 @@ export function usePOSCheckout(
         if (!app.autoPrintReceipt) return;
         const receipt = buildReceipt({
           storeName: currentStore.name,
-          items: cart.map((i) => ({ name: i.product.name, quantity: i.quantity, price: i.price })),
-          discount: getDiscountAmount(),
+          items: cart.map((i, idx) => ({
+            name: i.product.name,
+            quantity: i.quantity,
+            price: i.price,
+            discount: (totals.lines[idx]?.discountCents ?? 0) / 100,
+          })),
+          discount: totalDiscount,
           total: getTotal(),
-          paymentMethod: orderData.payment_method_title,
-          tendered: paymentMethod === 'cash' ? amountTendered : undefined,
-          change: getChange(),
+          paymentMethod: payTitle,
+          payments: pay.applied,
+          tendered: methods.has('cash') ? pay.tendered : undefined,
+          change: pay.change,
           orderId,
           vatRate: app.receiptVatRate,
         });
         void printReceipt(receipt, {
           printer: app.defaultPrinter,
-          openDrawer: app.openCashDrawer && paymentMethod === 'cash',
+          openDrawer: app.openCashDrawer && methods.has('cash'),
           currencySymbol: storeCurrencySymbol(currentStore),
           store: currentStore,
         }).then((ok) => {

@@ -7,6 +7,7 @@ import { downloadCSV } from '../utils/csvExport';
 import { posTransactionsInRange } from '../utils/reportRows';
 import { getAppLocale } from '../utils/dateTime';
 import { storeCurrencySymbol } from '../utils/currency';
+import { methodTotals, paymentTitle, type Payment } from '../utils/payments';
 import { RECENT_TRANSACTIONS_KEY, POS_TX_EVENT } from '../utils/posOfflineSale';
 
 interface TransactionItem {
@@ -14,6 +15,8 @@ interface TransactionItem {
   name: string;
   quantity: number;
   price: number;
+  /** Line discount amount (positive). */
+  discount?: number;
 }
 
 export interface RecentTransaction {
@@ -22,6 +25,8 @@ export interface RecentTransaction {
   itemCount: number;
   items: TransactionItem[];
   paymentMethod: string;
+  /** Applied amounts per method (split payments); absent on older transactions. */
+  payments?: Payment[];
   customerName?: string;
   /** Kept for receipt reprints. */
   discount?: number;
@@ -69,12 +74,12 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
 
   const {
     cart,
-    paymentMethod,
-    amountTendered,
     getTotal,
     getItemCount,
     getDiscountAmount,
-    getChange,
+    getLineDiscountAmount,
+    getPaymentSummary,
+    getTotals,
   } = usePOSStore();
 
   const [showRecentTransactions, setShowRecentTransactions] = useState(false);
@@ -103,22 +108,27 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
   // Save transaction to recent list
   const saveRecentTransaction = useCallback(
     (orderId: number, pendingClientId?: string): void => {
-      const items: TransactionItem[] = cart.map((item) => ({
+      const lineTotals = getTotals().lines;
+      const items: TransactionItem[] = cart.map((item, idx) => ({
         productId: item.product.id,
         name: item.product.name,
         quantity: item.quantity,
         price: item.price,
+        ...((lineTotals[idx]?.discountCents ?? 0) > 0 && {
+          discount: (lineTotals[idx]?.discountCents ?? 0) / 100,
+        }),
       }));
 
+      const pay = getPaymentSummary();
       const transaction: RecentTransaction = {
         id: orderId,
         total: getTotal(),
         itemCount: getItemCount(),
         items,
-        paymentMethod:
-          paymentMethod === 'cash' ? 'Каса' : paymentMethod === 'card' ? 'Карта' : 'Друго',
-        discount: getDiscountAmount(),
-        ...(paymentMethod === 'cash' && { tendered: amountTendered, change: getChange() }),
+        paymentMethod: paymentTitle(pay.applied),
+        payments: pay.applied,
+        discount: getDiscountAmount() + getLineDiscountAmount(),
+        ...(pay.tendered > 0 && { tendered: pay.tendered, change: pay.change }),
         timestamp: new Date().toISOString(),
         refunded: false,
         ...(pendingClientId && { pending: true, clientId: pendingClientId }),
@@ -135,7 +145,15 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
         return updated;
       });
     },
-    [cart, paymentMethod, getTotal, getItemCount, getDiscountAmount, getChange, amountTendered]
+    [
+      cart,
+      getTotal,
+      getItemCount,
+      getDiscountAmount,
+      getLineDiscountAmount,
+      getPaymentSummary,
+      getTotals,
+    ]
   );
 
   const getTodayTransactions = useCallback((): RecentTransaction[] => {
@@ -153,13 +171,11 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
 
     const byPaymentMethod: Record<string, { total: number; count: number }> = {};
     todayTx.forEach((tx) => {
-      const method = tx.paymentMethod;
-      if (!byPaymentMethod[method]) {
-        byPaymentMethod[method] = { total: 0, count: 0 };
-      }
-      const entry = byPaymentMethod[method];
-      entry.total += tx.total;
-      entry.count += 1;
+      methodTotals(tx).forEach(({ label, amount }) => {
+        const entry = (byPaymentMethod[label] ??= { total: 0, count: 0 });
+        entry.total += amount;
+        entry.count += 1;
+      });
     });
 
     const productSales: Record<number, { name: string; quantity: number; revenue: number }> = {};

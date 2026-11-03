@@ -10,6 +10,10 @@ vi.mock('../../stores', () => ({
   useStoreConfig: vi.fn(),
 }));
 
+vi.mock('../../contexts/ToastContext', () => ({
+  useToast: () => ({ warning: vi.fn(), error: vi.fn(), success: vi.fn() }),
+}));
+
 vi.mock('../../stores/posStore', () => ({
   usePOSStore: vi.fn(),
 }));

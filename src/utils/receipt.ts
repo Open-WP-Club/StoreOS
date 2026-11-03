@@ -1,12 +1,15 @@
 import { formatPrice } from './currency';
+import { PAY_LABEL, type Payment } from './payments';
 
 interface ReceiptInput {
   storeName: string;
-  items: Array<{ name: string; quantity: number; price: number }>;
-  /** Discount amount (positive). */
+  items: Array<{ name: string; quantity: number; price: number; discount?: number }>;
+  /** Total discount amount incl. line discounts (positive). */
   discount?: number;
   total: number;
   paymentMethod: string;
+  /** Split-payment breakdown (applied amounts); shown when more than one. */
+  payments?: Payment[];
   tendered?: number;
   change?: number;
   /** Server order id; 0/undefined means the sale is still pending (offline). */
@@ -20,13 +23,21 @@ interface ReceiptInput {
 
 export interface Receipt {
   storeName: string;
-  lines: Array<{ name: string; quantity: number; unitPrice: number; total: number }>;
+  lines: Array<{
+    name: string;
+    quantity: number;
+    unitPrice: number;
+    /** Gross line total (before line discount). */
+    total: number;
+    discount: number;
+  }>;
   subtotal: number;
   discount: number;
   vatRate: number;
   vat: number;
   total: number;
   paymentMethod: string;
+  payments: Payment[];
   tendered: number | null;
   change: number | null;
   /** null = pending (offline sale, no order number yet). */
@@ -43,6 +54,7 @@ export function buildReceipt(input: ReceiptInput): Receipt {
     quantity: i.quantity,
     unitPrice: i.price,
     total: round2(i.price * i.quantity),
+    discount: round2(i.discount ?? 0),
   }));
   const vatRate = input.vatRate ?? 20;
   return {
@@ -54,6 +66,7 @@ export function buildReceipt(input: ReceiptInput): Receipt {
     vat: round2((input.total * vatRate) / (100 + vatRate)),
     total: round2(input.total),
     paymentMethod: input.paymentMethod,
+    payments: input.payments ?? [],
     tendered: input.tendered && input.tendered > 0 ? input.tendered : null,
     change: input.change && input.change > 0 ? input.change : null,
     orderId: input.orderId && input.orderId > 0 ? input.orderId : null,
@@ -80,7 +93,8 @@ export function renderReceiptHtml(r: Receipt, currencySymbol: string | null = nu
     .map(
       (l) =>
         `<div class="item">${escapeHtml(l.name)}</div>` +
-        row(`${escapeHtml(l.quantity)} x ${money(l.unitPrice)}`, money(l.total))
+        row(`${escapeHtml(l.quantity)} x ${money(l.unitPrice)}`, money(l.total)) +
+        (l.discount > 0 ? row('Отстъпка', '-' + money(l.discount)) : '')
     )
     .join('');
   const order = r.orderId === null ? 'Чака синхронизация' : `Поръчка #${escapeHtml(r.orderId)}`;
@@ -106,7 +120,11 @@ ${r.discount > 0 ? row('Междинна сума', money(r.subtotal)) + row('О
 ${r.vatRate > 0 ? row(`ДДС ${escapeHtml(r.vatRate)}% (вкл.)`, money(r.vat)) : ''}
 <div class="row total"><span>ОБЩО</span><span>${money(r.total)}</span></div>
 <hr>
-${row('Плащане', escapeHtml(r.paymentMethod))}
+${
+  r.payments.length > 1
+    ? r.payments.map((p) => row(escapeHtml(PAY_LABEL[p.method]), money(p.amount))).join('')
+    : row('Плащане', escapeHtml(r.paymentMethod))
+}
 ${r.tendered !== null ? row('Получени', money(r.tendered)) : ''}
 ${r.change !== null ? row('Ресто', money(r.change)) : ''}
 <hr><div class="c">Благодарим Ви!</div>

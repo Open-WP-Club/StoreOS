@@ -463,7 +463,7 @@ describe('posStore', () => {
         expect(result.current.getDiscountAmount()).toBe(15);
       });
 
-      it('should cap fixed discount at subtotal', () => {
+      it('should cap fixed discount at the max discount share of the subtotal', () => {
         const { result } = renderHook(() => usePOSStore());
 
         act(() => {
@@ -471,7 +471,7 @@ describe('posStore', () => {
           result.current.setDiscount('fixed', 100);
         });
 
-        expect(result.current.getDiscountAmount()).toBe(25); // Capped at subtotal
+        expect(result.current.getDiscountAmount()).toBe(12.5); // 50% cap
       });
     });
 
