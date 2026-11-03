@@ -129,8 +129,8 @@ describe('OfflineIndicator', () => {
   });
 
   it('Sync Now processes immediately; thrown errors become lastError', async () => {
-    svc.createOrder.mockRejectedValue(new Error('net'));
-    useOffline.getState().addPendingOperation('create_order', { total: '1' }, 's1');
+    svc.updateOrder.mockRejectedValue(new Error('net'));
+    useOffline.getState().addPendingOperation('update_order', { id: 1 }, 's1');
     render(<OfflineIndicator />);
     fireEvent.click(screen.getByText(/1 pending/));
     await act(async () => {
