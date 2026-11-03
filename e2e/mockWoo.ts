@@ -8,6 +8,15 @@ export interface MockWoo {
   url: string;
   /** Requests seen, e.g. "GET /wp-json/wc/v3/orders". */
   log: string[];
+  /** Mutating requests with parsed JSON bodies. */
+  calls: Array<{ method: string; path: string; body: any }>;
+  /** Items created through the API (orders, products, categories) and refunds. */
+  created: {
+    orders: any[];
+    products: any[];
+    categories: any[];
+    refunds: any[];
+  };
   /** Number of requests rejected for bad credentials. */
   denied: () => number;
   close: () => Promise<void>;
@@ -74,9 +83,33 @@ export async function startMockWoo(
     customers: counts.customers ?? 120,
   };
   const log: string[] = [];
+  const calls: MockWoo['calls'] = [];
+  const created: MockWoo['created'] = { orders: [], products: [], categories: [], refunds: [] };
+  let nextId = 9000;
   let denied = 0;
 
+  /** Page through `list` = generated items + API-created extras (only built when extras exist). */
+  const pageOf = (name: string, extras: unknown[], u: URL, res: http.ServerResponse) => {
+    const perPage = Math.min(Number(u.searchParams.get('per_page') ?? 10), 100);
+    const page = Number(u.searchParams.get('page') ?? 1);
+    let all: any[] = [];
+    const n = total[name] ?? 0;
+    for (let id = 1; id <= n; id++) all.push((makers[name] as (i: number) => unknown)(id));
+    all = all.concat(extras);
+    const sku = u.searchParams.get('sku');
+    if (sku) all = all.filter((p) => p.sku === sku);
+    res.setHeader('x-wp-total', String(all.length));
+    res.setHeader('x-wp-totalpages', String(Math.max(1, Math.ceil(all.length / perPage))));
+    res.end(JSON.stringify(all.slice((page - 1) * perPage, page * perPage)));
+  };
+
   const server = http.createServer((req, res) => {
+    let body = '';
+    req.on('data', (c) => (body += c));
+    req.on('end', () => handle(req, res, body));
+  });
+
+  const handle = (req: http.IncomingMessage, res: http.ServerResponse, rawBody: string) => {
     const u = new URL(req.url ?? '/', 'http://x');
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
@@ -110,18 +143,101 @@ export async function startMockWoo(
         })
       );
     }
+    const json = (v: unknown) => void res.end(JSON.stringify(v));
+    const body = rawBody ? JSON.parse(rawBody) : undefined;
+    if (req.method !== 'GET') calls.push({ method: req.method ?? '', path: u.pathname, body });
+    const rest = u.pathname.replace('/wp-json/wc/v3/', '');
+    const mk = (extra: object) => ({
+      id: nextId++,
+      date_modified: new Date().toISOString(),
+      ...extra,
+    });
+
+    if (rest === 'products/attributes') return json([]);
+    if (rest === 'products/categories') {
+      const all = created.categories;
+      res.setHeader('x-wp-total', String(all.length));
+      res.setHeader('x-wp-totalpages', '1');
+      return json(all);
+    }
+    if (rest === 'products/categories/batch') {
+      const out = (body.create ?? []).map((c: object) => {
+        const item = mk({ count: 0, ...c });
+        created.categories.push(item);
+        return item;
+      });
+      return json({ create: out, update: [], delete: [] });
+    }
+    if (rest === 'products/batch') {
+      const out = (body.create ?? []).map((c: object) => {
+        const item = mk({ ...product(1), name: '', ...c });
+        created.products.push(item);
+        return item;
+      });
+      const upd = (body.update ?? []).map((c: { id: number }) => {
+        const ex = created.products.find((p) => p.id === c.id);
+        return ex ? Object.assign(ex, c) : { ...product(c.id), ...c };
+      });
+      return json({ create: out, update: upd, delete: [] });
+    }
+    if (rest === 'products' && req.method === 'POST') {
+      const item = mk({ ...product(1), ...body });
+      created.products.push(item);
+      return json(item);
+    }
+    if (rest === 'products' && (created.products.length || u.searchParams.has('sku'))) {
+      return pageOf('products', created.products, u, res);
+    }
+    if (rest === 'orders' && req.method === 'POST') {
+      const lines = (body.line_items ?? []).map(
+        (l: { product_id: number; quantity: number }, i: number) => ({
+          id: i + 1,
+          name: `Product ${l.product_id}`,
+          product_id: l.product_id,
+          quantity: l.quantity,
+          total: (9.99 * l.quantity).toFixed(2),
+        })
+      );
+      const sum = lines.reduce((a: number, l: { total: string }) => a + Number(l.total), 0);
+      const item = mk({
+        ...order(1),
+        ...body,
+        number: String(nextId),
+        date_created: new Date().toISOString(),
+        line_items: lines,
+        total: sum.toFixed(2),
+        currency_symbol: '$',
+      });
+      item.number = String(item.id);
+      created.orders.push(item);
+      return json(item);
+    }
+    if (rest === 'orders' && created.orders.length) return pageOf('orders', created.orders, u, res);
+    const orderOne = /^orders\/(\d+)(\/refunds)?$/.exec(rest);
+    const createdOrder = orderOne && created.orders.find((o) => o.id === Number(orderOne[1]));
+    if (orderOne?.[2]) {
+      const id = Number(orderOne[1]);
+      if (req.method === 'POST') {
+        const r = mk({ ...body, order_id: id, total: `-${body.amount}`, amount: body.amount });
+        created.refunds.push(r);
+        return json(r);
+      }
+      return json(created.refunds.filter((r) => r.order_id === id));
+    }
+    if (createdOrder && req.method === 'GET') {
+      const refunds = created.refunds.filter((r) => r.order_id === createdOrder.id);
+      return json({ ...createdOrder, refunds: refunds.map((r) => ({ id: r.id, total: r.total })) });
+    }
+    if (rest === 'orders' && req.method === 'POST') return json({});
+
     const make = makers[name];
     if (!make) return void res.end('[]');
     const one = /^\/wp-json\/wc\/v3\/[a-z_]+\/(\d+)$/.exec(u.pathname)?.[1];
     if (one) {
       // Single-item read / update (PUT merges the JSON body into the generated item).
-      let body = '';
-      req.on('data', (c) => (body += c));
-      req.on('end', () => {
-        const patch = req.method === 'PUT' && body ? JSON.parse(body) : {};
-        res.end(JSON.stringify({ ...(make(Number(one)) as object), ...patch }));
-      });
-      return;
+      const patch = req.method === 'PUT' && body ? body : {};
+      const ex = created.products.find((p) => p.id === Number(one));
+      return json({ ...((ex ?? make(Number(one))) as object), ...patch });
     }
     const perPage = Math.min(Number(u.searchParams.get('per_page') ?? 10), 100);
     const page = Number(u.searchParams.get('page') ?? 1);
@@ -133,13 +249,15 @@ export async function startMockWoo(
     res.setHeader('x-wp-total', String(n));
     res.setHeader('x-wp-totalpages', String(Math.max(1, Math.ceil(n / perPage))));
     res.end(JSON.stringify(items));
-  });
+  };
 
   await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
   const { port } = server.address() as AddressInfo;
   return {
     url: `http://localhost:${port}`,
     log,
+    calls,
+    created,
     denied: () => denied,
     close: () =>
       new Promise((r) => {

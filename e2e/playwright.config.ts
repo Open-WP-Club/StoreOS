@@ -6,5 +6,6 @@ export default defineConfig({
   testMatch: '*.e2e.ts',
   timeout: 180_000,
   workers: 1,
+  use: { actionTimeout: 15_000 },
   reporter: [['list']],
 });
