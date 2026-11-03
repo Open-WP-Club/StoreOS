@@ -16,7 +16,11 @@ export function POSShortcutsPanel({ onClose }: POSShortcutsPanelProps): ReactEle
           <Keyboard className="w-4 h-4" />
           Клавиатурни shortcuts
         </h3>
-        <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+        <button
+          onClick={onClose}
+          aria-label="Затвори"
+          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+        >
           <X className="w-4 h-4 text-gray-400" />
         </button>
       </div>

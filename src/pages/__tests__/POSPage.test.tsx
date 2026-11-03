@@ -186,6 +186,18 @@ describe('POSPage', () => {
     expect(document.body).toBeTruthy();
   });
 
+  it('header buttons have accessible names', () => {
+    render(
+      <MemoryRouter>
+        <POSPage />
+      </MemoryRouter>
+    );
+    const header = document.querySelector('header')!;
+    const buttons = Array.from(header.querySelectorAll('button'));
+    expect(buttons.length).toBeGreaterThan(0);
+    for (const b of buttons) expect(b.getAttribute('aria-label')?.trim()).toBeTruthy();
+  });
+
   it('should show setup message when no store configured', () => {
     (useStoreConfig as unknown as Mock).mockImplementation(
       (selector?: (state: unknown) => unknown) => {

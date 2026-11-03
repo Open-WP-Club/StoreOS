@@ -60,6 +60,7 @@ export function POSVariantPickerModal({
           </div>
           <button
             onClick={onClose}
+            aria-label="Затвори"
             className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
           >
             <X className="w-5 h-5 text-gray-400" />

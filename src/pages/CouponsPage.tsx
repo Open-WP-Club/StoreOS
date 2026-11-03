@@ -12,6 +12,7 @@ import ExportMenu from '../components/ExportMenu';
 import Pagination from '../components/Pagination';
 import ToastContainer from '../components/ToastContainer';
 import LoadingIndicator from '../components/LoadingIndicator';
+import ListStatus from '../components/ListStatus';
 import CouponFormModal from '../components/CouponFormModal';
 import { useToast } from '../hooks/useToast';
 import { useOfflineMutation } from '../hooks/useOfflineMutation';
@@ -444,6 +445,11 @@ function CouponsPage(): React.ReactElement {
   return (
     <div>
       <LoadingIndicator loadingState={loadingState} />
+      <ListStatus
+        loading={loading || loadingState.isLoading}
+        count={filteredCoupons.length}
+        noun="coupons"
+      />
       <ToastContainer toasts={toast.toasts} removeToast={toast.removeToast} />
 
       <PageHeader title="Coupons" subtitle="Manage your discount codes" />

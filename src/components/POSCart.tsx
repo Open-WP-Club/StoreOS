@@ -145,6 +145,7 @@ export function POSCart({
               </div>
               <button
                 onClick={onClearCustomer}
+                aria-label="Премахни клиента"
                 className="p-1 text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-200"
               >
                 <X className="w-4 h-4" />
@@ -213,6 +214,7 @@ export function POSCart({
 
                 <button
                   onClick={() => removeFromCart(item.product.id)}
+                  aria-label={`Премахни ${item.product.name}`}
                   className="p-1 text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -223,6 +225,7 @@ export function POSCart({
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                    aria-label={`Намали количеството на ${item.product.name}`}
                     className="w-8 h-8 rounded-lg bg-white dark:bg-gray-600 border border-gray-200 dark:border-gray-500 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-500 transition-colors"
                   >
                     <Minus className="w-4 h-4" />
@@ -231,11 +234,13 @@ export function POSCart({
                     onClick={() => onOpenQuantityNumpad(item.product.id, item.quantity)}
                     className="w-12 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 text-center font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
                     title="Натисни за numpad"
+                    aria-label={`Количество на ${item.product.name}: ${item.quantity}`}
                   >
                     {item.quantity}
                   </button>
                   <button
                     onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                    aria-label={`Увеличи количеството на ${item.product.name}`}
                     className="w-8 h-8 rounded-lg bg-white dark:bg-gray-600 border border-gray-200 dark:border-gray-500 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-500 transition-colors"
                   >
                     <Plus className="w-4 h-4" />
@@ -465,6 +470,7 @@ export function POSCart({
                     onClick={onOpenAmountNumpad}
                     className="px-4 py-3 bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-xl text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
                     title="Отвори numpad"
+                    aria-label="Отвори numpad"
                   >
                     <Keyboard className="w-5 h-5" />
                   </button>

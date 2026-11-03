@@ -10,6 +10,7 @@ import CopyToStoreModal from '../components/CopyToStoreModal';
 import ImportModal from '../components/ImportModal';
 import ToastContainer from '../components/ToastContainer';
 import LoadingIndicator from '../components/LoadingIndicator';
+import ListStatus from '../components/ListStatus';
 import ProductsFilterBar from '../components/ProductsFilterBar';
 import StatCard from '../components/StatCard';
 import PageHeader from '../components/PageHeader';
@@ -77,6 +78,11 @@ function ProductsPage(): React.ReactElement {
   return (
     <div>
       <LoadingIndicator loadingState={loadingState} />
+      <ListStatus
+        loading={loading || loadingState.isLoading}
+        count={filtersHook.filteredProducts.length}
+        noun="products"
+      />
       <ToastContainer toasts={toasts} removeToast={removeToast} />
 
       <PageHeader title="Products" subtitle="Manage your store products" />

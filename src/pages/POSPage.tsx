@@ -214,6 +214,7 @@ export default function POSPage(): ReactElement {
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate('/')}
+            aria-label="Назад"
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
@@ -232,6 +233,7 @@ export default function POSPage(): ReactElement {
             onClick={() => dailyReport.setShowDailyReport(true)}
             className="p-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
             title="Дневен отчет"
+            aria-label="Дневен отчет"
           >
             <BarChart3 className="w-5 h-5" />
           </button>
@@ -239,6 +241,7 @@ export default function POSPage(): ReactElement {
             onClick={() => dailyReport.setShowRecentTransactions(true)}
             className="p-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 relative"
             title="Последни транзакции"
+            aria-label="Последни транзакции"
           >
             <History className="w-5 h-5" />
             {dailyReport.recentTransactions.length > 0 && (
@@ -255,6 +258,7 @@ export default function POSPage(): ReactElement {
                 : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
             }`}
             title="Бележник"
+            aria-label="Бележник"
           >
             <StickyNote className="w-5 h-5" />
             {scratchpadNote.trim() && (
@@ -269,6 +273,7 @@ export default function POSPage(): ReactElement {
                 : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
             }`}
             title="Клавиатурни shortcuts (F8)"
+            aria-label="Клавиатурни shortcuts"
           >
             <Keyboard className="w-5 h-5" />
           </button>

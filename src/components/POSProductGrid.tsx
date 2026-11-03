@@ -95,6 +95,7 @@ export function POSProductGrid({
           {searchTerm && (
             <button
               onClick={() => onSearchTermChange('')}
+              aria-label="Изчисти търсенето"
               className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-600"
             >
               <X className="w-4 h-4" />
@@ -138,6 +139,7 @@ export function POSProductGrid({
                   {categorySearch && (
                     <button
                       onClick={() => onCategorySearchChange('')}
+                      aria-label="Изчисти търсенето"
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-600"
                     >
                       <X className="w-4 h-4" />

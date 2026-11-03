@@ -30,12 +30,14 @@ export function POSScratchpad({
               onClick={onClear}
               className="p-1 hover:bg-yellow-100 dark:hover:bg-gray-700 rounded text-gray-500 dark:text-gray-400 hover:text-red-500"
               title="Изчисти"
+              aria-label="Изчисти бележника"
             >
               <Trash2 className="w-4 h-4" />
             </button>
           )}
           <button
             onClick={onClose}
+            aria-label="Затвори"
             className="p-1 hover:bg-yellow-100 dark:hover:bg-gray-700 rounded"
           >
             <X className="w-4 h-4 text-gray-400" />

@@ -40,7 +40,11 @@ export function POSDailyReportModal({
           <BarChart3 className="w-5 h-5 text-blue-600" />
           Дневен отчет
         </h3>
-        <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+        <button
+          onClick={onClose}
+          aria-label="Затвори"
+          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+        >
           <X className="w-5 h-5 text-gray-400" />
         </button>
       </div>

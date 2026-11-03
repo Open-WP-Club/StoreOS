@@ -20,6 +20,7 @@ import { useApplySavedView } from '../hooks/useApplySavedView';
 import Pagination from '../components/Pagination';
 import ToastContainer from '../components/ToastContainer';
 import LoadingIndicator from '../components/LoadingIndicator';
+import ListStatus from '../components/ListStatus';
 import { useToast } from '../hooks/useToast';
 import { useProgressiveLoading } from '../hooks/useProgressiveLoading';
 import { RefreshCw, Search, Mail, Phone, ShoppingBag, DollarSign, User, X } from 'lucide-react';
@@ -330,6 +331,11 @@ function CustomersPage(): React.ReactElement {
   return (
     <div>
       <LoadingIndicator loadingState={loadingState} />
+      <ListStatus
+        loading={loading || loadingState.isLoading}
+        count={sortedCustomers.length}
+        noun="customers"
+      />
       <ToastContainer toasts={toasts} removeToast={removeToast} />
 
       <PageHeader title="Customers" subtitle="Manage your store customers" />

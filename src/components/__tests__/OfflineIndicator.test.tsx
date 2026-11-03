@@ -80,6 +80,17 @@ describe('OfflineIndicator', () => {
     expect(checkStatus).toHaveBeenCalled();
   });
 
+  it('all buttons have accessible names (offline, details open)', () => {
+    online = false;
+    useOffline.getState().addPendingOperation('update_order', { id: 1 }, 's1');
+    render(<OfflineIndicator />);
+    fireEvent.click(screen.getByText(/Offline/));
+    const buttons = screen.getAllByRole('button');
+    expect(buttons.length).toBeGreaterThan(1);
+    for (const b of buttons)
+      expect((b.getAttribute('aria-label') || b.textContent)?.trim()).toBeTruthy();
+  });
+
   it('auto-syncs after 2s, removing successful ops', async () => {
     svc.updateOrder.mockResolvedValue({ success: true });
     useOffline.getState().addPendingOperation('update_order', { id: 7, status: 'completed' }, 's1');

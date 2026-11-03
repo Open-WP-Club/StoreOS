@@ -70,9 +70,12 @@ Benchmark: `node_modules/.bin/vitest run -c scripts/vitest.bench.config.ts --dis
   with a `dark:text-gray-400` counterpart. Decorative/lucide icons still use gray-300/400 and
   yellow/amber-500 (WCAG 1.4.11 non-text needs 3:1; not text). Check new text for >= 4.5:1.
 - Some `<th>` cells that act as row headers should be `scope="row"`; all were set to `col`.
-- Icon-only buttons in POS components (Numpad, POSCart, POSProductGrid, POSScratchpad, POS
-  modals) and `OfflineIndicator` were flagged by a heuristic scan but not edited (other work in
-  progress there); verify they carry `aria-label`.
-- Many modals do not use the shared `Modal` and therefore lack the focus trap (e.g.
-  ConfirmDialog, CouponFormModal, BulkEditModal); migrate them to `Modal`.
-- Page-level `aria-live` region for async list updates (loading/count changes) is not present.
+- Icon-only buttons: DONE. Numpad, POSCart, POSProductGrid, POSScratchpad, the POS modals and the
+  POSPage header now carry Bulgarian `aria-label`s; `OfflineIndicator` buttons all have visible
+  English text. `components/__tests__/posButtonNames.test.tsx` (plus cases in `POSPage.test.tsx`
+  and `OfflineIndicator.test.tsx`) assert every rendered `<button>` has a name.
+- Modals/focus trap: DONE. ConfirmDialog, CouponFormModal and BulkEditModal (form + preview)
+  render through the shared `Modal`.
+- Async list updates: DONE. `components/ListStatus.tsx` is a visually hidden `role="status"`
+  `aria-live="polite"` region announcing "Loading X..." / "N X found" on Orders, Products,
+  Customers and Coupons (test: `ListStatus.test.tsx`). Not yet on other list pages.

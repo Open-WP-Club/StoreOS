@@ -22,6 +22,7 @@ import {
 import { useApplySavedView } from '../hooks/useApplySavedView';
 import ToastContainer from '../components/ToastContainer';
 import LoadingIndicator from '../components/LoadingIndicator';
+import ListStatus from '../components/ListStatus';
 import BulkActionsBar from '../components/BulkActionsBar';
 import OrdersAdvancedFilters from '../components/OrdersAdvancedFilters';
 import OrdersTable from '../components/OrdersTable';
@@ -596,6 +597,11 @@ function OrdersPage(): React.ReactElement {
   return (
     <div>
       <LoadingIndicator loadingState={loadingState} />
+      <ListStatus
+        loading={loading || loadingState.isLoading}
+        count={filteredOrders.length}
+        noun="orders"
+      />
       <ToastContainer toasts={toasts} removeToast={removeToast} />
 
       <PageHeader title="Orders" subtitle="Manage your store orders" />
