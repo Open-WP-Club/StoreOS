@@ -6,7 +6,68 @@ import { useStoreConfig } from '../stores';
 import WooCommerceService from '../services/woocommerce';
 import { resolvePendingSale } from '../utils/posOfflineSale';
 import { replayOperation } from '../utils/offlineReplay';
+import { editedFields, stockDeltaData } from '../utils/offlineConflicts';
 import type { PendingOperation } from '../types';
+
+function ConflictPanel({
+  op,
+  disabled,
+  onKeepMine,
+  onUseServer,
+  onApplyDelta,
+}: {
+  op: PendingOperation;
+  disabled: boolean;
+  onKeepMine: () => void;
+  onUseServer: () => void;
+  onApplyDelta: () => void;
+}): React.ReactElement | null {
+  const c = op.conflict;
+  if (!c) return null;
+  const mine = editedFields(op);
+  const show = (v: unknown): string => (typeof v === 'string' ? v : JSON.stringify(v ?? null));
+  const btn =
+    'px-2 py-1 text-xs rounded border border-gray-300 dark:border-gray-500 text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50';
+  return (
+    <div className="mt-1 space-y-1" data-testid="conflict-panel">
+      <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+        Changed on the server while you were offline
+      </p>
+      <table className="w-full text-xs text-gray-700 dark:text-gray-200">
+        <thead>
+          <tr className="text-left text-gray-500 dark:text-gray-400">
+            <th className="font-normal">Field</th>
+            <th className="font-normal">Mine</th>
+            <th className="font-normal">Server</th>
+          </tr>
+        </thead>
+        <tbody>
+          {c.fields.map((f) => (
+            <tr key={f}>
+              <td>{f}</td>
+              <td>{show(mine[f])}</td>
+              <td>{show(c.server[f])}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="flex flex-wrap gap-1">
+        <button className={btn} disabled={disabled} onClick={onKeepMine}>
+          Keep mine
+        </button>
+        <button className={btn} onClick={onUseServer}>
+          Use server
+        </button>
+        {stockDeltaData(op) && (
+          <button className={btn} disabled={disabled} onClick={onApplyDelta}>
+            Apply as delta ({c.stockDelta! > 0 ? '+' : ''}
+            {c.stockDelta})
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 /**
  * OfflineIndicator
@@ -32,11 +93,14 @@ function OfflineIndicator(): React.ReactElement | null {
   const [syncProgress, setSyncProgress] = useState<number>(0);
   const [showDetails, setShowDetails] = useState<boolean>(false);
 
+  // Conflicted ops wait for the user's choice; they are never auto-synced.
+  const syncable = pendingOperations.filter((op) => !op.conflict);
   const hasPendingOps = pendingOperations.length > 0;
+  const hasSyncableOps = syncable.length > 0;
 
   // Process a single pending operation
   const processOperation = useCallback(
-    async (operation: PendingOperation): Promise<boolean> => {
+    async (operation: PendingOperation): Promise<boolean | 'conflict'> => {
       // Replay against the operation's own store (may differ from the current one).
       const store = stores.find((s) => s.id === operation.storeId);
       if (!store) return false;
@@ -44,6 +108,13 @@ function OfflineIndicator(): React.ReactElement | null {
       try {
         const result = await replayOperation(new WooCommerceService(store), operation);
 
+        if (result.conflict) {
+          updatePendingOperation(operation.id, {
+            conflict: result.conflict,
+            lastError: 'Changed on the server',
+          });
+          return 'conflict';
+        }
         if (!result.success) {
           updatePendingOperation(operation.id, { lastError: result.error ?? 'Sync failed' });
         }
@@ -58,9 +129,29 @@ function OfflineIndicator(): React.ReactElement | null {
     [stores, updatePendingOperation]
   );
 
+  // Resolve a held conflict: send the op (optionally rewritten) with no snapshot, so no re-check.
+  const sendResolved = async (
+    op: PendingOperation,
+    data?: Record<string, unknown>
+  ): Promise<void> => {
+    const next: PendingOperation = {
+      ...op,
+      data: data ?? op.data,
+      conflict: undefined,
+      base: undefined,
+    };
+    updatePendingOperation(op.id, {
+      data: next.data,
+      conflict: undefined,
+      base: undefined,
+      lastError: undefined,
+    });
+    if ((await processOperation(next)) === true) removePendingOperation(op.id);
+  };
+
   // Sync all pending operations
   const syncPendingOperations = useCallback(async (): Promise<void> => {
-    if (!isOnline || pendingOperations.length === 0 || isSyncing) {
+    if (!isOnline || !hasSyncableOps || isSyncing) {
       return;
     }
 
@@ -68,15 +159,15 @@ function OfflineIndicator(): React.ReactElement | null {
     setSyncProgress(0);
     setLastSyncAttempt(Date.now());
 
-    const total = pendingOperations.length;
+    const total = syncable.length;
     let processed = 0;
 
-    for (const operation of pendingOperations) {
+    for (const operation of syncable) {
       const success = await processOperation(operation);
 
-      if (success) {
+      if (success === true) {
         removePendingOperation(operation.id);
-      } else {
+      } else if (success === false) {
         incrementRetryCount(operation.id);
       }
 
@@ -91,7 +182,8 @@ function OfflineIndicator(): React.ReactElement | null {
     setSyncProgress(0);
   }, [
     isOnline,
-    pendingOperations,
+    syncable,
+    hasSyncableOps,
     isSyncing,
     processOperation,
     removePendingOperation,
@@ -101,7 +193,7 @@ function OfflineIndicator(): React.ReactElement | null {
 
   // Auto-sync when coming back online
   useEffect(() => {
-    if (isOnline && hasPendingOps && !isSyncing) {
+    if (isOnline && hasSyncableOps && !isSyncing) {
       // Delay a bit to ensure connectivity is stable
       const timeoutId = setTimeout(() => {
         syncPendingOperations();
@@ -110,7 +202,7 @@ function OfflineIndicator(): React.ReactElement | null {
       return () => clearTimeout(timeoutId);
     }
     return undefined;
-  }, [isOnline, hasPendingOps, isSyncing, syncPendingOperations]);
+  }, [isOnline, hasSyncableOps, isSyncing, syncPendingOperations]);
 
   // Don't show anything if online and no pending operations
   if (isOnline && !hasPendingOps) {
@@ -203,11 +295,24 @@ function OfflineIndicator(): React.ReactElement | null {
                         {new Date(op.timestamp).toLocaleTimeString()}
                         {op.retryCount > 0 && ` (${op.retryCount} retries)`}
                       </p>
-                      {op.lastError && (
-                        <p className="text-xs text-red-500 mt-1 truncate">{op.lastError}</p>
+                      {op.conflict ? (
+                        <ConflictPanel
+                          op={op}
+                          disabled={!isOnline}
+                          onKeepMine={() => void sendResolved(op)}
+                          onUseServer={() => removePendingOperation(op.id)}
+                          onApplyDelta={() => {
+                            const data = stockDeltaData(op);
+                            if (data) void sendResolved(op, data);
+                          }}
+                        />
+                      ) : (
+                        op.lastError && (
+                          <p className="text-xs text-red-500 mt-1 truncate">{op.lastError}</p>
+                        )
                       )}
                     </div>
-                    {op.retryCount > 0 && (
+                    {op.retryCount > 0 && !op.conflict && (
                       <button
                         onClick={() => discardOperation(op)}
                         className="text-xs text-red-600 dark:text-red-400 hover:underline"

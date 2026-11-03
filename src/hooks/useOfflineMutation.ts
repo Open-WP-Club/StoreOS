@@ -3,6 +3,7 @@ import useOffline from '../stores/offlineStore';
 import useOnlineStatus from './useOnlineStatus';
 import { useToast } from './useToast';
 import { CLIENT_ID_META, CLIENT_ID_TYPES } from '../utils/offlineCreates';
+import { captureBase } from '../utils/offlineConflicts';
 import { interceptBatch, mutatePlaceholder } from '../utils/offlinePlaceholders';
 import type { PendingOperationType } from '../types';
 
@@ -71,7 +72,9 @@ export function useOfflineMutation() {
               ],
             }
           : payload;
-        addPendingOperation(operationType, data, storeId);
+        const base = captureBase(operationType, data, storeId);
+        if (base) addPendingOperation(operationType, data, storeId, base);
+        else addPendingOperation(operationType, data, storeId);
         showToast('You are offline. This change will sync when you reconnect.', 'warning');
         return { queued: true, success: false };
       }

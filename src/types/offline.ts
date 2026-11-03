@@ -33,6 +33,23 @@ export type PendingOperationType =
   | 'delete_variation'
   | 'batch_variations';
 
+/** Cached item state when an update was queued; lets replay detect edits made elsewhere meanwhile. */
+export interface OperationBase {
+  /** date_modified_gmt (or date_modified) of the item at queue time */
+  modified: string;
+  /** previous values of the fields the op changes */
+  prev: Record<string, unknown>;
+}
+
+/** Set when replay found the server item changed under the same fields; the op is held, not sent. */
+export interface OperationConflict {
+  fields: string[];
+  /** current server values of the conflicting fields */
+  server: Record<string, unknown>;
+  /** stock ops: my change relative to the expected quantity */
+  stockDelta?: number;
+}
+
 export interface PendingOperation {
   id: string;
   type: PendingOperationType;
@@ -41,6 +58,9 @@ export interface PendingOperation {
   timestamp: number;
   retryCount: number;
   lastError?: string;
+  /** absent on ops queued before conflict detection: replayed without checks */
+  base?: OperationBase;
+  conflict?: OperationConflict;
 }
 
 export interface OfflineState {
