@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useSyncExternalStore } from 'react';
 import { WifiOff, RefreshCw, AlertCircle, Check, Clock } from 'lucide-react';
 import useOffline from '../stores/offlineStore';
 import useOnlineStatus from '../hooks/useOnlineStatus';
@@ -111,6 +111,13 @@ function ConflictPanel({
   );
 }
 
+// Rendered outside the Router, so read the HashRouter path from the URL hash.
+const subscribeHash = (cb: () => void): (() => void) => {
+  window.addEventListener('hashchange', cb);
+  return () => window.removeEventListener('hashchange', cb);
+};
+const isPosRoute = (): boolean => window.location.hash.startsWith('#/pos');
+
 /**
  * OfflineIndicator
  *
@@ -125,6 +132,8 @@ function OfflineIndicator(): React.ReactElement | null {
   const updatePendingOperation = useOffline((state) => state.updatePendingOperation);
   const setLastSyncAttempt = useOffline((state) => state.setLastSyncAttempt);
   const stores = useStoreConfig((state) => state.stores);
+  // The POS checkout buttons sit in the bottom-right corner, so the badge moves left there.
+  const onPos = useSyncExternalStore(subscribeHash, isPosRoute);
 
   const discardOperation = (op: PendingOperation): void => {
     if (typeof op.data.clientId === 'string') resolvePendingSale(op.data.clientId, null);
@@ -294,7 +303,7 @@ function OfflineIndicator(): React.ReactElement | null {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-40">
+    <div className={`fixed bottom-4 z-40 ${onPos ? 'left-4' : 'right-4'}`}>
       {/* Main indicator button */}
       <button
         onClick={() => setShowDetails(!showDetails)}
@@ -333,7 +342,9 @@ function OfflineIndicator(): React.ReactElement | null {
 
       {/* Details panel */}
       {showDetails && (
-        <div className="absolute bottom-full right-0 mb-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div
+          className={`absolute bottom-full mb-2 w-80 ${onPos ? 'left-0' : 'right-0'} bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden`}
+        >
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-gray-900 dark:text-white">Sync Status</h3>

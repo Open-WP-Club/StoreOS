@@ -386,4 +386,19 @@ describe('OfflineIndicator', () => {
     });
     expect(useOffline.getState().pendingOperations[0]!.lastError).toBe('net');
   });
+
+  it('moves to the bottom-left on the POS route and back on hashchange', () => {
+    online = false;
+    window.location.hash = '#/pos';
+    const { container } = render(<OfflineIndicator />);
+    const root = container.firstElementChild!;
+    expect(root).toHaveClass('left-4');
+    expect(root).not.toHaveClass('right-4');
+    act(() => {
+      window.location.hash = '#/orders';
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    });
+    expect(root).toHaveClass('right-4');
+    window.location.hash = '';
+  });
 });
