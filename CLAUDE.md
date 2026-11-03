@@ -279,7 +279,7 @@ pnpm run build:electron   # build + electron-builder → distributable in dist-e
 ### Testing
 
 ```bash
-pnpm run test             # vitest run — full suite (161 files, ~2,198 tests)
+pnpm run test             # vitest run — full suite (162 files, ~2,179 tests)
 pnpm run test:watch       # vitest (watch mode)
 pnpm run test:coverage    # vitest run --coverage (v8 provider)
 pnpm run e2e:build        # one-off packaged build (electron-builder --dir --mac --arm64) for the e2e suite
@@ -435,7 +435,7 @@ Verify field names match the data shape (e.g. `billing.email`, not `email`) and 
 
 ## Testing Guidelines
 
-The project has a full **Vitest** suite (161 files, ~2,198 tests) — this is not a "manual testing only" project. Key points:
+The project has a full **Vitest** suite (162 files, ~2,179 tests) — this is not a "manual testing only" project. Key points:
 
 - `clearMocks: true` in `vitest.config.ts` — mock implementations reset between tests automatically.
 - Set up mocks in `beforeEach()`, not inside `vi.mock()` factories.

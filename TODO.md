@@ -1,12 +1,10 @@
 # TODO
 
-Всичко от партиди 1–5 е слято в main. Остава:
+Всичко останало от партиди 1–6 е слято в main. Остава:
 
-- [ ] Ръчен тест в стартирано приложение: POS офлайн, планирани отчети и backup, печат на бележка (80mm/чекмедже), refund, импорт, tracking, копиране между магазини, webhooks, нови офлайн опашки
-- [ ] Офлайн: VariationsTab „Generate all“ иска връзка; update/delete на нещо, създадено офлайн, е невъзможно до синхрон (няма сървърен id; трябват оптимистични placeholder-и в кеша)
+- [ ] Ръчен тест в стартирано приложение: POS офлайн, планирани отчети и backup, печат на бележка (80mm/чекмедже/лого), refund, импорт, tracking, копиране между магазини, webhooks, нови офлайн опашки
+- [ ] Офлайн: update/delete на нещо, създадено офлайн, е невъзможно до синхрон (трябват оптимистични placeholder-и в кеша); VariationsTab „Generate all“ иска връзка
 - [ ] Копиране между магазини: връзки към продукти, създавани в същото копиране, не се мапват; `related_ids` е read-only в API
-- [ ] Модали, още не на `Modal`: QuickSwitcher, CommandPalette (собствена клавиатурна логика), ReorderReportModal, ImportModal
-- [ ] Неизползвани exports (функции/константи); `deferredInit.ts` е маркиран unused, но има тестове
-- [ ] Бележка: без лого
-- [ ] Saved views: sort и колони (няма такива понятия в списъците)
-- [ ] `ReviewsPage` е на ~49% покритие
+- [ ] QuickSwitcher и CommandPalette не са на `Modal` (top-aligned layout)
+- [ ] Помощни функции, ползвани само от тестове (`dateTime`, `i18n`, `currency`, `batchResult`, `indexedDBCache`, `search/utils`); `deferredInit.ts` е маркиран unused, но има тестове
+- [ ] Saved views: sort и колони — първо трябва списъците Orders/Products да имат сортиране и избор на колони
