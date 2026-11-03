@@ -14,6 +14,8 @@ export interface ReceiptInput {
   date?: Date | string;
   /** Prices include VAT at this percent (BG default 20). */
   vatRate?: number;
+  /** Optional logo image URL (https only; anything else is dropped). */
+  logoUrl?: string | null;
 }
 
 export interface Receipt {
@@ -30,6 +32,7 @@ export interface Receipt {
   /** null = pending (offline sale, no order number yet). */
   orderId: number | null;
   date: string;
+  logoUrl: string | null;
 }
 
 const round2 = (n: number): number => Math.round(n * 100) / 100;
@@ -55,6 +58,7 @@ export function buildReceipt(input: ReceiptInput): Receipt {
     change: input.change && input.change > 0 ? input.change : null,
     orderId: input.orderId && input.orderId > 0 ? input.orderId : null,
     date: new Date(input.date ?? Date.now()).toISOString(),
+    logoUrl: input.logoUrl && /^https:\/\//i.test(input.logoUrl) ? input.logoUrl : null,
   };
 }
 
@@ -82,7 +86,7 @@ export function renderReceiptHtml(r: Receipt, currencySymbol: string | null = nu
   const order = r.orderId === null ? 'Чака синхронизация' : `Поръчка #${escapeHtml(r.orderId)}`;
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https:; style-src 'unsafe-inline'">
 <style>
 @page { size: 80mm auto; margin: 0; }
 body { width: 72mm; margin: 0 auto; padding: 4mm 0; font-family: 'Courier New', monospace; font-size: 12px; color: #000; }
@@ -90,8 +94,10 @@ body { width: 72mm; margin: 0 auto; padding: 4mm 0; font-family: 'Courier New', 
 .row { display: flex; justify-content: space-between; gap: 6px; }
 .item { margin-top: 4px; word-break: break-word; }
 hr { border: 0; border-top: 1px dashed #000; margin: 6px 0; }
+.logo { display: block; margin: 0 auto 4px; max-width: 48mm; max-height: 20mm; filter: grayscale(1) contrast(1.5); }
 .total { font-size: 15px; font-weight: bold; }
 </style></head><body>
+${r.logoUrl ? `<img class="logo" src="${escapeHtml(r.logoUrl)}" alt="">` : ''}
 <div class="c b">${escapeHtml(r.storeName)}</div>
 <div class="c">${escapeHtml(when)}</div>
 <div class="c">${order}</div>

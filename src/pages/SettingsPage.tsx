@@ -23,6 +23,8 @@ export default function SettingsPage(): ReactElement {
     autoPrintReceipt,
     setAutoPrintReceipt,
     receiptVatRate,
+    receiptShowLogo,
+    setReceiptShowLogo,
     setReceiptVatRate,
     openCashDrawer,
     setOpenCashDrawer,
@@ -90,6 +92,8 @@ export default function SettingsPage(): ReactElement {
           setDefaultPrinter={setDefaultPrinter}
           autoPrintReceipt={autoPrintReceipt}
           setAutoPrintReceipt={setAutoPrintReceipt}
+          receiptShowLogo={receiptShowLogo}
+          setReceiptShowLogo={setReceiptShowLogo}
           receiptVatRate={receiptVatRate}
           setReceiptVatRate={setReceiptVatRate}
           openCashDrawer={openCashDrawer}

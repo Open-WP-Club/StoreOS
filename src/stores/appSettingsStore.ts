@@ -22,6 +22,7 @@ export interface AppSettingsState {
   // Printer
   defaultPrinter: string | null;
   autoPrintReceipt: boolean; // POS: print on checkout
+  receiptShowLogo: boolean; // Receipt: print the store logo at the top
   receiptVatRate: number; // Receipt: VAT % included in prices; 0 hides the VAT line
   openCashDrawer: boolean; // POS: ESC/POS kick with the receipt (needs a named printer)
 
@@ -47,6 +48,7 @@ export interface AppSettingsActions {
   setDefaultPrinter: (printer: string | null) => void;
   setAutoPrintReceipt: (v: boolean) => void;
   setReceiptVatRate: (v: number) => void;
+  setReceiptShowLogo: (v: boolean) => void;
   setOpenCashDrawer: (v: boolean) => void;
 
   // PIN Lock
@@ -99,6 +101,7 @@ const useAppSettings = create<AppSettingsStore>()(
       language: 'bg',
       defaultPrinter: null,
       autoPrintReceipt: false,
+      receiptShowLogo: false,
       receiptVatRate: 20,
       openCashDrawer: false,
       pinEnabled: false,
@@ -139,6 +142,7 @@ const useAppSettings = create<AppSettingsStore>()(
       },
       setAutoPrintReceipt: (v: boolean) => set({ autoPrintReceipt: v }),
       setReceiptVatRate: (v: number) => set({ receiptVatRate: v }),
+      setReceiptShowLogo: (v: boolean) => set({ receiptShowLogo: v }),
       setOpenCashDrawer: (v: boolean) => set({ openCashDrawer: v }),
 
       // PIN Lock
@@ -220,6 +224,7 @@ const useAppSettings = create<AppSettingsStore>()(
           language: 'bg',
           defaultPrinter: null,
           autoPrintReceipt: false,
+          receiptShowLogo: false,
           receiptVatRate: 20,
           openCashDrawer: false,
           pinEnabled: false,
@@ -240,6 +245,7 @@ const useAppSettings = create<AppSettingsStore>()(
         language: state.language,
         defaultPrinter: state.defaultPrinter,
         autoPrintReceipt: state.autoPrintReceipt,
+        receiptShowLogo: state.receiptShowLogo,
         receiptVatRate: state.receiptVatRate,
         openCashDrawer: state.openCashDrawer,
         pinEnabled: state.pinEnabled,

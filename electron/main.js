@@ -299,7 +299,17 @@ ipcMain.handle('receipt:print', async (event, payload) => {
   try {
     win.webContents.on('will-navigate', (e) => e.preventDefault());
     win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
-    await win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html));
+    // loadURL resolves after subresources (the logo) load; don't hang on a slow image (~2s cap).
+    const loaded = win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html));
+    loaded.catch(() => {});
+    let timer;
+    await Promise.race([
+      loaded,
+      new Promise((r) => {
+        timer = setTimeout(r, 2000);
+      }),
+    ]);
+    clearTimeout(timer);
     await new Promise((resolve, reject) =>
       win.webContents.print(
         {

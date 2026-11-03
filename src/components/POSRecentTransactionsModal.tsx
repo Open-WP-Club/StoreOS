@@ -45,6 +45,7 @@ export function POSRecentTransactionsModal({
       printer: defaultPrinter,
       openDrawer: false,
       currencySymbol: storeCurrencySymbol(currentStore),
+      store: currentStore,
     });
     if (!ok) toast.warning('Касовата бележка не можа да се отпечата.');
   };

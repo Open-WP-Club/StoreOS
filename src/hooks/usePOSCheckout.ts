@@ -165,6 +165,7 @@ export function usePOSCheckout(
           printer: app.defaultPrinter,
           openDrawer: app.openCashDrawer && paymentMethod === 'cash',
           currencySymbol: storeCurrencySymbol(currentStore),
+          store: currentStore,
         }).then((ok) => {
           if (!ok) toast.warning('Касовата бележка не можа да се отпечата.');
         });

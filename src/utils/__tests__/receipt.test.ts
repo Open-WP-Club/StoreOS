@@ -72,3 +72,21 @@ describe('receipt VAT rate', () => {
     expect(useAppSettings.getState().receiptVatRate).toBe(20);
   });
 });
+
+describe('receipt logo', () => {
+  it('renders an escaped https logo and drops other schemes', () => {
+    const ok = renderReceiptHtml(
+      buildReceipt({ ...base, logoUrl: 'https://x.test/a.png?a=1&b="2"' })
+    );
+    expect(ok).toContain('<img class="logo" src="https://x.test/a.png?a=1&amp;b=&quot;2&quot;"');
+    expect(ok).toContain('img-src https:');
+    for (const u of [
+      'http://x.test/a.png',
+      'javascript:alert(1)',
+      'data:image/png;base64,AA',
+      null,
+    ]) {
+      expect(renderReceiptHtml(buildReceipt({ ...base, logoUrl: u }))).not.toContain('<img');
+    }
+  });
+});

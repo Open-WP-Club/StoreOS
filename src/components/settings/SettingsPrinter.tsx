@@ -10,6 +10,8 @@ interface SettingsPrinterProps {
   setDefaultPrinter: (p: string | null) => void;
   autoPrintReceipt: boolean;
   setAutoPrintReceipt: (v: boolean) => void;
+  receiptShowLogo: boolean;
+  setReceiptShowLogo: (v: boolean) => void;
   receiptVatRate: number;
   setReceiptVatRate: (v: number) => void;
   openCashDrawer: boolean;
@@ -22,6 +24,8 @@ const SettingsPrinter = memo(function SettingsPrinter({
   setDefaultPrinter,
   autoPrintReceipt,
   setAutoPrintReceipt,
+  receiptShowLogo,
+  setReceiptShowLogo,
   receiptVatRate,
   setReceiptVatRate,
   openCashDrawer,
@@ -108,6 +112,16 @@ const SettingsPrinter = memo(function SettingsPrinter({
           {language === 'bg'
             ? 'ДДС % в бележката (включен в цените; 0 скрива реда)'
             : 'Receipt VAT % (included in prices; 0 hides the line)'}
+        </label>
+        <label className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            checked={receiptShowLogo}
+            onChange={(e) => setReceiptShowLogo(e.target.checked)}
+          />
+          {language === 'bg'
+            ? 'Лого на магазина най-горе в бележката'
+            : 'Print the store logo at the top of the receipt'}
         </label>
         <label className="flex items-center gap-3">
           <input
