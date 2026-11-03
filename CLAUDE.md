@@ -43,7 +43,7 @@ StoreOS - Built for WooCommerce is an Electron-based desktop application for man
 
 ### Development & Testing Tools
 
-- **Vitest 5.x** - Test runner (`jsdom` environment), **not Jest** — 157 test files, ~2,133 tests
+- **Vitest 5.x** - Test runner (`jsdom` environment), **not Jest** — 160 test files, ~2,189 tests
 - **@testing-library/react** + **jest-dom** matchers + **user-event**
 - **ESLint 9.x** - Flat config (`eslint.config.js`, not `.eslintrc.json`), includes `eslint-plugin-react-compiler`
 - **Prettier** - Code formatting
@@ -279,7 +279,7 @@ pnpm run build:electron   # build + electron-builder → distributable in dist-e
 ### Testing
 
 ```bash
-pnpm run test             # vitest run — full suite (157 files, ~2,133 tests)
+pnpm run test             # vitest run — full suite (160 files, ~2,189 tests)
 pnpm run test:watch       # vitest (watch mode)
 pnpm run test:coverage    # vitest run --coverage (v8 provider)
 pnpm run e2e:build        # one-off packaged build (electron-builder --dir --mac --arm64) for the e2e suite
@@ -435,7 +435,7 @@ Verify field names match the data shape (e.g. `billing.email`, not `email`) and 
 
 ## Testing Guidelines
 
-The project has a full **Vitest** suite (157 files, ~2,133 tests) — this is not a "manual testing only" project. Key points:
+The project has a full **Vitest** suite (160 files, ~2,189 tests) — this is not a "manual testing only" project. Key points:
 
 - `clearMocks: true` in `vitest.config.ts` — mock implementations reset between tests automatically.
 - Set up mocks in `beforeEach()`, not inside `vi.mock()` factories.
@@ -492,6 +492,8 @@ The project has a full **Vitest** suite (157 files, ~2,133 tests) — this is no
 - **POS receipts**: `utils/receipt.ts` (80mm HTML, escaped) + `utils/printReceipt.ts`; IPC `receipt:print` / `receipt:get-printers`; optional ESC/POS drawer kick (CUPS `lp`, untested on hardware).
 - **Integrations & backup**: webhooks/payment gateway management (`IntegrationsManager`, `utils/webhookValidation.ts`); scheduled encrypted backup (`utils/autoBackup.ts`, `ScheduledBackupRunner`, `backupScheduleStore`, IPC `backups:*` in `electron/backupFiles.js`). Passphrase is memory-only; without it credentials are omitted.
 - **Shared helpers**: `Modal` takes an optional `title`; `getAppLocale()` in `utils/dateTime.ts`; `utils/reportRows.ts` builds report rows for the scheduled runner and POS report.
+- **Offline queue (complete)**: categories, attributes/terms, tax rates/classes, reviews, variations and batch order delete also queue via `mutateApi` in `useOfflineMutation`. Creates carry a `_storeos_client_id` (`utils/offlineCreates.ts`) and replay looks for an existing item first (SKU, coupon code, slug/name, or client id) so retries never duplicate.
+- **Shared inputs/rules**: `NumberInput` (allows empty while typing, clamps on blur); `isStockAtOrBelow` in `utils/stock.ts` is the single low-stock rule (`<=` threshold); `receiptVatRate` setting; store comparison totals are per currency; copy-to-store recreates category trees (`planCategories`/`applyCategoryPlan`).
 - **Packaging**: `scripts/adhocSign.cjs` (`build.afterSign`) re-signs ad-hoc only when `codesign --verify` fails after the Electron fuse flip (otherwise arm64 builds are SIGKILLed on launch). e2e launches use `--use-mock-keychain` to avoid Keychain prompts.
 
 ## Resources & Documentation
