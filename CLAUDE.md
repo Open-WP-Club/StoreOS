@@ -43,7 +43,7 @@ StoreOS - Built for WooCommerce is an Electron-based desktop application for man
 
 ### Development & Testing Tools
 
-- **Vitest 5.x** - Test runner (`jsdom` environment), **not Jest** — 178 test files, ~2,269 tests
+- **Vitest 5.x** - Test runner (`jsdom` environment), **not Jest** — 188 test files, ~2,338 tests
 - **@testing-library/react** + **jest-dom** matchers + **user-event**
 - **ESLint 9.x** - Flat config (`eslint.config.js`, not `.eslintrc.json`), includes `eslint-plugin-react-compiler`
 - **Prettier** - Code formatting
@@ -279,7 +279,7 @@ pnpm run build:electron   # build + electron-builder → distributable in dist-e
 ### Testing
 
 ```bash
-pnpm run test             # vitest run — full suite (183 files, ~2,269 tests)
+pnpm run test             # vitest run — full suite (188 files, ~2,338 tests)
 pnpm run test:watch       # vitest (watch mode)
 pnpm run test:coverage    # vitest run --coverage (v8 provider)
 pnpm run e2e:build        # one-off packaged build (electron-builder --dir --mac --arm64) for the e2e suite
@@ -291,7 +291,7 @@ Coverage thresholds (see `vitest.config.ts`): branches 25%, functions 30%, lines
 ### Code Quality
 
 ```bash
-pnpm run lint             # eslint src electron --ext .js,.jsx,.ts,.tsx
+pnpm run lint             # eslint src electron e2e
 pnpm run lint:fix
 pnpm run format           # prettier --write
 pnpm run format:check
@@ -435,7 +435,7 @@ Verify field names match the data shape (e.g. `billing.email`, not `email`) and 
 
 ## Testing Guidelines
 
-The project has a full **Vitest** suite (183 files, ~2,269 tests) — this is not a "manual testing only" project. Key points:
+The project has a full **Vitest** suite (188 files, ~2,338 tests) — this is not a "manual testing only" project. Key points:
 
 - `clearMocks: true` in `vitest.config.ts` — mock implementations reset between tests automatically.
 - Set up mocks in `beforeEach()`, not inside `vi.mock()` factories.
