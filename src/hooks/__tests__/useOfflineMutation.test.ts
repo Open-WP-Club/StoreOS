@@ -12,6 +12,8 @@ vi.mock('../useOnlineStatus', () => ({ default: () => ({ isOnline: online }) }))
 vi.mock('../useToast', () => ({ useToast: () => ({ showToast }) }));
 
 import { useOfflineMutation } from '../useOfflineMutation';
+import useCache from '../../stores/cacheStore';
+import useStoreConfig from '../../stores/storeConfigStore';
 
 const base = {
   operationType: 'updateOrderStatus' as never,
@@ -73,6 +75,36 @@ describe('useOfflineMutation', () => {
     expect(execute).not.toHaveBeenCalled();
     expect(addPendingOperation).toHaveBeenCalledWith('updateOrderStatus', { id: 1 }, 's1');
     expect(showToast).toHaveBeenCalledWith(expect.stringContaining('offline'), 'warning');
+  });
+
+  it('offline update of a cached item queues a base snapshot', async () => {
+    online = false;
+    const c = useCache.getState().cache;
+    useStoreConfig.setState({ currentStoreId: 's1' } as never);
+    useCache.setState({
+      cache: {
+        ...c,
+        orders: {
+          ...c.orders,
+          data: [{ id: 7, status: 'processing', date_modified_gmt: '2024-01-01T10:00:00' }],
+        },
+      },
+    } as never);
+    const { result } = renderHook(() => useOfflineMutation());
+    await act(async () => {
+      await result.current.mutate({
+        operationType: 'update_order',
+        queueData: { id: 7, status: 'completed' },
+        storeId: 's1',
+        execute: vi.fn(),
+      });
+    });
+    expect(addPendingOperation).toHaveBeenCalledWith(
+      'update_order',
+      { id: 7, status: 'completed' },
+      's1',
+      { modified: '2024-01-01T10:00:00', prev: { status: 'processing' } }
+    );
   });
 
   it('offline create_product/create_variation get a client id meta; others do not', async () => {

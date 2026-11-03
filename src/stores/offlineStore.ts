@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
-import type { PendingOperation, PendingOperationType, OfflineState } from '../types';
+import type { OperationBase, PendingOperation, PendingOperationType, OfflineState } from '../types';
 import { nowMs } from './storeUtils';
 
 // ============================================
@@ -19,7 +19,8 @@ interface OfflineStoreActions {
   addPendingOperation: (
     type: PendingOperationType,
     data: Record<string, unknown>,
-    storeId: string
+    storeId: string,
+    base?: OperationBase
   ) => string;
   removePendingOperation: (id: string) => void;
   updatePendingOperation: (id: string, updates: Partial<PendingOperation>) => void;
@@ -104,7 +105,8 @@ const useOffline = create<OfflineStore>()(
       addPendingOperation: (
         type: PendingOperationType,
         data: Record<string, unknown>,
-        storeId: string
+        storeId: string,
+        base?: OperationBase
       ): string => {
         const id = crypto.randomUUID();
         const operation: PendingOperation = {
@@ -114,6 +116,7 @@ const useOffline = create<OfflineStore>()(
           storeId,
           timestamp: nowMs(),
           retryCount: 0,
+          ...(base && { base }),
         };
 
         set((state) => {

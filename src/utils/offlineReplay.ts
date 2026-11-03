@@ -12,10 +12,16 @@ import {
   createVariationOnce,
   createOrderOnce,
 } from './offlineCreates';
-import type { ApiResponse, BatchOperationResponse, PendingOperation } from '../types';
+import { detectConflict } from './offlineConflicts';
+import type {
+  ApiResponse,
+  BatchOperationResponse,
+  OperationConflict,
+  PendingOperation,
+} from '../types';
 import type WooCommerceService from '../services/woocommerce';
 
-type Result = { success: boolean; error?: string };
+type Result = { success: boolean; error?: string; conflict?: OperationConflict };
 
 // Deleting something that is already gone is a success on replay (idempotent delete).
 const GONE = /invalid[_ ]id|not found|no .* found|404/i;
@@ -75,6 +81,9 @@ export async function replayOperation(
   ) {
     return { success: false, error: 'Refusing to sync a pending placeholder id' };
   }
+  // Edits made elsewhere since queueing: hold the op instead of overwriting them.
+  const conflict = await detectConflict(service, operation);
+  if (conflict) return { success: false, error: 'Changed on the server', conflict };
   switch (operation.type) {
     case 'create_order':
       return typeof d.clientId === 'string'
@@ -88,9 +97,9 @@ export async function replayOperation(
       return service.updateProduct(d.id as number, d);
     case 'update_stock':
       return service.updateStock(
-        d.productId as number,
-        d.quantity as number,
-        d.stockStatus as 'instock' | 'outofstock' | 'onbackorder'
+        (d.productId ?? d.id) as number,
+        (d.quantity ?? d.stock_quantity) as number,
+        (d.stockStatus ?? d.stock_status) as 'instock' | 'outofstock' | 'onbackorder'
       );
     case 'delete_product':
       return okIfGone(await service.deleteProduct(d.id as number));

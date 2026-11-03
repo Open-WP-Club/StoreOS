@@ -7,6 +7,9 @@ const svc = {
   createOrder: vi.fn(),
   updateOrder: vi.fn(),
   deleteCoupon: vi.fn(),
+  getOrder: vi.fn(),
+  getProduct: vi.fn(),
+  updateStock: vi.fn(),
 };
 let online = true;
 const checkStatus = vi.fn();
@@ -34,6 +37,9 @@ vi.mock('../../services/woocommerce', () => ({
     createOrder = svc.createOrder;
     updateOrder = svc.updateOrder;
     deleteCoupon = svc.deleteCoupon;
+    getOrder = svc.getOrder;
+    getProduct = svc.getProduct;
+    updateStock = svc.updateStock;
   },
 }));
 vi.mock('../../utils/posOfflineSale', () => ({
@@ -115,6 +121,83 @@ describe('OfflineIndicator', () => {
     expect(replayPosSale).toHaveBeenCalled();
     expect(svc.createOrder).not.toHaveBeenCalled();
     expect(useOffline.getState().pendingOperations).toHaveLength(0);
+  });
+
+  describe('conflicts', () => {
+    const base = { modified: '2024-01-01T10:00:00', prev: { status: 'processing' } };
+    const queueConflicted = (): void => {
+      svc.getOrder.mockResolvedValue({
+        success: true,
+        data: { id: 7, status: 'cancelled', date_modified_gmt: '2024-01-02T10:00:00' },
+      });
+      useOffline
+        .getState()
+        .addPendingOperation('update_order', { id: 7, status: 'completed' }, 's1', base);
+    };
+    const open = async (): Promise<void> => {
+      render(<OfflineIndicator />);
+      await flush(2100);
+      await flush(600);
+      fireEvent.click(screen.getAllByRole('button')[0]!);
+    };
+
+    it('holds a conflicting op unsent with no retry and shows the diff', async () => {
+      queueConflicted();
+      await open();
+      expect(svc.updateOrder).not.toHaveBeenCalled();
+      const op = useOffline.getState().pendingOperations[0]!;
+      expect(op.conflict?.fields).toEqual(['status']);
+      expect(op.retryCount).toBe(0);
+      expect(screen.getByTestId('conflict-panel')).toHaveTextContent('completed');
+      expect(screen.getByTestId('conflict-panel')).toHaveTextContent('cancelled');
+      // not re-checked on later sync cycles
+      await flush(5000);
+      expect(svc.getOrder).toHaveBeenCalledTimes(1);
+    });
+
+    it('Keep mine sends the op and removes it', async () => {
+      queueConflicted();
+      await open();
+      svc.updateOrder.mockResolvedValue({ success: true });
+      await act(async () => {
+        fireEvent.click(screen.getByText('Keep mine'));
+      });
+      expect(svc.updateOrder).toHaveBeenCalledWith(7, { id: 7, status: 'completed' });
+      expect(useOffline.getState().pendingOperations).toHaveLength(0);
+    });
+
+    it('Use server discards the op without sending', async () => {
+      queueConflicted();
+      await open();
+      fireEvent.click(screen.getByText('Use server'));
+      expect(svc.updateOrder).not.toHaveBeenCalled();
+      expect(useOffline.getState().pendingOperations).toHaveLength(0);
+    });
+
+    it('stock conflict offers Apply as delta: server qty + my change', async () => {
+      svc.getProduct.mockResolvedValue({
+        success: true,
+        data: { id: 5, stock_quantity: 20, date_modified_gmt: '2024-01-02T10:00:00' },
+      });
+      useOffline
+        .getState()
+        .addPendingOperation(
+          'update_stock',
+          { id: 5, stock_quantity: 7, stock_status: 'instock' },
+          's1',
+          {
+            modified: '2024-01-01T10:00:00',
+            prev: { stock_quantity: 10, stock_status: 'instock' },
+          }
+        );
+      await open();
+      svc.updateStock.mockResolvedValue({ success: true });
+      await act(async () => {
+        fireEvent.click(screen.getByText(/Apply as delta/));
+      });
+      expect(svc.updateStock).toHaveBeenCalledWith(5, 17, 'instock');
+      expect(useOffline.getState().pendingOperations).toHaveLength(0);
+    });
   });
 
   it('discarding a POS sale resolves its pending sale', () => {
