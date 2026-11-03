@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { launchApp, newProfile, seedStore, seedStores } from './app';
-import { startMockWoo, CK, CS } from './mockWoo';
+import { startMockWoo, CK, CS, type Item } from './mockWoo';
 
 test('partial refund from the order detail page', async () => {
   const mock = await startMockWoo({ orders: 6, products: 3, customers: 3 });
@@ -45,8 +45,9 @@ test('CSV import: dry-run preview, then apply', async () => {
   await page.getByRole('button', { name: /Import 2 products/ }).click();
   await expect(page.getByText('Imported 2 products')).toBeVisible({ timeout: 15_000 });
   const batch = mock.calls.find((c) => c.path.endsWith('/products/batch'));
-  expect(batch?.body.create[0].sku).toBe('NEW-1');
-  expect(batch?.body.update[0].id).toBe(1);
+  const body = batch?.body as { create: Item[]; update: Item[] } | undefined;
+  expect(body?.create[0]?.sku).toBe('NEW-1');
+  expect(body?.update[0]?.id).toBe(1);
   expect(mock.created.products.some((p) => p.sku === 'NEW-1')).toBe(true);
   await app.close();
   await mock.close();
@@ -98,7 +99,7 @@ test('copy a product to a second store, recreating its category hierarchy', asyn
   expect(parent).toBeTruthy();
   expect(child?.parent).toBe(parent?.id); // hierarchy remapped to the target's ids
   const copied = dst.created.products.find((p) => p.sku === 'CAT-1');
-  expect(copied?.categories?.[0]?.id).toBe(child?.id);
+  expect((copied?.categories as Item[] | undefined)?.[0]?.id).toBe(child?.id);
   await app.close();
   await src.close();
   await dst.close();

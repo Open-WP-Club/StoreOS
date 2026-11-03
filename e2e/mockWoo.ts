@@ -4,18 +4,27 @@ import type { AddressInfo } from 'node:net';
 export const CK = 'ck_test_e2e';
 export const CS = 'cs_test_e2e';
 
+/** Loosely typed API payload; the specs only read a few well-known keys. */
+export interface Item {
+  id?: number;
+  sku?: string;
+  slug?: string;
+  name?: string;
+  [key: string]: unknown;
+}
+
 export interface MockWoo {
   url: string;
   /** Requests seen, e.g. "GET /wp-json/wc/v3/orders". */
   log: string[];
   /** Mutating requests with parsed JSON bodies. */
-  calls: Array<{ method: string; path: string; body: any }>;
+  calls: Array<{ method: string; path: string; body: Item }>;
   /** Items created through the API (orders, products, categories) and refunds. */
   created: {
-    orders: any[];
-    products: any[];
-    categories: any[];
-    refunds: any[];
+    orders: Item[];
+    products: Item[];
+    categories: Item[];
+    refunds: Item[];
   };
   /** Number of requests rejected for bad credentials. */
   denied: () => number;
@@ -89,12 +98,12 @@ export async function startMockWoo(
   let denied = 0;
 
   /** Page through `list` = generated items + API-created extras (only built when extras exist). */
-  const pageOf = (name: string, extras: unknown[], u: URL, res: http.ServerResponse) => {
+  const pageOf = (name: string, extras: Item[], u: URL, res: http.ServerResponse) => {
     const perPage = Math.min(Number(u.searchParams.get('per_page') ?? 10), 100);
     const page = Number(u.searchParams.get('page') ?? 1);
-    let all: any[] = [];
+    let all: Item[] = [];
     const n = total[name] ?? 0;
-    for (let id = 1; id <= n; id++) all.push((makers[name] as (i: number) => unknown)(id));
+    for (let id = 1; id <= n; id++) all.push((makers[name] as (i: number) => Item)(id));
     all = all.concat(extras);
     const sku = u.searchParams.get('sku');
     if (sku) all = all.filter((p) => p.sku === sku);
@@ -123,6 +132,12 @@ export async function startMockWoo(
       return void res.end('<title>Mock WP Admin</title><h1>Mock WP Admin</h1>');
     }
 
+    // Public, credential-less endpoints (the store-logo lookup reads the site root + media).
+    if (u.pathname === '/wp-json/' || u.pathname.startsWith('/wp-json/wp/v2/')) {
+      res.setHeader('content-type', 'application/json');
+      return void res.end('{"name":"E2E Store"}');
+    }
+
     // http stores use OAuth1 (Authorization header or query), https use query-string keys.
     const auth = `${req.headers.authorization ?? ''} ${u.search}`;
     if (!auth.includes(CK)) {
@@ -147,7 +162,7 @@ export async function startMockWoo(
     const body = rawBody ? JSON.parse(rawBody) : undefined;
     if (req.method !== 'GET') calls.push({ method: req.method ?? '', path: u.pathname, body });
     const rest = u.pathname.replace('/wp-json/wc/v3/', '');
-    const mk = (extra: object) => ({
+    const mk = (extra: object): Item => ({
       id: nextId++,
       date_modified: new Date().toISOString(),
       ...extra,

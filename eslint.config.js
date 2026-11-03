@@ -120,4 +120,10 @@ export default [
       },
     },
   },
+
+  // e2e specs log progress to the test runner output
+  {
+    files: ['e2e/**/*.ts'],
+    rules: { 'no-console': 'off' },
+  },
 ];

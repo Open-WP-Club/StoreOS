@@ -41,7 +41,7 @@ test('virtualized lists with 6000 rows', async () => {
     }, route);
     await expect(page.getByText(`of ${TOTAL}`).first()).toBeVisible({ timeout: 30_000 });
     // Largest page size => 200 rows of data, far above the virtualization threshold.
-    await page.locator('select').last().selectOption('200');
+    await page.locator('#pagination-page-size').selectOption('200');
     await page.waitForTimeout(1000);
 
     const before = await rowInfo(page);

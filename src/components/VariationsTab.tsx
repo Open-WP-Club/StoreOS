@@ -9,6 +9,7 @@ import React, {
 } from 'react';
 import { Plus, Trash2, Save, Loader2, ChevronDown, ChevronUp, Layers } from 'lucide-react';
 import { useOfflineMutation } from '../hooks/useOfflineMutation';
+import ConfirmDialog from './ConfirmDialog';
 import WooCommerceService from '../services/woocommerce';
 import { formatPrice } from '../utils/currency';
 import { usePlaceholders } from '../utils/offlinePlaceholders';
@@ -67,6 +68,7 @@ function VariationsTab({ product, storeConfig }: VariationsTabProps): ReactEleme
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [confirmGenerate, setConfirmGenerate] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
@@ -348,6 +350,19 @@ function VariationsTab({ product, storeConfig }: VariationsTabProps): ReactEleme
 
   return (
     <div className="space-y-4">
+      {/* Bulk-creates every missing combination (can be many), so confirm first. */}
+      <ConfirmDialog
+        isOpen={confirmGenerate}
+        title="Generate all variations?"
+        message="This creates a variation for every attribute combination that does not exist yet."
+        confirmLabel="Generate"
+        variant="info"
+        onCancel={() => setConfirmGenerate(false)}
+        onConfirm={() => {
+          setConfirmGenerate(false);
+          void handleGenerateAll();
+        }}
+      />
       {/* Messages */}
       {error && (
         <div className="px-4 py-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
@@ -368,7 +383,7 @@ function VariationsTab({ product, storeConfig }: VariationsTabProps): ReactEleme
         <div className="flex gap-2">
           {variationAttrs.length > 0 && (
             <button
-              onClick={handleGenerateAll}
+              onClick={() => setConfirmGenerate(true)}
               disabled={generating}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
             >
