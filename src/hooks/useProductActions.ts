@@ -360,8 +360,8 @@ export function useProductActions(
       operationType: 'batch_products',
       queueData: { delete: ids },
       storeId: currentStore.id,
-      execute: async () => {
-        const deleteResult = await service.batchProducts({ delete: ids });
+      execute: async (d) => {
+        const deleteResult = await service.batchProducts({ delete: d.delete as number[] });
         if (!deleteResult.success) throw new Error(deleteResult.error);
         return deleteResult.data;
       },
@@ -403,8 +403,8 @@ export function useProductActions(
       operationType: 'batch_products',
       queueData: { update: updates },
       storeId: currentStore.id,
-      execute: async () => {
-        const result = await service.batchUpdateProducts(updates);
+      execute: async (d) => {
+        const result = await service.batchUpdateProducts(d.update as typeof updates);
         if (!result.success) throw new Error(result.error);
         return result.data;
       },

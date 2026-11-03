@@ -1,5 +1,6 @@
 import React from 'react';
 import EmptyState from './EmptyState';
+import PendingBadge from './PendingBadge';
 import { RefreshCw, Plus, Edit, Trash2, Save, X, Receipt } from 'lucide-react';
 import type { WooCommerceTaxRate, WooCommerceTaxClass } from '../types';
 import type { TaxRateFormData } from '../pages/TaxPage';
@@ -321,7 +322,10 @@ function TaxRatesTab({
                   <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
                     {parseFloat(rate.rate).toFixed(4)}%
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{rate.name}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
+                    {rate.name}
+                    {rate._pending && <PendingBadge />}
+                  </td>
                   <td className="px-4 py-3">
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
                       {rate.class || 'standard'}

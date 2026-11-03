@@ -13,6 +13,8 @@ export interface WooCommerceTaxRate {
   shipping: boolean;
   order: number;
   class: string;
+  /** UI-only: optimistic placeholder for a create queued offline (never persisted). */
+  _pending?: boolean;
 }
 
 export interface TaxRateUpdateData {
@@ -34,6 +36,9 @@ export interface TaxRateUpdateData {
 export interface WooCommerceTaxClass {
   slug: string;
   name: string;
+  /** Temp id of a class queued offline (only on `_pending` placeholders). */
+  id?: number;
+  _pending?: boolean;
 }
 
 export interface TaxClassCreateData {

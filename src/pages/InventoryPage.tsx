@@ -289,9 +289,9 @@ const InventoryPage: React.FC = (): React.ReactElement => {
       operationType: 'batch_products',
       queueData: { delete: ids },
       storeId: currentStore.id,
-      execute: async () => {
+      execute: async (d) => {
         const service = new WooCommerceService(currentStore);
-        const deleteResult = await service.batchProducts({ delete: ids });
+        const deleteResult = await service.batchProducts({ delete: d.delete as number[] });
         if (!deleteResult.success) throw new Error(deleteResult.error);
         return deleteResult.data;
       },
@@ -334,9 +334,9 @@ const InventoryPage: React.FC = (): React.ReactElement => {
       operationType: 'batch_products',
       queueData: { update: updates },
       storeId: currentStore.id,
-      execute: async () => {
+      execute: async (d) => {
         const service = new WooCommerceService(currentStore);
-        const result = await service.batchUpdateProducts(updates);
+        const result = await service.batchUpdateProducts(d.update as typeof updates);
         if (!result.success) throw new Error(result.error);
         return result;
       },

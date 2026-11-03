@@ -3,8 +3,14 @@ import useOffline from '../stores/offlineStore';
 import type {
   PendingOperation,
   PendingOperationType,
+  ProductVariation,
+  WooCommerceAttributeTerm,
   WooCommerceCoupon,
   WooCommerceProduct,
+  WooCommerceProductAttribute,
+  WooCommerceProductCategory,
+  WooCommerceTaxClass,
+  WooCommerceTaxRate,
 } from '../types';
 
 /**
@@ -12,34 +18,49 @@ import type {
  * They are DERIVED from the offline queue (never written to the cache / IndexedDB), so they
  * vanish automatically when the op is replayed, discarded, cancelled or absent after a restart.
  */
-type Kind = 'product' | 'coupon';
 type D = Record<string, unknown>;
 
-const CREATE: Record<Kind, PendingOperationType> = {
-  product: 'create_product',
-  coupon: 'create_coupon',
-};
-const UPDATE: Record<string, Kind> = { update_product: 'product', update_coupon: 'coupon' };
-const DELETE: Record<string, Kind> = { delete_product: 'product', delete_coupon: 'coupon' };
-
-/** Stable negative id for a queued op (real WooCommerce ids are always positive). */
-export function tempIdFor(opId: string): number {
-  let h = 5381;
-  for (let i = 0; i < opId.length; i++) h = ((h * 33) ^ opId.charCodeAt(i)) >>> 0;
-  return -((h % 2147483646) + 1);
+interface KindDef {
+  create: PendingOperationType;
+  update?: PendingOperationType;
+  delete: PendingOperationType;
+  batch?: PendingOperationType;
+  defaults: D;
 }
 
-export const isPlaceholderId = (id: unknown): boolean => typeof id === 'number' && id < 0;
-
-/** Drop UI-only placeholders before anything is persisted. */
-export const stripPending = <T extends { _pending?: boolean }>(items: T[]): T[] =>
-  items.some((i) => i._pending) ? items.filter((i) => !i._pending) : items;
-
-function build(kind: Kind, op: PendingOperation): WooCommerceProduct | WooCommerceCoupon {
-  const now = new Date(op.timestamp).toISOString();
-  const base = { id: tempIdFor(op.id), date_created: now, date_modified: now, _pending: true };
-  if (kind === 'coupon') {
-    return {
+const KINDS = {
+  product: {
+    create: 'create_product',
+    update: 'update_product',
+    delete: 'delete_product',
+    batch: 'batch_products',
+    defaults: {
+      name: '',
+      sku: '',
+      type: 'simple',
+      status: 'publish',
+      price: '',
+      regular_price: '',
+      sale_price: '',
+      stock_quantity: null,
+      stock_status: 'instock',
+      manage_stock: false,
+      description: '',
+      short_description: '',
+      categories: [],
+      tags: [],
+      images: [],
+      attributes: [],
+      variations: [],
+      meta_data: [],
+    },
+  },
+  coupon: {
+    create: 'create_coupon',
+    update: 'update_coupon',
+    delete: 'delete_coupon',
+    batch: 'batch_coupons',
+    defaults: {
       code: '',
       amount: '0',
       discount_type: 'percent',
@@ -60,35 +81,137 @@ function build(kind: Kind, op: PendingOperation): WooCommerceProduct | WooCommer
       email_restrictions: [],
       used_by: [],
       meta_data: [],
-      ...op.data,
-      ...base,
-    } as unknown as WooCommerceCoupon;
-  }
-  return {
-    name: '',
-    sku: '',
-    type: 'simple',
-    status: 'publish',
-    price: '',
-    regular_price: '',
-    sale_price: '',
-    stock_quantity: null,
-    stock_status: 'instock',
-    manage_stock: false,
-    description: '',
-    short_description: '',
-    categories: [],
-    tags: [],
-    images: [],
-    attributes: [],
-    variations: [],
-    meta_data: [],
-    ...op.data,
-    ...base,
-  } as unknown as WooCommerceProduct;
+    },
+  },
+  category: {
+    create: 'create_category',
+    update: 'update_category',
+    delete: 'delete_category',
+    defaults: {
+      name: '',
+      slug: '',
+      parent: 0,
+      description: '',
+      display: 'default',
+      image: null,
+      menu_order: 0,
+      count: 0,
+    },
+  },
+  attribute: {
+    create: 'create_attribute',
+    update: 'update_attribute',
+    delete: 'delete_attribute',
+    defaults: { name: '', slug: '', type: 'select', order_by: 'menu_order', has_archives: false },
+  },
+  term: {
+    create: 'create_attribute_term',
+    update: 'update_attribute_term',
+    delete: 'delete_attribute_term',
+    defaults: { name: '', slug: '', description: '', menu_order: 0, count: 0 },
+  },
+  tax_rate: {
+    create: 'create_tax_rate',
+    update: 'update_tax_rate',
+    delete: 'delete_tax_rate',
+    defaults: {
+      country: '',
+      state: '',
+      postcode: '',
+      city: '',
+      postcodes: [],
+      cities: [],
+      rate: '',
+      name: '',
+      priority: 1,
+      compound: false,
+      shipping: true,
+      order: 0,
+      class: '',
+    },
+  },
+  // Tax classes have no update; they are deleted by slug (a pending one also carries its temp id).
+  tax_class: {
+    create: 'create_tax_class',
+    delete: 'delete_tax_class',
+    defaults: { name: '', slug: '' },
+  },
+  variation: {
+    create: 'create_variation',
+    update: 'update_variation',
+    delete: 'delete_variation',
+    batch: 'batch_variations',
+    defaults: {
+      description: '',
+      sku: '',
+      price: '',
+      regular_price: '',
+      sale_price: '',
+      on_sale: false,
+      status: 'publish',
+      virtual: false,
+      downloadable: false,
+      manage_stock: false,
+      stock_quantity: null,
+      stock_status: 'instock',
+      attributes: [],
+      image: null,
+      meta_data: [],
+    },
+  },
+} satisfies Record<string, KindDef>;
+
+export type Kind = keyof typeof KINDS;
+const kindEntries = Object.entries(KINDS) as Array<[Kind, KindDef]>;
+const kindOf = (pick: (k: KindDef) => PendingOperationType | undefined, type: string) =>
+  kindEntries.find(([, k]) => pick(k) === type)?.[0];
+
+/** Stable negative id for a queued op (real WooCommerce ids are always positive). */
+export function tempIdFor(opId: string): number {
+  let h = 5381;
+  for (let i = 0; i < opId.length; i++) h = ((h * 33) ^ opId.charCodeAt(i)) >>> 0;
+  return -((h % 2147483646) + 1);
 }
 
-type Item<K extends Kind> = K extends 'product' ? WooCommerceProduct : WooCommerceCoupon;
+/** WooCommerce-style slug (tax class slugs are derived from the name). */
+const slugify = (name: string): string =>
+  name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+export const isPlaceholderId = (id: unknown): boolean => typeof id === 'number' && id < 0;
+
+/** Drop UI-only placeholders before anything is persisted. */
+export const stripPending = <T extends { _pending?: boolean }>(items: T[]): T[] =>
+  items.some((i) => i._pending) ? items.filter((i) => !i._pending) : items;
+
+interface ItemMap {
+  product: WooCommerceProduct;
+  coupon: WooCommerceCoupon;
+  category: WooCommerceProductCategory;
+  attribute: WooCommerceProductAttribute;
+  term: WooCommerceAttributeTerm;
+  tax_rate: WooCommerceTaxRate;
+  tax_class: WooCommerceTaxClass;
+  variation: ProductVariation;
+}
+type Item<K extends Kind> = ItemMap[K];
+
+function build(kind: Kind, op: PendingOperation): unknown {
+  const now = new Date(op.timestamp).toISOString();
+  const slug = kind === 'tax_class' ? slugify(String(op.data.name ?? '')) : undefined;
+  return {
+    ...KINDS[kind].defaults,
+    ...op.data,
+    ...(slug !== undefined && { slug }),
+    id: tempIdFor(op.id),
+    date_created: now,
+    date_modified: now,
+    _pending: true,
+  };
+}
 
 export function placeholdersFor<K extends Kind>(
   kind: K,
@@ -96,7 +219,7 @@ export function placeholdersFor<K extends Kind>(
   storeId: string | null | undefined
 ): Item<K>[] {
   return ops
-    .filter((o) => o.type === CREATE[kind] && o.storeId === storeId)
+    .filter((o) => o.type === KINDS[kind].create && o.storeId === storeId)
     .map((o) => build(kind, o) as Item<K>)
     .reverse(); // newest first, like a fresh server create
 }
@@ -111,6 +234,28 @@ export function usePlaceholders<K extends Kind>(
 }
 
 type Outcome = { queued: true; success: false } | { queued: false; success: false; error: string };
+const SYNCED = 'This item has already synced. Refresh and retry.';
+
+const findCreate = (kind: Kind, id: unknown, storeId: string): PendingOperation | undefined =>
+  useOffline
+    .getState()
+    .pendingOperations.find(
+      (o) => o.type === KINDS[kind].create && o.storeId === storeId && tempIdFor(o.id) === id
+    );
+
+/** Merge an update (data.id = temp id) into the queued create it targets. */
+function mergeInto(create: PendingOperation, data: D): void {
+  const merged: D = { ...create.data, ...data };
+  delete merged.id;
+  // Keep the queued create's meta (client id); append any new entries.
+  const meta = [
+    ...((create.data.meta_data as unknown[]) ?? []),
+    ...(Array.isArray(data.meta_data) ? data.meta_data : []),
+  ];
+  if (meta.length) merged.meta_data = meta;
+  else delete merged.meta_data;
+  useOffline.getState().updatePendingOperation(create.id, { data: merged });
+}
 
 /**
  * Update/delete of a placeholder never reaches the API: an update merges into the queued create,
@@ -121,32 +266,51 @@ export function mutatePlaceholder(
   data: D,
   storeId: string
 ): Outcome | null {
-  const kind = UPDATE[type] ?? DELETE[type];
+  const kind = kindOf((k) => k.update, type) ?? kindOf((k) => k.delete, type);
   if (!kind || !isPlaceholderId(data.id)) return null;
-  const store = useOffline.getState();
-  const create = store.pendingOperations.find(
-    (o) => o.type === CREATE[kind] && o.storeId === storeId && tempIdFor(o.id) === data.id
-  );
-  if (!create) {
-    return {
-      queued: false,
-      success: false,
-      error: 'This item has already synced. Refresh and retry.',
-    };
-  }
-  if (type in DELETE) {
-    store.removePendingOperation(create.id);
-  } else {
-    const merged: D = { ...create.data, ...data };
-    delete merged.id;
-    // Keep the queued create's meta (client id); append any new entries.
-    const meta = [
-      ...((create.data.meta_data as unknown[]) ?? []),
-      ...(Array.isArray(data.meta_data) ? data.meta_data : []),
-    ];
-    if (meta.length) merged.meta_data = meta;
-    else delete merged.meta_data;
-    store.updatePendingOperation(create.id, { data: merged });
-  }
+  const create = findCreate(kind, data.id, storeId);
+  if (!create) return { queued: false, success: false, error: SYNCED };
+  if (type === KINDS[kind].delete) useOffline.getState().removePendingOperation(create.id);
+  else mergeInto(create, data);
   return { queued: true, success: false };
+}
+
+type BatchOutcome = { data: D | null } | { error: string };
+
+/**
+ * Bulk edit/delete containing placeholder ids: deletes cancel the queued creates, updates merge
+ * into them, and only the real ids are returned (data null when nothing real is left).
+ * All-or-nothing: if any placeholder has already synced nothing is applied. Null = no placeholders.
+ */
+export function interceptBatch(
+  type: PendingOperationType,
+  data: D,
+  storeId: string
+): BatchOutcome | null {
+  const kind = kindOf((k) => k.batch, type);
+  if (!kind) return null;
+  const updates = (Array.isArray(data.update) ? data.update : []) as Array<D>;
+  const deletes = (Array.isArray(data.delete) ? data.delete : []) as number[];
+  const phUpdates = updates.filter((u) => isPlaceholderId(u.id));
+  const phDeletes = deletes.filter(isPlaceholderId);
+  if (!phUpdates.length && !phDeletes.length) return null;
+
+  const targets = [...phUpdates.map((u) => u.id), ...phDeletes];
+  const creates = targets.map((id) => findCreate(kind, id, storeId));
+  if (creates.some((c) => !c)) return { error: SYNCED };
+
+  phUpdates.forEach((u) => mergeInto(findCreate(kind, u.id, storeId)!, u));
+  phDeletes.forEach((id) =>
+    useOffline.getState().removePendingOperation(findCreate(kind, id, storeId)!.id)
+  );
+
+  const rest: D = { ...data };
+  const realUpdates = updates.filter((u) => !isPlaceholderId(u.id));
+  const realDeletes = deletes.filter((id) => !isPlaceholderId(id));
+  if (realUpdates.length) rest.update = realUpdates;
+  else delete rest.update;
+  if (realDeletes.length) rest.delete = realDeletes;
+  else delete rest.delete;
+  const left = ['create', 'update', 'delete'].some((k) => rest[k] !== undefined);
+  return { data: left ? rest : null };
 }

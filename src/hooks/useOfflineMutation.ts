@@ -3,7 +3,7 @@ import useOffline from '../stores/offlineStore';
 import useOnlineStatus from './useOnlineStatus';
 import { useToast } from './useToast';
 import { CLIENT_ID_META, CLIENT_ID_TYPES } from '../utils/offlineCreates';
-import { mutatePlaceholder } from '../utils/offlinePlaceholders';
+import { interceptBatch, mutatePlaceholder } from '../utils/offlinePlaceholders';
 import type { PendingOperationType } from '../types';
 
 interface MutationOptions<T> {
@@ -13,8 +13,8 @@ interface MutationOptions<T> {
   queueData: Record<string, unknown>;
   /** Store ID for queue tracking */
   storeId: string;
-  /** The actual API call to execute when online */
-  execute: () => Promise<T>;
+  /** The actual API call to execute when online. Receives the data actually sent (placeholder ids removed from batches). */
+  execute: (queueData: Record<string, unknown>) => Promise<T>;
   /** Called on successful execution */
   onSuccess?: (result: T) => void | Promise<void>;
   /** Called on failed execution (still online) */
@@ -49,23 +49,35 @@ export function useOfflineMutation() {
         return local;
       }
 
+      // Bulk ops: placeholder ids are handled locally, only real ids continue.
+      let payload = queueData;
+      const batch = interceptBatch(operationType, queueData, storeId);
+      if (batch) {
+        if ('error' in batch) {
+          onError?.(batch.error);
+          return { queued: false, success: false, error: batch.error };
+        }
+        if (!batch.data) return { queued: true, success: false };
+        payload = batch.data;
+      }
+
       if (!isOnline) {
         const data = CLIENT_ID_TYPES.includes(operationType)
           ? {
-              ...queueData,
+              ...payload,
               meta_data: [
-                ...((queueData.meta_data as unknown[]) ?? []),
+                ...((payload.meta_data as unknown[]) ?? []),
                 { key: CLIENT_ID_META, value: crypto.randomUUID() },
               ],
             }
-          : queueData;
+          : payload;
         addPendingOperation(operationType, data, storeId);
         showToast('You are offline. This change will sync when you reconnect.', 'warning');
         return { queued: true, success: false };
       }
 
       try {
-        const result = await execute();
+        const result = await execute(payload);
         await onSuccess?.(result);
         return { queued: false, success: true };
       } catch (err) {

@@ -7,6 +7,8 @@ import PageHeader from '../components/PageHeader';
 import EmptyState from '../components/EmptyState';
 import { useToast } from '../hooks/useToast';
 import { useOfflineMutation } from '../hooks/useOfflineMutation';
+import PendingBadge from '../components/PendingBadge';
+import { isPlaceholderId, usePlaceholders } from '../utils/offlinePlaceholders';
 import ToastContainer from '../components/ToastContainer';
 import {
   RefreshCw,
@@ -44,7 +46,12 @@ function CategoriesPage(): React.ReactElement {
   const currentStore = getCurrentStore();
   const { toasts, showToast, removeToast } = useToast();
 
-  const [categories, setCategories] = useState<WooCommerceProductCategory[]>([]);
+  const [loadedCategories, setCategories] = useState<WooCommerceProductCategory[]>([]);
+  const placeholders = usePlaceholders('category', currentStore?.id);
+  const categories = useMemo(
+    () => [...loadedCategories, ...placeholders],
+    [loadedCategories, placeholders]
+  );
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -265,6 +272,7 @@ function CategoriesPage(): React.ReactElement {
               )}
               <FolderTree className="w-4 h-4 text-blue-500" />
               <span className="font-medium text-gray-900 dark:text-white">{cat.name}</span>
+              {cat._pending && <PendingBadge />}
             </div>
           </td>
           <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{cat.slug}</td>
@@ -399,7 +407,7 @@ function CategoriesPage(): React.ReactElement {
               >
                 <option value={0}>None (Top Level)</option>
                 {categories
-                  .filter((c) => c.id !== editingId)
+                  .filter((c) => c.id !== editingId && !isPlaceholderId(c.id))
                   .map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}

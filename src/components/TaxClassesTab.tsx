@@ -1,5 +1,6 @@
 import React from 'react';
 import EmptyState from './EmptyState';
+import PendingBadge from './PendingBadge';
 import { RefreshCw, Plus, Trash2, Save, X, Tag } from 'lucide-react';
 import type { WooCommerceTaxRate, WooCommerceTaxClass } from '../types';
 
@@ -135,6 +136,7 @@ function TaxClassesTab({
                   >
                     <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
                       {tc.name}
+                      {tc._pending && <PendingBadge />}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                       {tc.slug}

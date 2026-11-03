@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useStoreConfig, useCache } from '../stores';
 import useOffline from '../stores/offlineStore';
 import { opTouchesProduct } from '../utils/offlineCreates';
+import { isPlaceholderId, usePlaceholders } from '../utils/offlinePlaceholders';
+import PendingBadge from '../components/PendingBadge';
 import WooCommerceService from '../services/woocommerce';
 import type { WooCommerceProduct } from '../types';
 import { formatPrice } from '../utils/currency';
@@ -41,6 +43,12 @@ export default function ProductEditPage(): ReactElement {
   );
   const currentStore = getCurrentStore();
 
+  // `/products/-123`: a product created offline that is still only in the queue.
+  const isPending = isPlaceholderId(Number(id));
+  const placeholder = usePlaceholders('product', currentStore?.id).find(
+    (p) => p.id === Number(id)
+  ) as Product | undefined;
+
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -59,7 +67,7 @@ export default function ProductEditPage(): ReactElement {
   // Fetch fresh product data from API
   const fetchProductFromApi = useCallback(
     async (showLoadingState: boolean = true): Promise<void> => {
-      if (!currentStore || !id) return;
+      if (!currentStore || !id || isPending) return;
 
       try {
         if (showLoadingState) {
@@ -89,7 +97,7 @@ export default function ProductEditPage(): ReactElement {
         setRefreshing(false);
       }
     },
-    [currentStore, id, product, form]
+    [currentStore, id, isPending, product, form]
   );
 
   useEffect(() => {
@@ -118,7 +126,15 @@ export default function ProductEditPage(): ReactElement {
 
     const cachedProduct = getProductFromCache();
 
-    if (cachedProduct) {
+    if (isPending) {
+      if (placeholder) {
+        setProduct(placeholder);
+        form.populateFormData(placeholder);
+      } else {
+        setError('This product has already synced or was discarded. Open it from the list.');
+      }
+      setLoading(false);
+    } else if (cachedProduct) {
       setProduct(cachedProduct);
       form.populateFormData(cachedProduct);
       setLoading(false);
@@ -132,6 +148,7 @@ export default function ProductEditPage(): ReactElement {
     try {
       setError(null);
       const updated = await form.handleSave(parseInt(id!));
+      if (isPending) return; // the placeholder re-derives from the queue
       if (updated) {
         setProduct(updated);
       }
@@ -139,6 +156,9 @@ export default function ProductEditPage(): ReactElement {
       setError((err as Error).message || 'Failed to update product');
     }
   };
+
+  // Pending products always show what is in the queue (edits merge into the queued create).
+  const shown = isPending ? (placeholder ?? product) : product;
 
   if (loading) {
     return (
@@ -203,6 +223,16 @@ export default function ProductEditPage(): ReactElement {
           </div>
         </div>
 
+        {isPending && (
+          <div
+            role="status"
+            className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-4 text-sm text-amber-800 dark:text-amber-300"
+          >
+            This product was created offline and is waiting to sync. Edits are saved to the queued
+            create.
+          </div>
+        )}
+
         {pendingForProduct > 0 && (
           <div
             role="status"
@@ -226,25 +256,26 @@ export default function ProductEditPage(): ReactElement {
         )}
 
         {/* Product Info Bar */}
-        {product && (
+        {shown && (
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-6">
             <div className="flex items-center space-x-6">
-              {product.images?.[0]?.src && (
+              {shown.images?.[0]?.src && (
                 <img
-                  src={product.images[0].src}
-                  alt={product.name}
+                  src={shown.images[0].src}
+                  alt={shown.name}
                   className="w-20 h-20 object-cover rounded-lg"
                 />
               )}
               <div className="flex-1">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {product.name}
+                  {shown.name}
+                  {isPending && <PendingBadge />}
                 </h2>
                 <div className="flex items-center space-x-4 mt-1 text-sm text-gray-600 dark:text-gray-400">
-                  <span>ID: {product.id}</span>
-                  {product.sku && <span>SKU: {product.sku}</span>}
-                  <span className="capitalize">Status: {product.status}</span>
-                  <span>Price: {formatPrice(product.price)}</span>
+                  <span>ID: {isPending ? 'pending' : shown.id}</span>
+                  {shown.sku && <span>SKU: {shown.sku}</span>}
+                  <span className="capitalize">Status: {shown.status}</span>
+                  <span>Price: {formatPrice(shown.price || shown.regular_price)}</span>
                 </div>
               </div>
             </div>
@@ -257,7 +288,7 @@ export default function ProductEditPage(): ReactElement {
         <nav className="flex space-x-8">
           {[
             ...TABS,
-            ...(product?.type === 'variable'
+            ...(!isPending && product?.type === 'variable'
               ? [{ id: 'variations' as TabId, label: 'Variations' }]
               : []),
           ].map((tab) => (
@@ -341,7 +372,7 @@ export default function ProductEditPage(): ReactElement {
       )}
 
       {/* Variations Tab (variable products only) */}
-      {activeTab === 'variations' && product?.type === 'variable' && currentStore && (
+      {activeTab === 'variations' && !isPending && product?.type === 'variable' && currentStore && (
         <VariationsTab product={product} storeConfig={currentStore} />
       )}
     </div>

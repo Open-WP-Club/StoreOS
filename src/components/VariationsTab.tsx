@@ -11,6 +11,8 @@ import { Plus, Trash2, Save, Loader2, ChevronDown, ChevronUp, Layers } from 'luc
 import { useOfflineMutation } from '../hooks/useOfflineMutation';
 import WooCommerceService from '../services/woocommerce';
 import { formatPrice } from '../utils/currency';
+import { usePlaceholders } from '../utils/offlinePlaceholders';
+import PendingBadge from './PendingBadge';
 import type {
   WooCommerceStore,
   WooCommerceProduct,
@@ -48,7 +50,17 @@ const emptyForm = (attrs: ProductAttribute[]): VariationFormData => ({
 });
 
 function VariationsTab({ product, storeConfig }: VariationsTabProps): ReactElement {
-  const [variations, setVariations] = useState<ProductVariation[]>([]);
+  const [loadedVariations, setVariations] = useState<ProductVariation[]>([]);
+  const pendingVariations = usePlaceholders('variation', storeConfig.id);
+  const variations = useMemo(
+    () => [
+      ...loadedVariations,
+      ...pendingVariations.filter(
+        (v) => (v as unknown as { productId?: number }).productId === product.id
+      ),
+    ],
+    [loadedVariations, pendingVariations, product.id]
+  );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -617,6 +629,7 @@ const VariationRow = React.memo(function VariationRow({
         </td>
         <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
           {attrLabel || `#${variation.id}`}
+          {variation._pending && <PendingBadge />}
         </td>
         <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
           {variation.sale_price ? (

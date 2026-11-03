@@ -1,11 +1,12 @@
 import { vi, Mock } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import ProductEditPage from '../ProductEditPage';
 import { createMockStore, createMockProduct } from '../../__test_utils__';
 import { useStoreConfig, useCache } from '../../stores';
 import WooCommerceService from '../../services/woocommerce';
 import useOffline from '../../stores/offlineStore';
+import { mutatePlaceholder, tempIdFor } from '../../utils/offlinePlaceholders';
 
 // Mock stores
 vi.mock('../../stores', () => ({
@@ -191,6 +192,47 @@ describe('ProductEditPage', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('general-tab')).toBeInTheDocument();
+    });
+  });
+
+  describe('product created offline (placeholder id)', () => {
+    const queueProduct = (data: Record<string, unknown>) => {
+      const id = useOffline.getState().addPendingOperation('create_product', data, mockStore.id);
+      return tempIdFor(id);
+    };
+
+    beforeEach(() => {
+      useOffline.setState({ pendingOperations: [] });
+    });
+
+    it('resolves the placeholder from the queue without hitting the API', async () => {
+      const tempId = queueProduct({ name: 'Offline Hat', sku: 'HAT', type: 'variable' });
+      renderWithRoute(String(tempId));
+
+      expect(await screen.findByText('Offline Hat')).toBeInTheDocument();
+      expect(screen.getByText('Pending sync')).toBeInTheDocument();
+      expect(screen.getByText('ID: pending')).toBeInTheDocument();
+      expect(screen.getByText(/created offline and is waiting to sync/i)).toBeInTheDocument();
+      expect(screen.getByTestId('general-tab')).toBeInTheDocument();
+      expect(mockGetProduct).not.toHaveBeenCalled();
+      // variations need a real parent id, so the tab is not offered
+      expect(screen.queryByText('Variations')).not.toBeInTheDocument();
+    });
+
+    it('shows an error when the placeholder is gone (already synced or discarded)', async () => {
+      renderWithRoute('-12345');
+      expect(await screen.findByText(/already synced or was discarded/i)).toBeInTheDocument();
+      expect(mockGetProduct).not.toHaveBeenCalled();
+    });
+
+    it('reflects edits merged into the queued create', async () => {
+      const tempId = queueProduct({ name: 'Offline Hat' });
+      renderWithRoute(String(tempId));
+      await screen.findByText('Offline Hat');
+      act(() => {
+        mutatePlaceholder('update_product', { id: tempId, name: 'Offline Cap' }, mockStore.id);
+      });
+      expect(await screen.findByText('Offline Cap')).toBeInTheDocument();
     });
   });
 });

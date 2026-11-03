@@ -7,6 +7,8 @@ import PageHeader from '../components/PageHeader';
 import EmptyState from '../components/EmptyState';
 import { useToast } from '../hooks/useToast';
 import { useOfflineMutation } from '../hooks/useOfflineMutation';
+import PendingBadge from '../components/PendingBadge';
+import { isPlaceholderId, usePlaceholders } from '../utils/offlinePlaceholders';
 import ToastContainer from '../components/ToastContainer';
 import {
   RefreshCw,
@@ -58,7 +60,13 @@ function AttributesPage(): React.ReactElement {
   const currentStore = getCurrentStore();
   const { toasts, showToast, removeToast } = useToast();
 
-  const [attributes, setAttributes] = useState<WooCommerceProductAttribute[]>([]);
+  const [loadedAttributes, setAttributes] = useState<WooCommerceProductAttribute[]>([]);
+  const pendingAttrs = usePlaceholders('attribute', currentStore?.id);
+  const pendingTerms = usePlaceholders('term', currentStore?.id);
+  const attributes = useMemo(
+    () => [...loadedAttributes, ...pendingAttrs],
+    [loadedAttributes, pendingAttrs]
+  );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -132,7 +140,8 @@ function AttributesPage(): React.ReactElement {
       setExpandedAttrId(null);
     } else {
       setExpandedAttrId(attrId);
-      if (!termsMap[attrId]) {
+      // A pending attribute has no server id yet, so there is nothing to fetch.
+      if (!termsMap[attrId] && !isPlaceholderId(attrId)) {
         await loadTerms(attrId);
       }
     }
@@ -531,7 +540,13 @@ function AttributesPage(): React.ReactElement {
         <div className="space-y-3">
           {attributes.map((attr) => {
             const isExpanded = expandedAttrId === attr.id;
-            const terms = termsMap[attr.id] || [];
+            const attrPending = isPlaceholderId(attr.id);
+            const terms = [
+              ...(termsMap[attr.id] || []),
+              ...pendingTerms.filter(
+                (t) => (t as unknown as { attributeId?: number }).attributeId === attr.id
+              ),
+            ];
             const isLoadingTerms = loadingTerms === attr.id;
 
             return (
@@ -553,19 +568,22 @@ function AttributesPage(): React.ReactElement {
                     <Layers className="w-5 h-5 text-purple-500" />
                     <div>
                       <span className="font-medium text-gray-900 dark:text-white">{attr.name}</span>
+                      {attr._pending && <PendingBadge />}
                       <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
                         ({attr.slug}) &middot; Sort: {attr.order_by}
                       </span>
                     </div>
                   </button>
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleCreateTerm(attr.id)}
-                      className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 rounded hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors"
-                    >
-                      <Plus className="w-3 h-3" />
-                      Term
-                    </button>
+                    {!attrPending && (
+                      <button
+                        onClick={() => handleCreateTerm(attr.id)}
+                        className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 rounded hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors"
+                      >
+                        <Plus className="w-3 h-3" />
+                        Term
+                      </button>
+                    )}
                     <button
                       onClick={() => handleEditAttr(attr)}
                       className="p-1.5 rounded text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30 transition-colors"
@@ -595,7 +613,9 @@ function AttributesPage(): React.ReactElement {
                       <div className="px-4 py-3 text-sm text-gray-500">Loading terms...</div>
                     ) : terms.length === 0 ? (
                       <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                        No terms yet. Click &quot;+ Term&quot; to add one.
+                        {attrPending
+                          ? 'Terms can be added once this attribute has synced.'
+                          : 'No terms yet. Click "+ Term" to add one.'}
                       </div>
                     ) : (
                       <div className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -609,6 +629,7 @@ function AttributesPage(): React.ReactElement {
                               <span className="text-sm text-gray-900 dark:text-white">
                                 {term.name}
                               </span>
+                              {term._pending && <PendingBadge />}
                               <span className="text-xs text-gray-500">({term.slug})</span>
                               {term.count > 0 && (
                                 <span className="text-xs bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded">

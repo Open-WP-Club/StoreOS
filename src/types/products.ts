@@ -159,6 +159,8 @@ export interface ProductVariation {
   attributes: VariationAttribute[];
   menu_order: number;
   meta_data: WooCommerceMetaData[];
+  /** UI-only: optimistic placeholder for a create queued offline (never persisted). */
+  _pending?: boolean;
 }
 
 export interface VariationCreateData {
@@ -285,6 +287,8 @@ export interface WooCommerceProductCategory {
   image: ProductImage | null;
   menu_order: number;
   count: number;
+  /** UI-only: optimistic placeholder for a create queued offline (never persisted). */
+  _pending?: boolean;
 }
 
 export interface ProductCategoryUpdateData {
@@ -319,6 +323,8 @@ export interface WooCommerceProductAttribute {
   type: string;
   order_by: 'menu_order' | 'name' | 'name_num' | 'id';
   has_archives: boolean;
+  /** UI-only: optimistic placeholder for a create queued offline (never persisted). */
+  _pending?: boolean;
 }
 
 export interface ProductAttributeUpdateData {
@@ -336,6 +342,8 @@ export interface WooCommerceAttributeTerm {
   description: string;
   menu_order: number;
   count: number;
+  /** UI-only: optimistic placeholder for a create queued offline (never persisted). */
+  _pending?: boolean;
 }
 
 export interface AttributeTermUpdateData {

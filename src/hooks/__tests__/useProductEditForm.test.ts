@@ -5,6 +5,8 @@ import { createMockStore, createMockProduct } from '../../__test_utils__/mockFac
 import type { WooCommerceStore, Product } from '../../types';
 import WooCommerceService from '../../services/woocommerce';
 import { useStoreConfig } from '../../stores';
+import useOffline from '../../stores/offlineStore';
+import { tempIdFor } from '../../utils/offlinePlaceholders';
 
 // ============================================
 // Mocks
@@ -286,6 +288,31 @@ describe('useProductEditForm', () => {
       expect(savedProduct?.name).toBe('Updated');
       expect(mockUpdateProduct).toHaveBeenCalledWith(42, expect.any(Object));
       expect(result.current.successMessage).toBe('Product updated successfully!');
+    });
+
+    it('saving a pending (offline-created) product merges into the queue and shows the pending message', async () => {
+      useOffline.setState({ pendingOperations: [] });
+      const opId = useOffline
+        .getState()
+        .addPendingOperation('create_product', { name: 'Hat' }, mockActiveStore!.id);
+      const tempId = tempIdFor(opId);
+
+      const { result } = renderHook(() => useProductEditForm());
+      act(() => {
+        result.current.handleInputChange({
+          target: { name: 'name', value: 'Cap', type: 'text' },
+        } as React.ChangeEvent<HTMLInputElement>);
+      });
+      await act(async () => {
+        await result.current.handleSave(tempId);
+      });
+
+      expect(mockUpdateProduct).not.toHaveBeenCalled();
+      const ops = useOffline.getState().pendingOperations;
+      expect(ops).toHaveLength(1);
+      expect(ops[0]!.type).toBe('create_product');
+      expect(ops[0]!.data.name).toBe('Cap');
+      expect(result.current.successMessage).toMatch(/pending product/i);
     });
 
     it('sends correct stock_quantity when manage_stock is true', async () => {

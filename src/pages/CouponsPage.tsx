@@ -369,9 +369,9 @@ function CouponsPage(): React.ReactElement {
       operationType: 'batch_coupons',
       queueData: { delete: ids },
       storeId: currentStore.id,
-      execute: async () => {
+      execute: async (d) => {
         const service = new WooCommerceService(currentStore);
-        const result = await service.batchCoupons({ delete: ids });
+        const result = await service.batchCoupons({ delete: d.delete as number[] });
         if (!result.success) throw new Error(result.error);
         return result.data;
       },

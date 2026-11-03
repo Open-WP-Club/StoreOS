@@ -6,6 +6,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import PageHeader from '../components/PageHeader';
 import { useToast } from '../hooks/useToast';
 import { useOfflineMutation } from '../hooks/useOfflineMutation';
+import { usePlaceholders } from '../utils/offlinePlaceholders';
 import ToastContainer from '../components/ToastContainer';
 import StatCard from '../components/StatCard';
 import TaxRatesTab from '../components/TaxRatesTab';
@@ -44,8 +45,19 @@ function TaxPage(): React.ReactElement {
   const currentStore = getCurrentStore();
   const { toasts, showToast, removeToast } = useToast();
 
-  const [taxRates, setTaxRates] = useState<WooCommerceTaxRate[]>([]);
-  const [taxClasses, setTaxClasses] = useState<WooCommerceTaxClass[]>([]);
+  const [loadedRates, setTaxRates] = useState<WooCommerceTaxRate[]>([]);
+  const [loadedClasses, setTaxClasses] = useState<WooCommerceTaxClass[]>([]);
+  const pendingRates = usePlaceholders('tax_rate', currentStore?.id);
+  const pendingClasses = usePlaceholders('tax_class', currentStore?.id);
+  const taxRates = useMemo(() => [...loadedRates, ...pendingRates], [loadedRates, pendingRates]);
+  const taxClasses = useMemo(
+    () => [
+      ...loadedClasses,
+      // a class that now exists on the server is no longer pending
+      ...pendingClasses.filter((p) => !loadedClasses.some((c) => c.slug === p.slug)),
+    ],
+    [loadedClasses, pendingClasses]
+  );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'rates' | 'classes'>('rates');
@@ -221,9 +233,11 @@ function TaxPage(): React.ReactElement {
       if (res.queued) setTaxRates((prev) => prev.filter((r) => r.id !== id));
       if (res.success) showToast('Tax rate deleted', 'success');
     } else if (deleteConfirm.type === 'class' && slug) {
+      const pendingId = taxClasses.find((c) => c.slug === slug && c._pending)?.id;
       const res = await mutateApi(
         'delete_tax_class',
-        { slug },
+        // a pending class carries its temp id so the delete cancels the queued create
+        { slug, ...(pendingId !== undefined && { id: pendingId }) },
         currentStore!.id,
         () => service.deleteTaxClass(slug),
         (msg) => showToast(msg, 'error'),

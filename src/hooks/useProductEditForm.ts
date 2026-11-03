@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, ChangeEvent, RefObject } from 'react';
 import { useStoreConfig } from '../stores';
 import WooCommerceService from '../services/woocommerce';
 import { useOfflineMutation } from './useOfflineMutation';
+import { isPlaceholderId } from '../utils/offlinePlaceholders';
 import type {
   Product,
   ProductUpdateData,
@@ -222,6 +223,10 @@ export function useProductEditForm(): UseProductEditFormResult {
         },
       });
       if (outcome.error) throw new Error(outcome.error);
+      if (outcome.queued && isPlaceholderId(productId)) {
+        setSuccessMessage('Saved to the pending product. It will sync when you reconnect.');
+        setTimeout(() => setSuccessMessage(''), 3000);
+      }
       return updated;
     } finally {
       setSaving(false);

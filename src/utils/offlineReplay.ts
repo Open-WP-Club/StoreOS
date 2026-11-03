@@ -61,7 +61,18 @@ export async function replayOperation(
 ): Promise<Result> {
   const d = operation.data;
   // Safety net: a temp placeholder id must never reach the API.
-  if (!operation.type.startsWith('create_') && isPlaceholderId(d.id)) {
+  const batchIds = operation.type.startsWith('batch_')
+    ? [
+        ...((d.update as Array<{ id?: unknown }> | undefined) ?? []).map((u) => u.id),
+        ...((d.delete as unknown[] | undefined) ?? []),
+      ]
+    : [];
+  if (
+    (!operation.type.startsWith('create_') && isPlaceholderId(d.id)) ||
+    batchIds.some(isPlaceholderId) ||
+    isPlaceholderId(d.productId) ||
+    isPlaceholderId(d.attributeId)
+  ) {
     return { success: false, error: 'Refusing to sync a pending placeholder id' };
   }
   switch (operation.type) {
