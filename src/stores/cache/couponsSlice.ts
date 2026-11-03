@@ -1,3 +1,4 @@
+import { stripPending } from '../../utils/offlinePlaceholders';
 import type { StateCreator } from 'zustand';
 import { getCollection, STORES } from '../../utils/indexedDBCache';
 import { CACHE_EXPIRY } from '../../constants/config';
@@ -50,7 +51,8 @@ export const createCouponsSlice: StateCreator<CacheStore, Mutators, [], CouponsS
     return null;
   },
 
-  setCachedCoupons: async (data: WooCommerceCoupon[], currentStoreId: string, now: number) => {
+  setCachedCoupons: async (rawData: WooCommerceCoupon[], currentStoreId: string, now: number) => {
+    const data = stripPending(rawData); // offline placeholders are UI-only
     const prevEntry = get().cache.coupons;
     const prev = prevEntry.storeId === currentStoreId ? prevEntry.data : null;
     set((state) => {

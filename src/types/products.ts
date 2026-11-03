@@ -124,6 +124,8 @@ export interface WooCommerceProduct {
   menu_order: number;
   meta_data: WooCommerceMetaData[];
   global_unique_id?: string;
+  /** UI-only: optimistic placeholder for a create queued offline (never persisted). */
+  _pending?: boolean;
 }
 
 export interface VariationAttribute {

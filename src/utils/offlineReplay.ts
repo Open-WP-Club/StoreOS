@@ -1,4 +1,5 @@
 import { replayPosSale, type PosSaleOpData } from './posOfflineSale';
+import { isPlaceholderId } from './offlinePlaceholders';
 import { batchErrorIds } from './batchResult';
 import {
   createProductOnce,
@@ -59,6 +60,10 @@ export async function replayOperation(
   operation: PendingOperation
 ): Promise<Result> {
   const d = operation.data;
+  // Safety net: a temp placeholder id must never reach the API.
+  if (!operation.type.startsWith('create_') && isPlaceholderId(d.id)) {
+    return { success: false, error: 'Refusing to sync a pending placeholder id' };
+  }
   switch (operation.type) {
     case 'create_order':
       return typeof d.clientId === 'string'

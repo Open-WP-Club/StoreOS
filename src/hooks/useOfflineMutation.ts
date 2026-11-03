@@ -3,6 +3,7 @@ import useOffline from '../stores/offlineStore';
 import useOnlineStatus from './useOnlineStatus';
 import { useToast } from './useToast';
 import { CLIENT_ID_META, CLIENT_ID_TYPES } from '../utils/offlineCreates';
+import { mutatePlaceholder } from '../utils/offlinePlaceholders';
 import type { PendingOperationType } from '../types';
 
 interface MutationOptions<T> {
@@ -40,6 +41,13 @@ export function useOfflineMutation() {
   const mutate = useCallback(
     async <T>(options: MutationOptions<T>): Promise<MutationResult> => {
       const { operationType, queueData, storeId, execute, onSuccess, onError } = options;
+
+      // Edits/deletes of an offline-created placeholder act on the queued create, online or not.
+      const local = mutatePlaceholder(operationType, queueData, storeId);
+      if (local) {
+        if (!local.queued) onError?.(local.error);
+        return local;
+      }
 
       if (!isOnline) {
         const data = CLIENT_ID_TYPES.includes(operationType)

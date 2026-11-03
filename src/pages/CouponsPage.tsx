@@ -4,6 +4,8 @@ import { useStoreConfig, useCache, useActivityLog } from '../stores';
 import { batchErrorIds } from '../utils/batchResult';
 import WooCommerceService from '../services/woocommerce';
 import { formatPrice } from '../utils/currency';
+import PendingBadge from '../components/PendingBadge';
+import { stripPending, usePlaceholders } from '../utils/offlinePlaceholders';
 import { exportToCSV } from '../utils/csvExport';
 import { exportTableToPDF } from '../utils/pdfExport';
 import ExportMenu from '../components/ExportMenu';
@@ -64,7 +66,12 @@ function CouponsPage(): React.ReactElement {
   const toast = useToast();
   const { mutate: offlineMutate } = useOfflineMutation();
 
-  const [coupons, setCoupons] = useState<Coupon[]>(couponsFromCache);
+  const [baseCoupons, setCoupons] = useState<Coupon[]>(couponsFromCache);
+  const placeholders = usePlaceholders('coupon', currentStore?.id);
+  const coupons = useMemo(
+    () => (placeholders.length ? [...placeholders, ...stripPending(baseCoupons)] : baseCoupons),
+    [placeholders, baseCoupons]
+  );
   const [loading, setLoading] = useState<boolean>(couponsFromCache.length === 0);
   const [searchTerm, setSearchTerm] = useState<string>(searchParams.get('search') || '');
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -623,6 +630,7 @@ function CouponsPage(): React.ReactElement {
                             <span className="font-mono text-sm font-bold text-gray-900 dark:text-white">
                               {coupon.code}
                             </span>
+                            {coupon._pending && <PendingBadge />}
                           </div>
                           {coupon.description && (
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate max-w-xs">

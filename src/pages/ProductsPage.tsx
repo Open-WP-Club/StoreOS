@@ -24,6 +24,8 @@ import type { Product, StockStatus, BatchProductUpdate } from '../types';
 import Modal from '../components/Modal';
 import { SortableTh } from '../components/ListViewControls';
 import { useVirtualRows } from '../hooks/useVirtualRows';
+import PendingBadge from '../components/PendingBadge';
+import { usePlaceholders } from '../utils/offlinePlaceholders';
 import { EMPTY_PRODUCTS } from '../constants';
 
 function ProductsPage(): React.ReactElement {
@@ -35,7 +37,11 @@ function ProductsPage(): React.ReactElement {
   const { toasts, showToast, removeToast } = useToast();
 
   const setCachedData = useCache((state) => state.setCachedData);
-  const products = productsFromCache;
+  const placeholders = usePlaceholders('product', currentStore?.id);
+  const products = React.useMemo(
+    () => (placeholders.length ? [...placeholders, ...productsFromCache] : productsFromCache),
+    [placeholders, productsFromCache]
+  );
   const loading = productsFromCache.length === 0 && !currentStore;
   const error = '';
 
@@ -277,6 +283,7 @@ function ProductsPage(): React.ReactElement {
                               >
                                 {product.name}
                               </Link>
+                              {product._pending && <PendingBadge />}
                             </div>
                           </div>
                         </td>

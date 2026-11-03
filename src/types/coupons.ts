@@ -30,6 +30,8 @@ export interface WooCommerceCoupon {
   email_restrictions: string[];
   used_by: string[];
   meta_data: WooCommerceMetaData[];
+  /** UI-only: optimistic placeholder for a create queued offline (never persisted). */
+  _pending?: boolean;
 }
 
 export interface CouponUpdateData {

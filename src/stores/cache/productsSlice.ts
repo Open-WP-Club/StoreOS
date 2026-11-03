@@ -1,3 +1,4 @@
+import { stripPending } from '../../utils/offlinePlaceholders';
 import type { StateCreator } from 'zustand';
 import { saveToCache, getCollection, getFromCache, STORES } from '../../utils/indexedDBCache';
 import { CACHE_EXPIRY, TIME } from '../../constants/config';
@@ -120,7 +121,8 @@ export const createProductsSlice: StateCreator<CacheStore, Mutators, [], Product
     return null;
   },
 
-  setCachedProducts: async (data: WooCommerceProduct[], currentStoreId: string, now: number) => {
+  setCachedProducts: async (rawData: WooCommerceProduct[], currentStoreId: string, now: number) => {
+    const data = stripPending(rawData); // offline placeholders are UI-only
     const recentProducts: WooCommerceProduct[] = [];
     const oldProducts: WooCommerceProduct[] = [];
 
