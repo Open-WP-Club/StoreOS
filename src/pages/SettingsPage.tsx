@@ -27,6 +27,8 @@ export default function SettingsPage(): ReactElement {
     receiptShowLogo,
     setReceiptShowLogo,
     setReceiptVatRate,
+    maxDiscountPercent,
+    setMaxDiscountPercent,
     openCashDrawer,
     setOpenCashDrawer,
     pinEnabled,
@@ -97,6 +99,8 @@ export default function SettingsPage(): ReactElement {
           setReceiptShowLogo={setReceiptShowLogo}
           receiptVatRate={receiptVatRate}
           setReceiptVatRate={setReceiptVatRate}
+          maxDiscountPercent={maxDiscountPercent}
+          setMaxDiscountPercent={setMaxDiscountPercent}
           openCashDrawer={openCashDrawer}
           setOpenCashDrawer={setOpenCashDrawer}
         />

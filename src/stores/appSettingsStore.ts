@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Language } from '../utils/i18n';
+import { MAX_DISCOUNT_PERCENT } from '../utils/posPricing';
 import { hashPin, verifyPinHash, isLegacyHash } from '../utils/pinHash';
 
 // ============================================
@@ -24,6 +25,7 @@ export interface AppSettingsState {
   autoPrintReceipt: boolean; // POS: print on checkout
   receiptShowLogo: boolean; // Receipt: print the store logo at the top
   receiptVatRate: number; // Receipt: VAT % included in prices; 0 hides the VAT line
+  maxDiscountPercent: number; // POS: highest % discount a cashier can apply (0-100)
   openCashDrawer: boolean; // POS: ESC/POS kick with the receipt (needs a named printer)
 
   // PIN Lock
@@ -48,6 +50,7 @@ interface AppSettingsActions {
   setDefaultPrinter: (printer: string | null) => void;
   setAutoPrintReceipt: (v: boolean) => void;
   setReceiptVatRate: (v: number) => void;
+  setMaxDiscountPercent: (v: number) => void;
   setReceiptShowLogo: (v: boolean) => void;
   setOpenCashDrawer: (v: boolean) => void;
 
@@ -103,6 +106,7 @@ const useAppSettings = create<AppSettingsStore>()(
       autoPrintReceipt: false,
       receiptShowLogo: false,
       receiptVatRate: 20,
+      maxDiscountPercent: MAX_DISCOUNT_PERCENT,
       openCashDrawer: false,
       pinEnabled: false,
       pinCode: null,
@@ -142,6 +146,8 @@ const useAppSettings = create<AppSettingsStore>()(
       },
       setAutoPrintReceipt: (v: boolean) => set({ autoPrintReceipt: v }),
       setReceiptVatRate: (v: number) => set({ receiptVatRate: v }),
+      setMaxDiscountPercent: (v: number) =>
+        set({ maxDiscountPercent: Math.min(100, Math.max(0, Number.isFinite(v) ? v : 0)) }),
       setReceiptShowLogo: (v: boolean) => set({ receiptShowLogo: v }),
       setOpenCashDrawer: (v: boolean) => set({ openCashDrawer: v }),
 
@@ -226,6 +232,7 @@ const useAppSettings = create<AppSettingsStore>()(
           autoPrintReceipt: false,
           receiptShowLogo: false,
           receiptVatRate: 20,
+          maxDiscountPercent: MAX_DISCOUNT_PERCENT,
           openCashDrawer: false,
           pinEnabled: false,
           pinCode: null,
@@ -247,6 +254,7 @@ const useAppSettings = create<AppSettingsStore>()(
         autoPrintReceipt: state.autoPrintReceipt,
         receiptShowLogo: state.receiptShowLogo,
         receiptVatRate: state.receiptVatRate,
+        maxDiscountPercent: state.maxDiscountPercent,
         openCashDrawer: state.openCashDrawer,
         pinEnabled: state.pinEnabled,
         pinCode: state.pinCode,

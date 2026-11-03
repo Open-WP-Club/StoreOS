@@ -1,3 +1,4 @@
+import useAppSettings from '../../stores/appSettingsStore';
 import { describe, it, expect } from 'vitest';
 import { computeTotals, discountCents, buildDiscountOrderParts } from '../posPricing';
 
@@ -23,6 +24,23 @@ describe('posPricing', () => {
     expect(discountCents(1000, { type: 'fixed', value: 999 })).toBe(500);
     expect(discountCents(1000, { type: 'fixed', value: -5 })).toBe(0);
     expect(discountCents(0, { type: 'fixed', value: 5 })).toBe(0);
+  });
+
+  it('honours a custom max percent', () => {
+    expect(discountCents(1000, { type: 'percent', value: 90 }, 80)).toBe(800);
+    expect(discountCents(1000, { type: 'percent', value: 90 }, 0)).toBe(0);
+    const t = computeTotals([{ price: 10, quantity: 1 }], { type: 'percent', value: 90 }, 100);
+    expect(t.saleDiscountCents).toBe(900);
+  });
+
+  it('clamps the maxDiscountPercent setting to 0-100 (default 50)', () => {
+    const s = useAppSettings.getState();
+    expect(s.maxDiscountPercent).toBe(50);
+    s.setMaxDiscountPercent(150);
+    expect(useAppSettings.getState().maxDiscountPercent).toBe(100);
+    s.setMaxDiscountPercent(-3);
+    expect(useAppSettings.getState().maxDiscountPercent).toBe(0);
+    s.setMaxDiscountPercent(50);
   });
 
   it('applies line discounts first, then the sale discount on the remainder', () => {
