@@ -48,6 +48,8 @@ export default function StockCountModal({
     try {
       await onApply(diffs.map((d) => ({ productId: d.productId, counted: d.counted })));
       onClose();
+    } catch {
+      // The caller reports the failure; keep the modal open so the count isn't lost.
     } finally {
       setApplying(false);
     }
