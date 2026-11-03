@@ -5,7 +5,7 @@
 - [ ] Автообновяване: на macOS работи само с подписани и нотаризирани билдове; кодът в главния процес няма тестове
 - [ ] Достъпност: икони-бутони в POS/OfflineIndicator без проверка за `aria-label`, ConfirmDialog/CouponFormModal/BulkEditModal без focus trap — виж `docs/PERFORMANCE_A11Y.md`
 - [ ] POS: лимитът на отстъпка (50%) е константа; скенерът не намира вариации (не са в кеша)
-- [ ] Конфликти: няма за tax classes, batch create/delete и batch_reviews; втора офлайн редакция на категория/атрибут/термин/данък/ревю се изпраща без проверка; batch_variations няма UI повикващ
+- [ ] Конфликти: tax classes нямат update в WooCommerce REST API (само list/create/delete), затова няма какво да се проверява; `batch_variations` е умишлено само API (няма UI повикващ — „Generate all“ работи само онлайн). Batch create се пази от дубликати по SKU/код, не по конфликт
 - [ ] Клиенти: тагове/бележки не се синхронизират към WooCommerce; дубликатите се сравняват само по точно име
-- [ ] Плейсхолдъри: няма за поръчки и ревюта; `update_stock` на плейсхолдър не се прихваща
+- [ ] Плейсхолдъри: ревюта нямат (няма офлайн create_review — ревюта не се създават от приложението). Поръчките (POS продажби) и `update_stock` на плейсхолдър са готови
 - [ ] VariationsTab „Generate all“ иска връзка; `related_ids` е read-only в API

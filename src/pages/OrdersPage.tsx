@@ -29,6 +29,7 @@ import OrdersTable from '../components/OrdersTable';
 import { useToast } from '../hooks/useToast';
 import { useProgressiveLoading } from '../hooks/useProgressiveLoading';
 import { useOfflineMutation } from '../hooks/useOfflineMutation';
+import { usePlaceholders } from '../utils/offlinePlaceholders';
 import type { Order, OrderStatus, OrderFilters, FilterPreset, SortState } from '../types';
 import { EMPTY_ORDERS } from '../constants';
 import StatCard from '../components/StatCard';
@@ -54,6 +55,7 @@ function OrdersPage(): React.ReactElement {
   const { mutate: offlineMutate, isOnline } = useOfflineMutation();
 
   const [orders, setOrders] = useState<Order[]>(ordersFromCache);
+  const pendingOrders = usePlaceholders('order', currentStore?.id);
   const [loading, setLoading] = useState<boolean>(ordersFromCache.length === 0);
 
   const { loadingState } = useProgressiveLoading();
@@ -505,10 +507,15 @@ function OrdersPage(): React.ReactElement {
   // downstream derived values can't accidentally alias mutable state.
   // Deferred so typing stays responsive while a 50k-order search runs.
   const deferredSearch = useDeferredValue(searchTerm);
+  // Offline-created orders (POS) show first; they live only in the queue, never in `orders`.
+  const shownOrders = useMemo(
+    () => (pendingOrders.length ? [...pendingOrders, ...orders] : orders),
+    [pendingOrders, orders]
+  );
   const searchedOrders = useMemo(() => {
-    if (deferredSearch.trim() === '') return orders.slice();
-    return searchOrders(orders, deferredSearch);
-  }, [orders, deferredSearch]);
+    if (deferredSearch.trim() === '') return shownOrders.slice();
+    return searchOrders(shownOrders, deferredSearch);
+  }, [shownOrders, deferredSearch]);
 
   // Memoized filtered results - only recalculates when searchedOrders or filters change.
   // React Compiler (RC) can't currently prove applyOrderFilters (a pure .filter())
@@ -521,13 +528,13 @@ function OrdersPage(): React.ReactElement {
 
   // Memoized stats - only recalculates when orders change
   const stats = useMemo<OrderStats>(() => {
-    const total = orders.length;
-    const pending = orders.filter((o) => o.status === 'pending').length;
-    const processing = orders.filter((o) => o.status === 'processing').length;
-    const completed = orders.filter((o) => o.status === 'completed').length;
+    const total = shownOrders.length;
+    const pending = shownOrders.filter((o) => o.status === 'pending').length;
+    const processing = shownOrders.filter((o) => o.status === 'processing').length;
+    const completed = shownOrders.filter((o) => o.status === 'completed').length;
 
     return { total, pending, processing, completed };
-  }, [orders]);
+  }, [shownOrders]);
 
   // Memoized check for active filters
   const hasActiveFilters = useMemo(() => {

@@ -16,6 +16,8 @@ const ok = { success: true, data: {} };
 const svc = () => ({
   deleteProduct: vi.fn(),
   batchProducts: vi.fn(),
+  getProducts: vi.fn().mockResolvedValue({ success: true, data: [] }),
+  getCoupons: vi.fn().mockResolvedValue({ success: true, data: [] }),
   batchOrders: vi.fn(),
   batchCoupons: vi.fn(),
   deleteCoupon: vi.fn(),

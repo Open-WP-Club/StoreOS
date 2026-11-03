@@ -166,6 +166,40 @@ export async function createOrderOnce(
   return r.data ? { success: true } : service.createOrder(d);
 }
 
+/**
+ * Batch creates replayed after a lost response must not duplicate: drop create items whose SKU
+ * (products) or code (coupons) already exists. Items without that key are sent as is.
+ * A failed lookup fails the op (never create blindly).
+ */
+export async function dropExistingCreates(
+  service: WooCommerceService,
+  kind: 'products' | 'coupons',
+  d: D
+): Promise<ApiResponse<D>> {
+  const creates = (d.create as D[] | undefined) ?? [];
+  const keep: D[] = [];
+  for (const item of creates) {
+    let exists = false;
+    if (kind === 'products') {
+      const sku = typeof item.sku === 'string' ? item.sku.trim() : '';
+      if (sku) {
+        const r = await service.getProducts({ sku });
+        if (!r.success) return r;
+        exists = r.data.length > 0;
+      }
+    } else if (item.code) {
+      const r = await service.getCoupons({ code: String(item.code) });
+      if (!r.success) return r;
+      exists = r.data.some((c) => norm(c.code) === norm(item.code));
+    }
+    if (!exists) keep.push(item);
+  }
+  const out = { ...d };
+  if (keep.length) out.create = keep;
+  else delete out.create;
+  return { success: true, data: out };
+}
+
 /** True when a queued op targets this product (itself, its stock, a batch entry or a variation). */
 export function opTouchesProduct(
   op: { type: string; storeId: string; data: D },
