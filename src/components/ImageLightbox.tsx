@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, ReactElement } from 'react';
 import { ZoomIn, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import Modal from './Modal';
 
-export interface LightboxImage {
+interface LightboxImage {
   src: string;
   name: string;
 }

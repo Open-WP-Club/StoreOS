@@ -1,10 +1,10 @@
-export interface ApiSuccessResponse<T> {
+interface ApiSuccessResponse<T> {
   success: true;
   data: T;
   headers?: Record<string, string>;
 }
 
-export type ApiErrorCode = 'invalid_credentials' | 'offline' | 'timeout';
+type ApiErrorCode = 'invalid_credentials' | 'offline' | 'timeout';
 
 export interface ApiErrorResponse {
   success: false;
@@ -16,7 +16,7 @@ export interface ApiErrorResponse {
 
 export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
 
-export interface PaginatedSuccessResponse<T> extends ApiSuccessResponse<T[]> {
+interface PaginatedSuccessResponse<T> extends ApiSuccessResponse<T[]> {
   totalPages: number;
   totalItems?: number;
 }

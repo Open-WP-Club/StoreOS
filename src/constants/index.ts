@@ -25,7 +25,7 @@ export const EMPTY_COUPONS: Coupon[] = [];
 /**
  * Order status to Tailwind CSS color class mapping
  */
-export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
+const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
   processing: 'bg-blue-100 text-blue-800',
   'on-hold': 'bg-gray-100 text-gray-800',

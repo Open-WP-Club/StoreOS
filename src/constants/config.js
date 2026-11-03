@@ -52,7 +52,7 @@ export const CACHE_EXPIRY = {
 // Order Age Threshold
 // ============================================
 
-export const ORDER_AGE = {
+const ORDER_AGE = {
   // Orders older than this are considered "old" for caching purposes
   SPLIT_THRESHOLD: 7 * TIME.DAY,
 };
@@ -61,7 +61,7 @@ export const ORDER_AGE = {
 // Product Age Threshold
 // ============================================
 
-export const PRODUCT_AGE = {
+const PRODUCT_AGE = {
   // Products not modified in this time are considered "old" for caching
   SPLIT_THRESHOLD: 7 * TIME.DAY,
 };
@@ -70,7 +70,7 @@ export const PRODUCT_AGE = {
 // Inventory Thresholds
 // ============================================
 
-export const INVENTORY = {
+const INVENTORY = {
   // Products with stock <= this value are considered "low stock"
   LOW_STOCK_THRESHOLD: 5,
 
@@ -82,7 +82,7 @@ export const INVENTORY = {
 // Pagination Defaults
 // ============================================
 
-export const PAGINATION = {
+const PAGINATION = {
   // Default number of items per page
   DEFAULT_PAGE_SIZE: 25,
 
@@ -176,7 +176,7 @@ export const AUTO_REFRESH = {
 // Error Messages
 // ============================================
 
-export const ERROR_MESSAGES = {
+const ERROR_MESSAGES = {
   NETWORK_ERROR: 'Unable to connect. Please check your internet connection.',
   UNAUTHORIZED: 'Your credentials are invalid. Please re-authenticate.',
   NOT_FOUND: 'The requested resource was not found.',

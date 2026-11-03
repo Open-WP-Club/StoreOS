@@ -2,7 +2,7 @@ import { isStockAtOrBelow } from './stock';
 import { calculateRevenueKPIs, filterOrdersByPeriod } from './kpiCalculator';
 import type { Order, Product } from '../types';
 
-export interface StoreComparisonRow {
+interface StoreComparisonRow {
   storeId: string;
   name: string;
   revenue: number;
@@ -18,7 +18,7 @@ export interface StoreComparisonRow {
 }
 
 /** Totals for stores sharing one currency; currencies are never summed together. */
-export interface CurrencyTotal {
+interface CurrencyTotal {
   currency: string;
   symbol: string;
   revenue: number;
@@ -27,7 +27,7 @@ export interface CurrencyTotal {
   lowStock: number;
 }
 
-export interface StoreComparisonInput {
+interface StoreComparisonInput {
   storeId: string;
   name: string;
   orders: Order[];

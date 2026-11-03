@@ -1,4 +1,4 @@
-export interface TimeRange {
+interface TimeRange {
   value: number;
   label: string;
   days: number;

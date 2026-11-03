@@ -16,7 +16,7 @@ export const WEBHOOK_TOPICS = [
   'coupon.restored',
 ] as const;
 
-export interface WebhookInput {
+interface WebhookInput {
   name: string;
   topic: string;
   delivery_url: string;

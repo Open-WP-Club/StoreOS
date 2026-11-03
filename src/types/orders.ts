@@ -39,7 +39,7 @@ export interface ShippingAddress {
   phone: string;
 }
 
-export interface OrderItemTax {
+interface OrderItemTax {
   id: number;
   total: string;
   subtotal: string;
@@ -64,7 +64,7 @@ export interface OrderLineItem {
   parent_name?: string;
 }
 
-export interface OrderTaxLine {
+interface OrderTaxLine {
   id: number;
   rate_code: string;
   rate_id: number;
@@ -87,7 +87,7 @@ export interface OrderShippingLine {
   meta_data: WooCommerceMetaData[];
 }
 
-export interface OrderFeeLine {
+interface OrderFeeLine {
   id: number;
   name: string;
   tax_class: string;

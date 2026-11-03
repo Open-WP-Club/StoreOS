@@ -42,13 +42,13 @@ export interface TopProduct {
   quantity: number;
 }
 
-export interface DailyData {
+interface DailyData {
   date: string;
   revenue: number;
   orders?: number;
 }
 
-export interface AnalyticsStats {
+interface AnalyticsStats {
   revenue: RevenueStats;
   orders: OrderStats;
   products: ProductStats;
@@ -57,7 +57,7 @@ export interface AnalyticsStats {
   ordersByDay: DailyData[];
 }
 
-export interface DataQuality {
+interface DataQuality {
   hasEnoughOrders: boolean;
   hasEnoughProducts: boolean;
   hasEnoughHistory: boolean;

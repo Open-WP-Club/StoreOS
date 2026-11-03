@@ -15,7 +15,7 @@ const PAGE = 100;
 /** Upper cap on pages scanned for a client id (5,000 items); the scan stops early on a match or short page. */
 const MAX_PAGES = 50;
 
-export const clientIdOf = (meta: Meta): string | undefined =>
+const clientIdOf = (meta: Meta): string | undefined =>
   meta?.find((m) => m.key === CLIENT_ID_META)?.value as string | undefined;
 
 const norm = (v: unknown): string =>

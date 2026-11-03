@@ -9,7 +9,7 @@ import { getAppLocale } from '../utils/dateTime';
 import { storeCurrencySymbol } from '../utils/currency';
 import { RECENT_TRANSACTIONS_KEY, POS_TX_EVENT } from '../utils/posOfflineSale';
 
-export interface TransactionItem {
+interface TransactionItem {
   productId: number;
   name: string;
   quantity: number;

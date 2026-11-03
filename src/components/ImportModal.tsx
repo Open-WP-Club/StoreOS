@@ -15,6 +15,7 @@ import {
   type ImportAction,
 } from '../utils/csvImport';
 import type { Product } from '../types';
+import Modal from './Modal';
 
 interface ImportModalProps {
   products: Product[];
@@ -117,170 +118,170 @@ export default function ImportModal({
     'border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm';
 
   return (
-    <div
-      className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4"
-      role="dialog"
+    <Modal
+      onClose={onClose}
+      closeOnBackdrop={false}
+      closeOnEscape={!progress}
       aria-label="Import products"
+      className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] mx-4 overflow-hidden flex flex-col"
     >
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-            Import products from CSV
-          </h2>
-          <button
-            onClick={onClose}
-            disabled={!!progress}
-            aria-label="Close modal"
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
+      <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+          Import products from CSV
+        </h2>
+        <button
+          onClick={onClose}
+          disabled={!!progress}
+          aria-label="Close modal"
+          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+        >
+          <X className="w-6 h-6" />
+        </button>
+      </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-4 text-sm text-gray-700 dark:text-gray-300">
-          <label className="flex items-center gap-2">
-            <Upload className="w-4 h-4" />
-            <input
-              type="file"
-              accept=".csv,text/csv"
-              onChange={(e) => void handleFile(e.target.files?.[0])}
-              aria-label="CSV file"
-            />
-          </label>
-          {error && <p className="text-red-600 dark:text-red-400">{error}</p>}
+      <div className="flex-1 overflow-y-auto p-6 space-y-4 text-sm text-gray-700 dark:text-gray-300">
+        <label className="flex items-center gap-2">
+          <Upload className="w-4 h-4" />
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            onChange={(e) => void handleFile(e.target.files?.[0])}
+            aria-label="CSV file"
+          />
+        </label>
+        {error && <p className="text-red-600 dark:text-red-400">{error}</p>}
 
-          {rows && mapping && step === 'map' && (
-            <div className="space-y-2">
-              <p>
-                Match file columns to product fields. Rows are matched to existing products by SKU;
-                empty cells are ignored.
-              </p>
-              {IMPORT_FIELDS.map(({ field, label }) => (
-                <div key={field} className="flex items-center gap-3">
-                  <span className="w-36">
-                    {label}
-                    {field === 'sku' ? ' *' : ''}
-                  </span>
-                  <select
-                    aria-label={label}
-                    className={cls}
-                    value={mapping[field]}
-                    onChange={(e) => setMapping({ ...mapping, [field]: Number(e.target.value) })}
-                  >
-                    <option value={-1}>— not imported —</option>
-                    {(rows[0] ?? []).map((h, i) => (
-                      <option key={i} value={i}>
-                        {h}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ))}
-            </div>
-          )}
+        {rows && mapping && step === 'map' && (
+          <div className="space-y-2">
+            <p>
+              Match file columns to product fields. Rows are matched to existing products by SKU;
+              empty cells are ignored.
+            </p>
+            {IMPORT_FIELDS.map(({ field, label }) => (
+              <div key={field} className="flex items-center gap-3">
+                <span className="w-36">
+                  {label}
+                  {field === 'sku' ? ' *' : ''}
+                </span>
+                <select
+                  aria-label={label}
+                  className={cls}
+                  value={mapping[field]}
+                  onChange={(e) => setMapping({ ...mapping, [field]: Number(e.target.value) })}
+                >
+                  <option value={-1}>— not imported —</option>
+                  {(rows[0] ?? []).map((h, i) => (
+                    <option key={i} value={i}>
+                      {h}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
+          </div>
+        )}
 
-          {step === 'preview' && (
-            <>
-              <p>
-                {count('create')} to create, {count('update')} to update, {count('unchanged')}{' '}
-                unchanged, {count('invalid')} invalid
-              </p>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200 dark:border-gray-700 text-left text-gray-500 dark:text-gray-400">
-                    <th className="py-2 pr-3">Line</th>
-                    <th className="pr-3">SKU</th>
-                    <th className="pr-3">Action</th>
-                    <th>Changes</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {diff
-                    .filter((d) => d.action !== 'unchanged')
-                    .map((d) => (
-                      <tr
-                        key={d.line}
-                        className="border-b border-gray-100 dark:border-gray-700 align-top"
-                      >
-                        <td className="py-2 pr-3">{d.line}</td>
-                        <td className="pr-3 break-all">{d.sku}</td>
-                        <td className="pr-3">
-                          <span className={`px-2 py-0.5 rounded text-xs ${BADGE[d.action]}`}>
-                            {d.action}
-                          </span>
-                        </td>
-                        <td>
-                          {d.errors.map((e, i) => (
-                            <div key={i} className="text-red-600 dark:text-red-400">
-                              {e}
+        {step === 'preview' && (
+          <>
+            <p>
+              {count('create')} to create, {count('update')} to update, {count('unchanged')}{' '}
+              unchanged, {count('invalid')} invalid
+            </p>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-700 text-left text-gray-500 dark:text-gray-400">
+                  <th className="py-2 pr-3">Line</th>
+                  <th className="pr-3">SKU</th>
+                  <th className="pr-3">Action</th>
+                  <th>Changes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {diff
+                  .filter((d) => d.action !== 'unchanged')
+                  .map((d) => (
+                    <tr
+                      key={d.line}
+                      className="border-b border-gray-100 dark:border-gray-700 align-top"
+                    >
+                      <td className="py-2 pr-3">{d.line}</td>
+                      <td className="pr-3 break-all">{d.sku}</td>
+                      <td className="pr-3">
+                        <span className={`px-2 py-0.5 rounded text-xs ${BADGE[d.action]}`}>
+                          {d.action}
+                        </span>
+                      </td>
+                      <td>
+                        {d.errors.map((e, i) => (
+                          <div key={i} className="text-red-600 dark:text-red-400">
+                            {e}
+                          </div>
+                        ))}
+                        {d.action === 'update' &&
+                          d.changes.map((c) => (
+                            <div key={c.field}>
+                              {c.field}:{' '}
+                              <span className="line-through opacity-60">{c.from || '—'}</span> →{' '}
+                              {c.to}
                             </div>
                           ))}
-                          {d.action === 'update' &&
-                            d.changes.map((c) => (
-                              <div key={c.field}>
-                                {c.field}:{' '}
-                                <span className="line-through opacity-60">{c.from || '—'}</span> →{' '}
-                                {c.to}
-                              </div>
-                            ))}
-                          {d.action === 'create' &&
-                            d.changes.map((c) => (
-                              <div key={c.field}>
-                                {c.field}: {c.to}
-                              </div>
-                            ))}
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </>
-          )}
+                        {d.action === 'create' &&
+                          d.changes.map((c) => (
+                            <div key={c.field}>
+                              {c.field}: {c.to}
+                            </div>
+                          ))}
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </>
+        )}
 
-          {progress && (
-            <div>
-              <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded">
-                <div
-                  className="h-2 bg-blue-600 rounded"
-                  style={{ width: `${(progress.done / Math.max(progress.total, 1)) * 100}%` }}
-                />
-              </div>
-              <p className="mt-1">
-                {progress.done} / {progress.total}
-              </p>
+        {progress && (
+          <div>
+            <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded">
+              <div
+                className="h-2 bg-blue-600 rounded"
+                style={{ width: `${(progress.done / Math.max(progress.total, 1)) * 100}%` }}
+              />
             </div>
-          )}
-        </div>
-
-        <div className="flex justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
-          {step === 'preview' && (
-            <button
-              onClick={() => setStep('map')}
-              disabled={!!progress}
-              className="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200"
-            >
-              Back
-            </button>
-          )}
-          {rows && step === 'map' && (
-            <button
-              onClick={() => setStep('preview')}
-              className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
-            >
-              Preview
-            </button>
-          )}
-          {step === 'preview' && (
-            <button
-              onClick={() => void run()}
-              disabled={!!progress || toRun.length === 0}
-              className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
-            >
-              Import {toRun.length} products
-            </button>
-          )}
-        </div>
+            <p className="mt-1">
+              {progress.done} / {progress.total}
+            </p>
+          </div>
+        )}
       </div>
-    </div>
+
+      <div className="flex justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
+        {step === 'preview' && (
+          <button
+            onClick={() => setStep('map')}
+            disabled={!!progress}
+            className="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200"
+          >
+            Back
+          </button>
+        )}
+        {rows && step === 'map' && (
+          <button
+            onClick={() => setStep('preview')}
+            className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+          >
+            Preview
+          </button>
+        )}
+        {step === 'preview' && (
+          <button
+            onClick={() => void run()}
+            disabled={!!progress || toRun.length === 0}
+            className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            Import {toRun.length} products
+          </button>
+        )}
+      </div>
+    </Modal>
   );
 }

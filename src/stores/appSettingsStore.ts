@@ -7,7 +7,7 @@ import { hashPin, verifyPinHash, isLegacyHash } from '../utils/pinHash';
 // Types
 // ============================================
 
-export interface NoteTemplate {
+interface NoteTemplate {
   id: string;
   text: string;
 }
@@ -40,7 +40,7 @@ export interface AppSettingsState {
   isInitialized: boolean;
 }
 
-export interface AppSettingsActions {
+interface AppSettingsActions {
   // Language
   setLanguage: (language: Language) => void;
 

@@ -156,7 +156,7 @@ export async function decryptCredentials(
   };
 }
 
-export interface RestoreResult {
+interface RestoreResult {
   success: boolean;
   restored: string[];
   failed: string[];
@@ -302,7 +302,7 @@ function sameOrigin(a: unknown, b: unknown): boolean {
   }
 }
 
-export function validateBackup(data: unknown): BackupData {
+function validateBackup(data: unknown): BackupData {
   if (!data || typeof data !== 'object') {
     throw new Error('Invalid backup: not an object');
   }

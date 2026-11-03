@@ -1,4 +1,4 @@
-export type ReviewStatus = 'approved' | 'hold' | 'spam' | 'unspam' | 'trash' | 'untrash';
+type ReviewStatus = 'approved' | 'hold' | 'spam' | 'unspam' | 'trash' | 'untrash';
 
 export interface WooCommerceReview {
   id: number;

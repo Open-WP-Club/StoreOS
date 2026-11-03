@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export interface ScheduledReportsState {
+interface ScheduledReportsState {
   enabled: boolean;
   reportType: 'pos-daily' | 'sales-summary';
   frequency: 'daily' | 'weekly';
