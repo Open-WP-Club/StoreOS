@@ -114,7 +114,7 @@ function AttributesPage(): React.ReactElement {
     setLoading(false);
   }, [service, showToast]);
 
-  const [prevLoadAttributes, setPrevLoadAttributes] = useState(() => loadAttributes);
+  const [prevLoadAttributes, setPrevLoadAttributes] = useState<typeof loadAttributes | null>(null);
   if (prevLoadAttributes !== loadAttributes) {
     setPrevLoadAttributes(() => loadAttributes);
     loadAttributes();

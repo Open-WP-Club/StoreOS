@@ -84,7 +84,7 @@ function CategoriesPage(): React.ReactElement {
     setLoading(false);
   }, [service, showToast]);
 
-  const [prevLoadCategories, setPrevLoadCategories] = useState(() => loadCategories);
+  const [prevLoadCategories, setPrevLoadCategories] = useState<typeof loadCategories | null>(null);
   if (prevLoadCategories !== loadCategories) {
     setPrevLoadCategories(() => loadCategories);
     loadCategories();
