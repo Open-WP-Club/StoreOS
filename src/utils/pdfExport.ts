@@ -600,3 +600,38 @@ export async function exportTableToPDF<T extends object>(
   const finalFilename = filename || `${title.toLowerCase().replace(/\s+/g, '-')}-${timestamp}.pdf`;
   doc.save(finalFilename);
 }
+
+/** Product labels as PDF (one page per label, or an A4 grid for sheets); barcodes drawn as rects. */
+export async function exportLabelsPDF(
+  labels: Array<{ lines: string[]; modules: number[] | null }>,
+  size: { w: number; h: number; cols?: number },
+  filename: string
+): Promise<void> {
+  if (labels.length === 0) return;
+  const { jsPDF } = await loadPdf();
+  const sheet = size.cols !== undefined;
+  const doc = new jsPDF(sheet ? { format: 'a4' } : { unit: 'mm', format: [size.w, size.h] });
+  const perPage = sheet ? size.cols! * Math.floor(297 / size.h) : 1;
+  labels.forEach((l, i) => {
+    if (i > 0 && i % perPage === 0) doc.addPage();
+    const k = i % perPage;
+    const ox = sheet ? (k % size.cols!) * size.w : 0;
+    const oy = sheet ? Math.floor(k / size.cols!) * size.h : 0;
+    let y = oy + 4;
+    doc.setFontSize(8);
+    l.lines.forEach((t) => {
+      doc.text(t, ox + size.w / 2, y, { align: 'center', maxWidth: size.w - 3 });
+      y += 3.5;
+    });
+    if (l.modules) {
+      const total = l.modules.reduce((a, b) => a + b, 0) + 20;
+      const unit = (size.w - 4) / total;
+      let x = ox + 2 + 10 * unit;
+      l.modules.forEach((w, j) => {
+        if (j % 2 === 0) doc.rect(x, y, w * unit, size.h * 0.3, 'F');
+        x += w * unit;
+      });
+    }
+  });
+  doc.save(filename);
+}

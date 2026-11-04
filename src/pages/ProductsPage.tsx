@@ -5,6 +5,7 @@ import DOMPurify from 'dompurify';
 import { useStoreConfig, useCache, useSettings } from '../stores';
 import { formatPrice } from '../utils/currency';
 import Pagination from '../components/Pagination';
+import LabelPrintModal from '../components/LabelPrintModal';
 import BulkEditModal from '../components/BulkEditModal';
 import CopyToStoreModal from '../components/CopyToStoreModal';
 import ImportModal from '../components/ImportModal';
@@ -67,6 +68,7 @@ function ProductsPage(): React.ReactElement {
   const exportHook = useProductExport();
   const [importOpen, setImportOpen] = React.useState(false);
   const [copyOpen, setCopyOpen] = React.useState(false);
+  const [labelsOpen, setLabelsOpen] = React.useState(false);
   const show = (k: string): boolean => !filtersHook.hiddenColumns.includes(k);
 
   if (!currentStore) {
@@ -142,6 +144,7 @@ function ProductsPage(): React.ReactElement {
         onBulkEdit={() => actions.setBulkEditModalOpen(true)}
         onBulkDelete={() => actions.handleBulkDelete(products, setProducts)}
         onCopyToStore={() => setCopyOpen(true)}
+        onPrintLabels={() => setLabelsOpen(true)}
         onClearSelection={() => actions.setSelectedProductIds([])}
         showToast={showToast}
       />
@@ -671,6 +674,15 @@ function ProductsPage(): React.ReactElement {
           items={actions.getSelectedProducts(products)}
           sourceStore={currentStore}
           onClose={() => setCopyOpen(false)}
+        />
+      )}
+
+      {labelsOpen && (
+        <LabelPrintModal
+          products={actions.getSelectedProducts(products)}
+          currencySymbol={currentStore?.currencySymbol ?? null}
+          onClose={() => setLabelsOpen(false)}
+          showToast={showToast}
         />
       )}
 
