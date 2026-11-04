@@ -18,6 +18,7 @@ import ExportMenu from '../components/ExportMenu';
 import Pagination from '../components/Pagination';
 import StockCountModal from '../components/StockCountModal';
 import BulkEditModal from '../components/BulkEditModal';
+import LabelPrintModal from '../components/LabelPrintModal';
 import ReorderReportModal from '../components/ReorderReportModal';
 import ToastContainer from '../components/ToastContainer';
 import LoadingIndicator from '../components/LoadingIndicator';
@@ -78,6 +79,7 @@ const InventoryPage: React.FC = (): React.ReactElement => {
   const [pageSize, setPageSize] = useState<number>(25);
   const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
   const [reorderOpen, setReorderOpen] = useState<boolean>(false);
+  const [labelsOpen, setLabelsOpen] = useState<boolean>(false);
   const [countOpen, setCountOpen] = useState<boolean>(false);
   const [receiveOpen, setReceiveOpen] = useState<boolean>(false);
   const [bulkEditModalOpen, setBulkEditModalOpen] = useState<boolean>(false);
@@ -549,6 +551,12 @@ const InventoryPage: React.FC = (): React.ReactElement => {
                 Bulk Edit
               </button>
               <button
+                onClick={() => setLabelsOpen(true)}
+                className="px-3 py-1.5 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700"
+              >
+                Print labels
+              </button>
+              <button
                 onClick={handleBulkDelete}
                 className="flex items-center gap-2 px-3 py-1.5 bg-red-600 text-white text-sm rounded-md hover:bg-red-700"
               >
@@ -819,6 +827,15 @@ const InventoryPage: React.FC = (): React.ReactElement => {
         lowStockThreshold={lowStockThreshold}
         storeName={currentStore.name}
       />
+
+      {labelsOpen && (
+        <LabelPrintModal
+          products={getSelectedProducts()}
+          currencySymbol={currentStore.currencySymbol ?? null}
+          onClose={() => setLabelsOpen(false)}
+          showToast={showToast}
+        />
+      )}
 
       {/* Bulk Edit Modal */}
       <BulkEditModal

@@ -33,3 +33,14 @@ export async function printReceipt(
     return false;
   }
 }
+
+/** Print arbitrary prepared (escaped) HTML, e.g. product labels, through the same IPC. */
+export async function printHtml(html: string, printer: string | null): Promise<boolean> {
+  const api = window.electronAPI?.receipt;
+  if (!api) return false;
+  try {
+    return (await api.print({ html, printer, openDrawer: false })).success;
+  } catch {
+    return false;
+  }
+}
