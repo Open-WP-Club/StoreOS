@@ -75,4 +75,37 @@ describe('POSReturnModal', () => {
     expect(screen.getByRole('button', { name: /Търси/ })).toBeDisabled();
     expect(svc.getOrder).not.toHaveBeenCalled();
   });
+
+  it('reconciles after a thrown createRefund and blocks resubmit until refreshed', async () => {
+    svc.createRefund.mockRejectedValueOnce(new Error('timeout'));
+    render(<POSReturnModal recentTransactions={[]} onClose={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText('Номер на поръчка'), { target: { value: '55' } });
+    fireEvent.click(screen.getByRole('button', { name: /Търси/ }));
+    fireEvent.change(await screen.findByLabelText('Количество за връщане: Widget'), {
+      target: { value: '1' },
+    });
+    svc.getOrderRefunds.mockClear();
+    svc.getOrderRefunds.mockRejectedValueOnce(new Error('down'));
+    fireEvent.click(screen.getByRole('button', { name: 'Върни' }));
+    await screen.findByRole('button', { name: 'Опресни' });
+    expect(screen.getByRole('button', { name: 'Върни' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Опресни' }));
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Опресни' })).toBeNull());
+    expect(svc.getOrderRefunds).toHaveBeenCalledTimes(2);
+    expect(svc.createRefund).toHaveBeenCalledTimes(1);
+  });
+
+  it('still shows success when post-refund bookkeeping throws', async () => {
+    const { decrementCachedStock } = await import('../../utils/posOfflineSale');
+    vi.mocked(decrementCachedStock).mockRejectedValueOnce(new Error('idb'));
+    render(<POSReturnModal recentTransactions={[]} onClose={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText('Номер на поръчка'), { target: { value: '55' } });
+    fireEvent.click(screen.getByRole('button', { name: /Търси/ }));
+    fireEvent.change(await screen.findByLabelText('Количество за връщане: Widget'), {
+      target: { value: '1' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Върни' }));
+    expect(await screen.findByText(/Печат на бележка/)).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
 });

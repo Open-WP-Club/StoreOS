@@ -1,6 +1,6 @@
 import type { CreateRefundRequest, OrderLineItem, WooCommerceOrder } from '../types';
 import { buildReceipt, type Receipt } from './receipt';
-import { RECENT_TRANSACTIONS_KEY } from './posOfflineSale';
+import { RECENT_TRANSACTIONS_KEY, POS_TX_EVENT } from './posOfflineSale';
 
 export const POS_RETURNS_KEY = 'pos_returns';
 export const POS_RETURNS_EVENT = 'pos-returns-changed';
@@ -14,6 +14,8 @@ export const RETURN_METHOD_LABEL: Record<ReturnMethod, string> = {
 export interface PosReturn {
   orderId: number;
   refundId: number;
+  /** Store the return belongs to; absent on old records (treated as the current store). */
+  storeId?: string;
   /** Positive refunded amount incl. tax. */
   total: number;
   method: ReturnMethod;
@@ -38,12 +40,14 @@ export function toPosReturn(
   request: CreateRefundRequest,
   refundId: number,
   method: ReturnMethod,
+  storeId?: string,
   timestamp = new Date().toISOString()
 ): PosReturn {
   const byId = new Map<number, OrderLineItem>(order.line_items.map((li) => [li.id, li]));
   return {
     orderId: order.id,
     refundId,
+    ...(storeId && { storeId }),
     total: Math.abs(parseFloat(request.amount)) || 0,
     method,
     restocked: !!request.api_restock,
@@ -64,7 +68,7 @@ export function returnsInRange(list: PosReturn[], start: number, end: number): P
   });
 }
 
-export function loadReturns(): PosReturn[] {
+function loadAll(): PosReturn[] {
   try {
     const v = JSON.parse(localStorage.getItem(POS_RETURNS_KEY) ?? '[]');
     return Array.isArray(v) ? (v as PosReturn[]) : [];
@@ -73,23 +77,33 @@ export function loadReturns(): PosReturn[] {
   }
 }
 
+/** Returns for a store; records without storeId count for every store (legacy). */
+export function loadReturns(storeId?: string): PosReturn[] {
+  return loadAll().filter((r) => !storeId || !r.storeId || r.storeId === storeId);
+}
+
 /** Persist a return (newest first, capped) and mark a fully-returned POS transaction. */
 export function saveReturn(r: PosReturn, fullyRefunded = false): void {
   try {
-    localStorage.setItem(POS_RETURNS_KEY, JSON.stringify([r, ...loadReturns()].slice(0, 200)));
+    localStorage.setItem(POS_RETURNS_KEY, JSON.stringify([r, ...loadAll()].slice(0, 200)));
     if (fullyRefunded) {
       const txs = JSON.parse(localStorage.getItem(RECENT_TRANSACTIONS_KEY) ?? '[]') as Array<{
         id: number;
+        storeId?: string;
         refunded?: boolean;
       }>;
+      const same = (t: { id: number; storeId?: string }): boolean =>
+        t.id === r.orderId && (!t.storeId || !r.storeId || t.storeId === r.storeId);
       localStorage.setItem(
         RECENT_TRANSACTIONS_KEY,
-        JSON.stringify(txs.map((t) => (t.id === r.orderId ? { ...t, refunded: true } : t)))
+        JSON.stringify(txs.map((t) => (same(t) ? { ...t, refunded: true } : t)))
       );
     }
   } catch {
     // Intentional: history is best-effort; the refund already exists on the server.
   }
+  // Refresh in-memory lists before they can overwrite what we just wrote.
+  window.dispatchEvent(new Event(POS_TX_EVENT));
   window.dispatchEvent(new Event(POS_RETURNS_EVENT));
 }
 

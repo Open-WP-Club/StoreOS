@@ -51,6 +51,7 @@ export function POSReturnModal({ recentTransactions, onClose }: POSReturnModalPr
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [stale, setStale] = useState(false);
   const [done, setDone] = useState<PosReturn | null>(null);
 
   const offline = typeof navigator !== 'undefined' && !navigator.onLine;
@@ -117,36 +118,78 @@ export function POSReturnModal({ recentTransactions, onClose }: POSReturnModalPr
     if (!ok) toast.warning('Касовата бележка не можа да се отпечата.');
   };
 
+  /** Re-read prior refunds after a failed/ambiguous submit; resubmit stays blocked until it works. */
+  const reconcile = async (): Promise<void> => {
+    if (!currentStore || !order) return;
+    setStale(true);
+    try {
+      const r = await new WooCommerceService(currentStore).getOrderRefunds(order.id);
+      if (r.success) {
+        setRefunds(r.data);
+        setSelections({});
+        setStale(false);
+        setError(
+          'Връщането може да е преминало. Данните са опреснени - проверете остатъка преди нов опит.'
+        );
+      } else {
+        setError('Неясен резултат и опресняването не успя. Натиснете "Опресни".');
+      }
+    } catch {
+      setError('Неясен резултат и опресняването не успя. Натиснете "Опресни".');
+    }
+  };
+
   const submit = async (): Promise<void> => {
-    if (!currentStore || !order || submitting) return;
+    if (!currentStore || !order || submitting || stale) return;
     if (offline) return setError('Няма връзка. Връщанията не се записват офлайн.');
     if (!result.ok) return setError(result.error);
     setSubmitting(true);
+    let res;
     try {
-      const res = await new WooCommerceService(currentStore).createRefund(order.id, result.request);
-      if (!res.success) return setError('Грешка при възстановяване: ' + res.error);
-      const record = toPosReturn(order, result.request, res.data.id, method);
+      res = await new WooCommerceService(currentStore).createRefund(order.id, result.request);
+    } catch {
+      setError('Грешка при възстановяване');
+      await reconcile();
+      setSubmitting(false);
+      return;
+    }
+    if (!res.success) {
+      setError('Грешка при възстановяване: ' + res.error);
+      await reconcile();
+      setSubmitting(false);
+      return;
+    }
+    // Server accepted the refund: from here on nothing may be reported as a refund failure.
+    const record = toPosReturn(order, result.request, res.data.id, method, currentStore.id);
+    setDone(record);
+    setSubmitting(false);
+    try {
       const fully = rows.every(
         (r) => r.remainingQty === (selections[r.item.id]?.quantity ?? 0) || r.remainingQty === 0
       );
       saveReturn(record, fully);
+      toast.success(`Върнати ${formatPrice(record.total, symbol)} по поръчка #${order.id}`);
       if (restock) {
         // Server already restocked (api_restock); keep the local product cache in sync.
         await decrementCachedStock(
           record.items.filter((i) => i.productId > 0).map((i) => ({ ...i, quantity: -i.quantity }))
         );
       }
-      toast.success(`Върнати ${formatPrice(record.total, symbol)} по поръчка #${order.id}`);
-      setDone(record);
-      void handlePrint(record);
     } catch {
-      setError('Грешка при възстановяване');
-    } finally {
-      setSubmitting(false);
+      toast.warning('Връщането е записано, но локалните данни не се обновиха.');
+    }
+    try {
+      await handlePrint(record);
+    } catch {
+      toast.warning('Касовата бележка не можа да се отпечата.');
     }
   };
 
-  const candidates = recentTransactions.filter((t) => t.id > 0 && !t.refunded).slice(0, 8);
+  const candidates = recentTransactions
+    .filter(
+      (t) => t.id > 0 && !t.refunded && (t.storeId === undefined || t.storeId === currentStore?.id)
+    )
+    .slice(0, 8);
 
   return (
     <Modal
@@ -352,10 +395,18 @@ export function POSReturnModal({ recentTransactions, onClose }: POSReturnModalPr
               >
                 Отказ
               </button>
+              {order && stale && (
+                <button
+                  onClick={() => void reconcile()}
+                  className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg"
+                >
+                  Опресни
+                </button>
+              )}
               {order && (
                 <button
                   onClick={() => void submit()}
-                  disabled={submitting || offline || !result.ok}
+                  disabled={submitting || offline || stale || !result.ok}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
                 >
                   {submitting && <Loader2 className="w-4 h-4 animate-spin" />}

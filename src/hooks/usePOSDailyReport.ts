@@ -29,6 +29,7 @@ export interface RecentTransaction {
   /** Applied amounts per method (split payments); absent on older transactions. */
   payments?: Payment[];
   customerName?: string;
+  storeId?: string;
   /** Kept for receipt reprints. */
   discount?: number;
   tendered?: number;
@@ -77,6 +78,7 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
   const currentStore = getCurrentStore();
   const toast = useToast();
   const currencySymbol = storeCurrencySymbol(currentStore);
+  const storeId = currentStore?.id;
 
   const {
     cart,
@@ -107,12 +109,12 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
     window.addEventListener(POS_TX_EVENT, reload);
     return () => window.removeEventListener(POS_TX_EVENT, reload);
   }, []);
-  const [returns, setReturns] = useState<PosReturn[]>(loadReturns);
+  const [returns, setReturns] = useState<PosReturn[]>(() => loadReturns(storeId));
   useEffect(() => {
-    const reload = (): void => setReturns(loadReturns());
+    const reload = (): void => setReturns(loadReturns(storeId));
     window.addEventListener(POS_RETURNS_EVENT, reload);
     return () => window.removeEventListener(POS_RETURNS_EVENT, reload);
-  }, []);
+  }, [storeId]);
   const [showDailyReport, setShowDailyReport] = useState(false);
   const [refundingTransaction, setRefundingTransaction] = useState<RecentTransaction | null>(null);
   const [processingRefund, setProcessingRefund] = useState(false);
@@ -143,6 +145,7 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
         ...(pay.tendered > 0 && { tendered: pay.tendered, change: pay.change }),
         timestamp: new Date().toISOString(),
         refunded: false,
+        ...(storeId && { storeId }),
         ...(pendingClientId && { pending: true, clientId: pendingClientId }),
       };
 
@@ -158,6 +161,7 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
       });
     },
     [
+      storeId,
       cart,
       getTotal,
       getItemCount,
@@ -215,6 +219,15 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
       new Date(start).setDate(new Date(start).getDate() + 1)
     );
     const refundTotal = refunds.reduce((sum, r) => sum + r.total, 0);
+    // Sales already marked refunded are excluded from totalSales; don't subtract their returns twice.
+    const refundedIds = new Set(
+      recentTransactions
+        .filter((t) => t.refunded && (!t.storeId || t.storeId === storeId))
+        .map((t) => t.id)
+    );
+    const countedRefunds = refunds
+      .filter((r) => !refundedIds.has(r.orderId))
+      .reduce((sum, r) => sum + r.total, 0);
 
     return {
       totalSales,
@@ -224,9 +237,9 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
       topProducts,
       refunds,
       refundTotal,
-      netSales: totalSales - refundTotal,
+      netSales: totalSales - countedRefunds,
     };
-  }, [getTodayTransactions, returns]);
+  }, [getTodayTransactions, returns, recentTransactions, storeId]);
 
   const exportDailyReportCSV = useCallback(() => {
     const stats = getDailyReportStats();
