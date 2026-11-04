@@ -6,7 +6,12 @@ import useSuppliers from '../../stores/suppliersStore';
 import { groupReorderBySupplier } from '../../utils/purchaseOrders';
 import { createMockStore, createMockProduct } from '../../__test_utils__';
 
-const m = vi.hoisted(() => ({ applyStockCount: vi.fn(), showToast: vi.fn(), csv: vi.fn() }));
+const m = vi.hoisted(() => ({
+  updateCost: vi.fn(),
+  applyStockCount: vi.fn(),
+  showToast: vi.fn(),
+  csv: vi.fn(),
+}));
 const store = createMockStore();
 const product = createMockProduct({ id: 7, name: 'Widget', manage_stock: true, stock_quantity: 5 });
 
@@ -23,6 +28,7 @@ vi.mock('../../stores', () => {
 vi.mock('../../hooks/useStockUpdater', () => ({
   useStockUpdater: () => ({
     applyStockCount: m.applyStockCount,
+    updateCost: m.updateCost,
     updateStock: vi.fn(),
     updating: false,
   }),
@@ -40,7 +46,8 @@ vi.mock('../../components/ExportMenu', () => ({
 
 beforeEach(() => {
   useSuppliers.setState({ byStore: {} });
-  m.applyStockCount.mockResolvedValue(undefined);
+  m.applyStockCount.mockResolvedValue(true);
+  m.updateCost.mockResolvedValue(true);
 });
 
 describe('PurchaseOrdersPage', () => {
@@ -65,6 +72,7 @@ describe('PurchaseOrdersPage', () => {
     const po = Object.values(useSuppliers.getState().byStore)[0]!.orders[0]!;
     expect(po.status).toBe('received');
     expect(po.lines[0]!.received).toBe(10);
+    expect(m.updateCost).not.toHaveBeenCalled(); // unit cost is 0
   });
 
   it('partial receipt keeps the PO open', async () => {
@@ -85,6 +93,43 @@ describe('PurchaseOrdersPage', () => {
     await waitFor(() =>
       expect(useSuppliers.getState().byStore[store.id]!.orders[0]!.status).toBe('partial')
     );
+  });
+});
+
+describe('receiving failures and cost', () => {
+  const setup = () => {
+    useSuppliers.getState().addOrder(store.id, {
+      supplierId: null,
+      supplierName: 'Unassigned',
+      lines: [{ productId: 7, name: 'Widget', sku: '', qty: 10, unitCost: 2.5, received: 0 }],
+    });
+    const id = useSuppliers.getState().byStore[store.id]!.orders[0]!.id;
+    useSuppliers.getState().markOrdered(store.id, id);
+  };
+
+  it('does not record the receipt when the stock update failed', async () => {
+    const user = userEvent.setup();
+    setup();
+    m.applyStockCount.mockResolvedValue(false);
+    render(<PurchaseOrdersPage />);
+    await user.click(screen.getByText(/Open PO-1/));
+    await user.click(screen.getByText('Receive stock'));
+    await waitFor(() =>
+      expect(m.showToast).toHaveBeenCalledWith(expect.stringContaining('failed'), 'error')
+    );
+    const po = useSuppliers.getState().byStore[store.id]!.orders[0]!;
+    expect(po.status).toBe('ordered');
+    expect(po.lines[0]!.received).toBe(0);
+    expect(m.updateCost).not.toHaveBeenCalled();
+  });
+
+  it('writes the unit cost back after a successful receipt', async () => {
+    const user = userEvent.setup();
+    setup();
+    render(<PurchaseOrdersPage />);
+    await user.click(screen.getByText(/Open PO-1/));
+    await user.click(screen.getByText('Receive stock'));
+    await waitFor(() => expect(m.updateCost).toHaveBeenCalledWith(7, 2.5));
   });
 });
 

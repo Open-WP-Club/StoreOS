@@ -28,7 +28,7 @@ const PurchaseOrdersPage: React.FC = (): React.ReactElement => {
   const data = useSuppliers((s) => getStoreData(s.byStore, currentStore?.id ?? ''));
   const actions = useSuppliers((s) => s);
   const { toasts, showToast, removeToast } = useToast();
-  const { applyStockCount } = useStockUpdater({
+  const { applyStockCount, updateCost } = useStockUpdater({
     getProducts: () => useCache.getState().cache.products?.data ?? [],
     setProducts: () => undefined, // useStockUpdater already writes the cache
     showToast,
@@ -65,7 +65,14 @@ const PurchaseOrdersPage: React.FC = (): React.ReactElement => {
     });
     if (Object.keys(qtys).length === 0) return;
     // Same offline-aware path as Inventory > Receive stock.
-    await applyStockCount(changes);
+    if (!(await applyStockCount(changes))) {
+      showToast('Stock update failed; the purchase order was not marked as received', 'error');
+      return;
+    }
+    // Keep the product cost current with what we actually paid
+    for (const l of o.lines) {
+      if (qtys[l.productId] && l.unitCost > 0) await updateCost(l.productId, l.unitCost);
+    }
     actions.recordReceipt(storeId, o.id, qtys);
     setReceiveQty({});
     showToast('Stock received', 'success');
