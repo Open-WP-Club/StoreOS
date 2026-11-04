@@ -16,6 +16,7 @@ import {
 } from '../utils/posOfflineSale';
 import { buildDiscountOrderParts } from '../utils/posPricing';
 import { PAYMENTS_META, paymentTitle } from '../utils/payments';
+import { buildFiscalSale, fiscalize } from '../utils/fiscal';
 import type { WooCommerceCustomer } from '../types';
 
 interface UsePOSCheckoutResult {
@@ -184,6 +185,40 @@ export function usePOSCheckout(
         });
       };
 
+      // Fiscal receipt (cash/card only). The sale is already safe; failures queue + warn, never throw.
+      const fiscalSale = (): void => {
+        const f = useAppSettings.getState().fiscal;
+        if (!f.enabled) return;
+        const sale = buildFiscalSale({
+          items: cart.map((i, idx) => ({
+            name: i.product.name,
+            quantity: i.quantity,
+            price: i.price,
+            lineDiscountCents: totals.lines[idx]?.discountCents ?? 0,
+          })),
+          saleDiscountCents: totals.saleDiscountCents,
+          payments: pay.applied,
+          vatRate: useAppSettings.getState().receiptVatRate,
+          vatMap: f.vatMap,
+        });
+        if (!sale) {
+          toast.warning(
+            'Фискален бон НЕ е издаден (плащане различно от брой/карта или неизвестна ДДС група).'
+          );
+          return;
+        }
+        void fiscalize(sale, f).then((r) => {
+          if (r.success) return;
+          toast.warning(
+            r.ambiguous
+              ? 'Фискалният бон може да е отпечатан - провери устройството (Настройки > Фискално устройство).'
+              : 'Фискален бон НЕ е издаден: ' +
+                  (r.error ?? '') +
+                  '. Изчаква в Настройки > Фискално устройство.'
+          );
+        });
+      };
+
       const soldItems = cart.map((i) => ({ productId: i.product.id, quantity: i.quantity }));
       const result = useOffline.getState().isOnline
         ? await service.createOrder(orderData)
@@ -195,6 +230,7 @@ export function usePOSCheckout(
         useOffline.getState().addPendingOperation('create_order', op, currentStore.id);
         saveRecentTransaction(0, clientId);
         printSale(0);
+        fiscalSale();
         void decrementCachedStock(soldItems);
         clearCart();
         setSelectedCustomer(null);
@@ -206,6 +242,7 @@ export function usePOSCheckout(
           saveRecentTransaction(result.data.id);
           printSale(result.data.id);
         }
+        fiscalSale();
         clearCart();
         setSelectedCustomer(null);
         setOrderNote('');

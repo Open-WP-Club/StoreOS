@@ -8,6 +8,7 @@ import { useToast } from '../hooks/useToast';
 import ToastContainer from '../components/ToastContainer';
 import SettingsLanguage from '../components/settings/SettingsLanguage';
 import SettingsPrinter from '../components/settings/SettingsPrinter';
+import SettingsFiscal from '../components/settings/SettingsFiscal';
 import SettingsNotifications from '../components/settings/SettingsNotifications';
 import SettingsSecurity from '../components/settings/SettingsSecurity';
 import SettingsAutoBackup from '../components/settings/SettingsAutoBackup';
@@ -106,6 +107,8 @@ export default function SettingsPage(): ReactElement {
           openCashDrawer={openCashDrawer}
           setOpenCashDrawer={setOpenCashDrawer}
         />
+
+        <SettingsFiscal />
 
         <section className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
           <label className="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300">

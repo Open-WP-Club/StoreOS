@@ -14,6 +14,7 @@ import { resolveBackupPath, listBackupNames, selectPrune } from './backupFiles';
 import electronUpdater from 'electron-updater';
 import path from 'path';
 import { sanitizeNotificationPayload } from './ipcValidation';
+import { registerFiscal } from './fiscal';
 
 // electron-updater is CommonJS: named imports fail in the packaged ESM bundle.
 const { autoUpdater } = electronUpdater;
@@ -270,6 +271,8 @@ ipcMain.handle('reports:save', async (event, filename, data) => {
     return { success: false, error: String(e && e.message) };
   }
 });
+
+registerFiscal(ipcMain, isTrustedSender); // fiscal:sale / fiscal:report (Datecs FP, serial)
 
 // IPC: receipt printing. Renderer sends escaped HTML; it is rendered in a sandboxed, script-less
 // hidden window (CSP in the document too) and printed. The drawer kick is raw ESC/POS via `lp`.

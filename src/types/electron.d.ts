@@ -43,6 +43,13 @@ declare global {
           openDrawer: boolean;
         }) => Promise<{ success: boolean; error?: string }>;
       };
+      /** Bulgarian fiscal device (Datecs FP over serial); untested on hardware. */
+      fiscal: {
+        sale: (
+          payload: unknown
+        ) => Promise<{ success: boolean; error?: string; ambiguous?: boolean }>;
+        report: (payload: unknown) => Promise<{ success: boolean; error?: string }>;
+      };
       /** Auto-backup output (separate folder; names are patterned and validated in main). */
       backups: {
         getDir: () => Promise<string | null>;
