@@ -23,6 +23,7 @@ import ToastContainer from '../components/ToastContainer';
 import LoadingIndicator from '../components/LoadingIndicator';
 import { useToast } from '../hooks/useToast';
 import { useOfflineMutation } from '../hooks/useOfflineMutation';
+import { useStockUpdater } from '../hooks/useStockUpdater';
 import { useProgressiveLoading } from '../hooks/useProgressiveLoading';
 import {
   Trash2,
@@ -58,15 +59,14 @@ const InventoryPage: React.FC = (): React.ReactElement => {
   const logActivity = useActivityLog((state) => state.logActivity);
   const lowStockThreshold = useSettings((state) => state.lowStockThreshold);
   const currentStore = getCurrentStore();
-  const { toasts, showToast, removeToast } = useToast();
   const { mutate: offlineMutate } = useOfflineMutation();
+  const { toasts, showToast, removeToast } = useToast();
 
   const [products, setProducts] = useState<Product[]>(productsFromCache);
   const [loading, setLoading] = useState<boolean>(productsFromCache.length === 0);
   const [error] = useState<string>('');
   const [filter, setFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [updating, setUpdating] = useState<boolean>(false);
 
   const latestProducts = useRef<Product[]>(products);
   useEffect(() => {
@@ -104,60 +104,14 @@ const InventoryPage: React.FC = (): React.ReactElement => {
     setCurrentPage(1);
   }
 
-  const updateStock = async (
-    productId: number,
-    newQuantity: number,
-    stockStatus: StockStatus
-  ): Promise<void> => {
-    if (!currentStore) return;
-    setUpdating(true);
-
-    const oldProduct = products.find((p) => p.id === productId);
-
-    try {
-      await offlineMutate({
-        operationType: 'update_stock',
-        queueData: {
-          id: productId,
-          stock_quantity: newQuantity,
-          stock_status: stockStatus,
-        },
-        storeId: currentStore.id,
-        execute: async () => {
-          const service = new WooCommerceService(currentStore);
-          const result = await service.updateStock(productId, newQuantity, stockStatus);
-          if (!result.success) throw new Error(result.error);
-          return result;
-        },
-        onSuccess: async (result) => {
-          // Latest cache as base so sequential updates (stock count) don't overwrite each other
-          const updatedProducts = latestProducts.current.map((p) =>
-            p.id === productId ? result.data : p
-          );
-          latestProducts.current = updatedProducts;
-          setProducts(updatedProducts);
-          await setCachedData('products', updatedProducts);
-          logActivity({
-            action: 'stock_updated',
-            entityType: 'product',
-            entityId: productId,
-            entityName: oldProduct?.name,
-            storeId: currentStore?.id ?? null,
-            storeName: currentStore?.name,
-            changes: {
-              stock_quantity: {
-                from: oldProduct?.stock_quantity,
-                to: newQuantity,
-              },
-            },
-          });
-        },
-        onError: (error) => showToast(`Failed to update stock: ${error}`, 'error'),
-      });
-    } finally {
-      setUpdating(false);
-    }
-  };
+  const { updateStock, applyStockCount, updating } = useStockUpdater({
+    getProducts: () => latestProducts.current,
+    setProducts: (p) => {
+      latestProducts.current = p;
+      setProducts(p);
+    },
+    showToast,
+  });
 
   const handleStockChange = (productId: number, newValue: string): void => {
     const product = products.find((p) => p.id === productId);
@@ -166,14 +120,6 @@ const InventoryPage: React.FC = (): React.ReactElement => {
     const quantity = parseInt(newValue) || 0;
     const stockStatus: StockStatus = quantity > 0 ? 'instock' : 'outofstock';
     updateStock(productId, quantity, stockStatus);
-  };
-
-  const applyStockCount = async (
-    changes: Array<{ productId: number; counted: number }>
-  ): Promise<void> => {
-    for (const c of changes) {
-      await updateStock(c.productId, c.counted, c.counted > 0 ? 'instock' : 'outofstock');
-    }
   };
 
   const deferredSearch = useDeferredValue(searchTerm);
@@ -818,6 +764,7 @@ const InventoryPage: React.FC = (): React.ReactElement => {
         orders={ordersFromCache}
         lowStockThreshold={lowStockThreshold}
         storeName={currentStore.name}
+        storeId={currentStore.id}
       />
 
       {/* Bulk Edit Modal */}
