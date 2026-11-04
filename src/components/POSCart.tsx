@@ -102,6 +102,13 @@ export function POSCart({
   const payment = getPaymentSummary();
   const lineDiscountTotal = getLineDiscountAmount();
   const maxDiscountPercent = useAppSettings((s) => s.maxDiscountPercent);
+  const lineDiscountCapped = (i: CartItem): boolean => {
+    const d = i.discount;
+    if (!d) return false;
+    const base = i.price * i.quantity;
+    const entered = d.type === 'percent' ? (base * d.value) / 100 : d.value;
+    return entered - (base * maxDiscountPercent) / 100 > 0.005;
+  };
   const saleBase = cart.reduce((sum, i) => sum + i.price * i.quantity, 0) - lineDiscountTotal;
   const enteredSale = discountType === 'percent' ? (saleBase * discountValue) / 100 : discountValue;
   const saleDiscountCapped = enteredSale - getDiscountAmount() > 0.005;
@@ -286,6 +293,11 @@ export function POSCart({
                   <option value="fixed">{currencySymbol || 'fixed'}</option>
                 </select>
               </div>
+              {item.discount && lineDiscountCapped(item) && (
+                <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                  Отстъпката е ограничена до {maxDiscountPercent}% от цената
+                </p>
+              )}
             </div>
           ))
         )}

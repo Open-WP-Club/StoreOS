@@ -135,6 +135,12 @@ describe('POSCart', () => {
     expect(screen.getByText('Отстъпката е ограничена до 20% от сумата')).toBeInTheDocument();
   });
 
+  it('warns when a line discount exceeds the limit', () => {
+    useAppSettings.setState({ maxDiscountPercent: 20 });
+    setup({ cart: [{ ...item(1, 'Widget', 10, 2), discount: { type: 'percent', value: 50 } }] });
+    expect(screen.getByText('Отстъпката е ограничена до 20% от цената')).toBeInTheDocument();
+  });
+
   it('hides the discount line without a discount', () => {
     setup();
     expect(screen.queryByText('Отстъпка')).not.toBeInTheDocument();
