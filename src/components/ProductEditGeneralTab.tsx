@@ -211,6 +211,37 @@ export function ProductEditGeneralTab({
         </div>
       </div>
 
+      <div>
+        <label
+          htmlFor="cost-price"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
+          Cost Price ($)
+        </label>
+        <input
+          id="cost-price"
+          type="number"
+          name="cost"
+          min="0"
+          value={formData.cost}
+          onChange={onInputChange}
+          step="0.01"
+          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          placeholder="0.00"
+        />
+        {Number(formData.cost) > 0 && Number(formData.regular_price) > 0 && (
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Margin at{' '}
+            {(
+              ((Number(formData.sale_price || formData.regular_price) - Number(formData.cost)) /
+                Number(formData.sale_price || formData.regular_price)) *
+              100
+            ).toFixed(1)}
+            % (private, stored in product meta)
+          </p>
+        )}
+      </div>
+
       <div className="flex items-center space-x-4">
         <label htmlFor="featured-product" className="flex items-center space-x-2">
           <input
