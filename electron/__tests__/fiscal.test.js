@@ -49,8 +49,8 @@ describe('frame building', () => {
       true
     );
   });
-  it('encodes Cyrillic as cp1251 and strips tabs', () => {
-    expect([...encodeCp1251('Аб\tя')]).toEqual([0xc0, 0xe1, 0x20, 0xff]);
+  it('encodes Cyrillic as cp1251 and keeps field separators', () => {
+    expect([...encodeCp1251('Аб\tя')]).toEqual([0xc0, 0xe1, 0x09, 0xff]);
   });
   it('formats sale and payment data', () => {
     expect(cmdSale({ name: 'X', taxGroup: 'Б', price: 2.5, quantity: 3, discount: 1 })).toBe(

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { createSecureStorage } from '../utils/secureStorage';
 import type { Language } from '../utils/i18n';
 import { MAX_DISCOUNT_PERCENT } from '../utils/posPricing';
 import { hashPin, verifyPinHash, isLegacyHash } from '../utils/pinHash';
@@ -279,6 +280,8 @@ const useAppSettings = create<AppSettingsStore>()(
     }),
     {
       name: 'woocommerce-app-settings',
+      // Encrypted via OS keychain (fiscal password, PIN hash); plaintext fallback without Electron.
+      storage: createJSONStorage(() => createSecureStorage()),
       partialize: (state): Omit<AppSettingsState, 'isInitialized' | 'isLocked'> => ({
         language: state.language,
         defaultPrinter: state.defaultPrinter,

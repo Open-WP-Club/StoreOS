@@ -5,6 +5,7 @@ import {
   fiscalReport,
   loadPending,
   dismissPending,
+  confirmNotPrinted,
   retryPending,
   type FiscalConfig,
 } from '../../utils/fiscal';
@@ -131,6 +132,23 @@ const SettingsFiscal = memo(function SettingsFiscal() {
                   {p.sale.lines.length} арт. - {p.error}
                   {p.ambiguous && ' (НЕЯСНО дали е отпечатан - провери устройството)'}
                 </span>
+                {p.ambiguous && (
+                  <button
+                    className={btn}
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          'Проверих устройството: бонът НЕ е отпечатан. Позволи повторен опит?'
+                        )
+                      ) {
+                        confirmNotPrinted(p.id);
+                        setPending(loadPending());
+                      }
+                    }}
+                  >
+                    Проверено - не е отпечатан
+                  </button>
+                )}
                 <button
                   className={btn}
                   onClick={() => {

@@ -15,12 +15,15 @@ export const ETX = 0x03;
 export const NAK = 0x15;
 export const SYN = 0x16;
 
+// Free text must not carry control bytes (tab is the field separator, 05/03 are frame markers).
+// eslint-disable-next-line no-control-regex
+export const cleanText = (s) => String(s).replace(/[\x00-\x1f\x7f]/g, ' ');
+
 export function encodeCp1251(str) {
   const out = [];
   for (const ch of String(str)) {
     const c = ch.codePointAt(0);
-    if (c < 0x80)
-      out.push(c === 0x09 ? 0x20 : c); // tab is the field separator, never in text
+    if (c < 0x80) out.push(c);
     else if (c >= 0x410 && c <= 0x44f)
       out.push(c - 0x410 + 0xc0); // А-я
     else out.push(0x3f);
@@ -72,7 +75,7 @@ const qty = (n) => String(Math.round(n * 1000) / 1000);
 export const cmdOpen = (op, pass, till = 1) => `${op}\t${pass}\t${till}\t`;
 // Absolute discount (DiscType 4) keeps line totals exact when a sale discount was folded in.
 export const cmdSale = ({ name, taxGroup, price, quantity, discount = 0 }) =>
-  `${String(name).slice(0, 36)}\t${taxGroup}\t${money(price)}\t${qty(quantity)}\t${
+  `${cleanText(name).slice(0, 36)}\t${taxGroup}\t${money(price)}\t${qty(quantity)}\t${
     discount > 0 ? '4' : '0'
   }\t${discount > 0 ? money(discount) : ''}\t`;
 export const cmdPay = (mode, amount) => `${mode === 'card' ? 1 : 0}\t${money(amount)}\t`;

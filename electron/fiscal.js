@@ -128,6 +128,29 @@ export function validateConfig(c) {
   return null;
 }
 
+const TAX_GROUPS = new Set([...'АБВГДЕЖЗ']);
+const num = (n, min = 0) => typeof n === 'number' && Number.isFinite(n) && n >= min;
+
+// Shape check for the fiscal:sale payload; returns an error string or null.
+export function validateSale(p) {
+  if (!p || !Array.isArray(p.lines) || !p.lines.length || p.lines.length > 200)
+    return 'invalid sale';
+  if (!Array.isArray(p.payments) || !p.payments.length || p.payments.length > 10) {
+    return 'invalid sale';
+  }
+  for (const l of p.lines) {
+    if (!l || typeof l.name !== 'string' || !TAX_GROUPS.has(l.taxGroup)) return 'invalid line';
+    if (!num(l.price) || !num(l.quantity) || l.quantity <= 0) return 'invalid line';
+    if (l.discount !== undefined && !num(l.discount)) return 'invalid line';
+  }
+  for (const y of p.payments) {
+    if (!y || (y.method !== 'cash' && y.method !== 'card') || !num(y.amount)) {
+      return 'invalid payment';
+    }
+  }
+  return null;
+}
+
 // No native dependency: configure the tty with stty/mode, then use plain file streams.
 export async function openSerial(path, baud) {
   const win = process.platform === 'win32';
@@ -180,13 +203,8 @@ export function registerFiscal(ipcMain, isTrustedSender, open = openSerial) {
     }
   };
   ipcMain.handle('fiscal:sale', (event, p) => {
-    const ok =
-      p &&
-      Array.isArray(p.lines) &&
-      p.lines.length > 0 &&
-      Array.isArray(p.payments) &&
-      p.payments.length > 0;
-    if (!ok) return { success: false, error: 'invalid sale' };
+    const bad = validateSale(p);
+    if (bad) return { success: false, error: bad };
     return run(event, p, (d) => d.sale({ lines: p.lines, payments: p.payments }));
   });
   ipcMain.handle('fiscal:report', (event, p) =>

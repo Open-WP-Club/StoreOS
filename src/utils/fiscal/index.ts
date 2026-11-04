@@ -156,12 +156,38 @@ export async function retryPending(config: FiscalConfig): Promise<{ done: number
   for (const p of loadPending()) {
     if (p.ambiguous) continue;
     const api = window.electronAPI?.fiscal;
-    const res = api ? await api.sale({ config, ...p.sale }).catch(() => null) : null;
-    if (!res?.success) break;
+    let res: FiscalResult;
+    let dispatched = true;
+    try {
+      if (!api) {
+        dispatched = false;
+        res = { success: false, error: 'not available' };
+      } else res = await api.sale({ config, ...p.sale });
+    } catch (e) {
+      // IPC rejected after dispatch: the device may have printed it.
+      res = { success: false, error: String((e as Error)?.message ?? e), ambiguous: true };
+    }
+    if (!res.success) {
+      // Persist BEFORE stopping so an unknown outcome is never retried blindly.
+      updatePending(p.id, {
+        error: res.error ?? 'unknown',
+        ambiguous: dispatched && !!res.ambiguous,
+      });
+      break;
+    }
     dismissPending(p.id);
     done++;
   }
   return { done, left: loadPending().length };
+}
+
+function updatePending(id: string, patch: Partial<PendingFiscal>): void {
+  savePending(loadPending().map((p) => (p.id === id ? { ...p, ...patch } : p)));
+}
+
+/** Operator confirmed on the device that the receipt was NOT printed: allow retrying it. */
+export function confirmNotPrinted(id: string): void {
+  updatePending(id, { ambiguous: false });
 }
 
 export async function fiscalReport(kind: 'X' | 'Z', config: FiscalConfig): Promise<FiscalResult> {
