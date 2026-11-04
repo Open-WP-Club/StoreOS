@@ -41,6 +41,7 @@ import CustomerProfileExtras from '../components/CustomerProfileExtras';
 import DuplicateCustomersModal from '../components/DuplicateCustomersModal';
 import useCustomerNotes from '../stores/customerNotesStore';
 import { findDuplicateGroups } from '../utils/customerProfile';
+import { segmentCustomers, SEGMENTS, type Segment } from '../utils/customerSegments';
 
 interface CustomerStats {
   total: number;
@@ -76,6 +77,7 @@ function CustomersPage(): React.ReactElement {
   const notesByStore = useCustomerNotes((s) => s.byStore);
   const [tagFilter, setTagFilter] = useState('');
   const [showDuplicates, setShowDuplicates] = useState(false);
+  const [segmentFilter, setSegmentFilter] = useState<Segment | ''>('');
   const { toasts, showToast, removeToast } = useToast();
 
   const [customers, setCustomers] = useState<Customer[]>(customersFromCache);
@@ -90,7 +92,7 @@ function CustomersPage(): React.ReactElement {
   const [sort, setSort] = useState<SortState | null>(null);
   const [hiddenColumns, setHiddenColumns] = useState<string[]>([]);
   const show = (k: string): boolean => !hiddenColumns.includes(k);
-  const visibleCols = 2 + CUSTOMER_COLUMNS.filter((c) => show(c.key)).length;
+  const visibleCols = 3 + CUSTOMER_COLUMNS.filter((c) => show(c.key)).length;
 
   const { loadingState } = useProgressiveLoading();
 
@@ -174,10 +176,22 @@ function CustomersPage(): React.ReactElement {
     () => [...new Set(Object.values(storeNotes ?? {}).flatMap((n) => n.tags))].sort(),
     [storeNotes]
   );
+  const segmentation = useMemo(
+    () => segmentCustomers(customers, cachedOrders),
+    [customers, cachedOrders]
+  );
+  const segmentById = useMemo(
+    () => new Map(segmentation.rows.map((r) => [r.customer.id, r.segment])),
+    [segmentation]
+  );
   const taggedCustomers = useMemo(
     () =>
-      tagFilter ? customers.filter((c) => storeNotes?.[c.id]?.tags.includes(tagFilter)) : customers,
-    [customers, tagFilter, storeNotes]
+      customers.filter(
+        (c) =>
+          (!tagFilter || storeNotes?.[c.id]?.tags.includes(tagFilter)) &&
+          (!segmentFilter || segmentById.get(c.id) === segmentFilter)
+      ),
+    [customers, tagFilter, storeNotes, segmentFilter, segmentById]
   );
   const duplicateGroups = useMemo(
     () => (showDuplicates ? findDuplicateGroups(customers) : []),
@@ -429,6 +443,27 @@ function CustomersPage(): React.ReactElement {
           </button>
         </div>
 
+        <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Filter by segment">
+          {(['', ...SEGMENTS] as const).map((s) => (
+            <button
+              key={s || 'all'}
+              type="button"
+              aria-pressed={segmentFilter === s}
+              onClick={() => {
+                setSegmentFilter(s);
+                setCurrentPage(1);
+              }}
+              className={`px-3 py-1 text-sm rounded-full border ${
+                segmentFilter === s
+                  ? 'bg-blue-600 border-blue-600 text-white'
+                  : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+              }`}
+            >
+              {s || 'All segments'}
+            </button>
+          ))}
+        </div>
+
         {/* Results Summary */}
         <div className="mt-3 text-sm text-gray-600 dark:text-gray-400">
           Showing{' '}
@@ -473,6 +508,7 @@ function CustomersPage(): React.ReactElement {
                       onSort={setSort}
                     />
                   )}
+                  <Th>Segment</Th>
                   <Th>Actions</Th>
                 </tr>
               </thead>
@@ -566,6 +602,9 @@ function CustomersPage(): React.ReactElement {
                           {new Date(customer.date_created).toLocaleDateString()}
                         </td>
                       )}
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                        {segmentById.get(customer.id) ?? ''}
+                      </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm">
                         <button
                           onClick={(e) => {

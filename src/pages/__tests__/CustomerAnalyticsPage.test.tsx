@@ -79,6 +79,7 @@ describe('CustomerAnalyticsPage', () => {
     (useCache as unknown as Mock).mockImplementation((selector?: (state: unknown) => unknown) => {
       const state = {
         getCachedData: mockGetCachedData,
+        cache: {},
       };
       return selector ? selector(state) : state;
     });

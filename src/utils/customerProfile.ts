@@ -2,7 +2,7 @@ import { boundedLevenshteinDistance } from './search/fuzzy';
 import type { Customer, WooCommerceOrder } from '../types';
 
 export const DUPLICATE_TAG = 'duplicate';
-const NON_REVENUE = new Set(['cancelled', 'refunded', 'failed', 'trash']);
+export const NON_REVENUE = new Set(['cancelled', 'refunded', 'failed', 'trash']);
 
 /** Lowercase, trim, drop "+tag" from the local part. */
 export function normalizeEmail(email?: string): string {
