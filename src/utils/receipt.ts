@@ -19,9 +19,12 @@ interface ReceiptInput {
   vatRate?: number;
   /** Optional logo image URL (https only; anything else is dropped). */
   logoUrl?: string | null;
+  /** 'refund' prints a return receipt (negative amounts). */
+  kind?: 'sale' | 'refund';
 }
 
 export interface Receipt {
+  kind?: 'sale' | 'refund';
   storeName: string;
   lines: Array<{
     name: string;
@@ -58,6 +61,7 @@ export function buildReceipt(input: ReceiptInput): Receipt {
   }));
   const vatRate = input.vatRate ?? 20;
   return {
+    ...(input.kind === 'refund' && { kind: 'refund' as const }),
     storeName: input.storeName,
     lines,
     subtotal: round2(lines.reduce((s, l) => s + l.total, 0)),
@@ -115,6 +119,7 @@ ${r.logoUrl ? `<img class="logo" src="${escapeHtml(r.logoUrl)}" alt="">` : ''}
 <div class="c b">${escapeHtml(r.storeName)}</div>
 <div class="c">${escapeHtml(when)}</div>
 <div class="c">${order}</div>
+${r.kind === 'refund' ? '<div class="c b">ВЪЗСТАНОВЯВАНЕ / ВРЪЩАНЕ</div>' : ''}
 <hr>${lines}<hr>
 ${r.discount > 0 ? row('Междинна сума', money(r.subtotal)) + row('Отстъпка', '-' + money(r.discount)) : ''}
 ${r.vatRate > 0 ? row(`ДДС ${escapeHtml(r.vatRate)}% (вкл.)`, money(r.vat)) : ''}
@@ -127,6 +132,6 @@ ${
 }
 ${r.tendered !== null ? row('Получени', money(r.tendered)) : ''}
 ${r.change !== null ? row('Ресто', money(r.change)) : ''}
-<hr><div class="c">Благодарим Ви!</div>
+<hr>${r.kind === 'refund' ? '' : '<div class="c">Благодарим Ви!</div>'}
 </body></html>`;
 }

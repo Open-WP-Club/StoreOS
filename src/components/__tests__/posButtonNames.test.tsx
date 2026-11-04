@@ -143,6 +143,9 @@ describe('POS buttons have accessible names', () => {
           averageOrder: 0,
           byPaymentMethod: {},
           topProducts: [],
+          refunds: [],
+          refundTotal: 0,
+          netSales: 0,
         }}
         onClose={noop}
         onExportCSV={noop}

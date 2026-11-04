@@ -9,6 +9,7 @@ import {
   Trophy,
   Medal,
   Award,
+  RotateCcw,
 } from 'lucide-react';
 import { formatPrice } from '../utils/currency';
 import type { DailyReportStats } from '../hooks/usePOSDailyReport';
@@ -65,8 +66,10 @@ export function POSDailyReportModal({
         <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-4 text-white">
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <p className="text-2xl font-bold">{formatPrice(stats.totalSales)}</p>
-              <p className="text-xs opacity-80">Общо продажби</p>
+              <p className="text-2xl font-bold">{formatPrice(stats.netSales)}</p>
+              <p className="text-xs opacity-80">
+                {stats.refundTotal > 0 ? 'Нетни продажби' : 'Общо продажби'}
+              </p>
             </div>
             <div>
               <p className="text-2xl font-bold">{stats.orderCount}</p>
@@ -108,6 +111,29 @@ export function POSDailyReportModal({
             ))
           )}
         </div>
+
+        {/* Returns */}
+        {stats.refunds.length > 0 && (
+          <div className="space-y-2" data-testid="report-returns">
+            <h4 className="font-medium text-gray-900 dark:text-white text-sm flex items-center gap-2">
+              <RotateCcw className="w-4 h-4 text-red-600" />
+              Върнати артикули (-{formatPrice(stats.refundTotal)})
+            </h4>
+            {stats.refunds.map((r) => (
+              <div
+                key={r.refundId}
+                className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-lg text-sm"
+              >
+                <span className="text-gray-900 dark:text-white">
+                  Поръчка #{r.orderId} · {r.items.reduce((n, i) => n + i.quantity, 0)} бр.
+                </span>
+                <span className="font-semibold text-red-600 dark:text-red-400">
+                  -{formatPrice(r.total)}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Top Selling Products */}
         <div className="space-y-2">
