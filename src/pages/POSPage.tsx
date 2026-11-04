@@ -8,6 +8,7 @@ import {
   History,
   BarChart3,
   StickyNote,
+  RotateCcw,
 } from 'lucide-react';
 import { useStoreConfig } from '../stores';
 import { usePOSStore } from '../stores/posStore';
@@ -27,6 +28,7 @@ import POSRecentTransactionsModal from '../components/POSRecentTransactionsModal
 import POSShortcutsPanel from '../components/POSShortcutsPanel';
 import POSScratchpad from '../components/POSScratchpad';
 import POSCustomerSearchModal from '../components/POSCustomerSearchModal';
+import POSReturnModal from '../components/POSReturnModal';
 import POSRefundConfirmModal from '../components/POSRefundConfirmModal';
 import POSVariantPickerModal from '../components/POSVariantPickerModal';
 
@@ -88,6 +90,7 @@ export default function POSPage(): ReactElement {
   const [numpadProductId, setNumpadProductId] = useState<number | null>(null);
 
   // Shortcuts & scratchpad
+  const [showReturn, setShowReturn] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showScratchpad, setShowScratchpad] = useState(false);
   const [scratchpadNote, setScratchpadNote] = useState((): string => {
@@ -251,6 +254,14 @@ export default function POSPage(): ReactElement {
             )}
           </button>
           <button
+            onClick={() => setShowReturn(true)}
+            className="p-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
+            title="Връщане на артикул"
+            aria-label="Връщане на артикул"
+          >
+            <RotateCcw className="w-5 h-5" />
+          </button>
+          <button
             onClick={() => setShowScratchpad(!showScratchpad)}
             className={`p-2 rounded-lg transition-colors relative ${
               showScratchpad
@@ -400,6 +411,13 @@ export default function POSPage(): ReactElement {
           recentTransactions={dailyReport.recentTransactions}
           onClose={() => dailyReport.setShowRecentTransactions(false)}
           onRefund={dailyReport.setRefundingTransaction}
+        />
+      )}
+
+      {showReturn && (
+        <POSReturnModal
+          recentTransactions={dailyReport.recentTransactions}
+          onClose={() => setShowReturn(false)}
         />
       )}
 

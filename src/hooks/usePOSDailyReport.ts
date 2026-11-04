@@ -9,6 +9,7 @@ import { getAppLocale } from '../utils/dateTime';
 import { storeCurrencySymbol } from '../utils/currency';
 import { methodTotals, paymentTitle, type Payment } from '../utils/payments';
 import { RECENT_TRANSACTIONS_KEY, POS_TX_EVENT } from '../utils/posOfflineSale';
+import { loadReturns, returnsInRange, POS_RETURNS_EVENT, type PosReturn } from '../utils/posReturn';
 
 interface TransactionItem {
   productId: number;
@@ -28,6 +29,7 @@ export interface RecentTransaction {
   /** Applied amounts per method (split payments); absent on older transactions. */
   payments?: Payment[];
   customerName?: string;
+  storeId?: string;
   /** Kept for receipt reprints. */
   discount?: number;
   tendered?: number;
@@ -45,6 +47,11 @@ export interface DailyReportStats {
   averageOrder: number;
   byPaymentMethod: Record<string, { total: number; count: number }>;
   topProducts: Array<{ productId: number; name: string; quantity: number; revenue: number }>;
+  /** Today's POS returns (listed in the report). */
+  refunds: PosReturn[];
+  refundTotal: number;
+  /** totalSales minus refundTotal. */
+  netSales: number;
 }
 
 interface UsePOSDailyReportResult {
@@ -71,6 +78,7 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
   const currentStore = getCurrentStore();
   const toast = useToast();
   const currencySymbol = storeCurrencySymbol(currentStore);
+  const storeId = currentStore?.id;
 
   const {
     cart,
@@ -101,6 +109,12 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
     window.addEventListener(POS_TX_EVENT, reload);
     return () => window.removeEventListener(POS_TX_EVENT, reload);
   }, []);
+  const [returns, setReturns] = useState<PosReturn[]>(() => loadReturns(storeId));
+  useEffect(() => {
+    const reload = (): void => setReturns(loadReturns(storeId));
+    window.addEventListener(POS_RETURNS_EVENT, reload);
+    return () => window.removeEventListener(POS_RETURNS_EVENT, reload);
+  }, [storeId]);
   const [showDailyReport, setShowDailyReport] = useState(false);
   const [refundingTransaction, setRefundingTransaction] = useState<RecentTransaction | null>(null);
   const [processingRefund, setProcessingRefund] = useState(false);
@@ -131,6 +145,7 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
         ...(pay.tendered > 0 && { tendered: pay.tendered, change: pay.change }),
         timestamp: new Date().toISOString(),
         refunded: false,
+        ...(storeId && { storeId }),
         ...(pendingClientId && { pending: true, clientId: pendingClientId }),
       };
 
@@ -146,6 +161,7 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
       });
     },
     [
+      storeId,
       cart,
       getTotal,
       getItemCount,
@@ -196,8 +212,34 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
       .sort((a, b) => b.quantity - a.quantity)
       .slice(0, 5);
 
-    return { totalSales, orderCount, averageOrder, byPaymentMethod, topProducts };
-  }, [getTodayTransactions]);
+    const start = new Date().setHours(0, 0, 0, 0);
+    const refunds = returnsInRange(
+      returns,
+      start,
+      new Date(start).setDate(new Date(start).getDate() + 1)
+    );
+    const refundTotal = refunds.reduce((sum, r) => sum + r.total, 0);
+    // Sales already marked refunded are excluded from totalSales; don't subtract their returns twice.
+    const refundedIds = new Set(
+      recentTransactions
+        .filter((t) => t.refunded && (!t.storeId || t.storeId === storeId))
+        .map((t) => t.id)
+    );
+    const countedRefunds = refunds
+      .filter((r) => !refundedIds.has(r.orderId))
+      .reduce((sum, r) => sum + r.total, 0);
+
+    return {
+      totalSales,
+      orderCount,
+      averageOrder,
+      byPaymentMethod,
+      topProducts,
+      refunds,
+      refundTotal,
+      netSales: totalSales - countedRefunds,
+    };
+  }, [getTodayTransactions, returns, recentTransactions, storeId]);
 
   const exportDailyReportCSV = useCallback(() => {
     const stats = getDailyReportStats();
@@ -220,6 +262,19 @@ export function usePOSDailyReport(): UsePOSDailyReportResult {
     stats.topProducts.forEach((product) => {
       csv += `"${product.name}",${product.quantity},${product.revenue.toFixed(2)} ${currencySymbol}\n`;
     });
+
+    if (stats.refunds.length > 0) {
+      csv += `\nВръщания\n`;
+      csv += `Поръчка #,Час,Метод,Сума\n`;
+      stats.refunds.forEach((r) => {
+        const time = new Date(r.timestamp).toLocaleTimeString(getAppLocale(), {
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+        csv += `${r.orderId},${time},${r.method === 'cash' ? 'Каса' : 'Оригинален метод'},-${r.total.toFixed(2)} ${currencySymbol}\n`;
+      });
+      csv += `Нетни продажби,${stats.netSales.toFixed(2)} ${currencySymbol}\n`;
+    }
 
     csv += `\nДетайли на транзакциите\n`;
     csv += `Поръчка #,Час,Артикули,Метод,Сума\n`;
