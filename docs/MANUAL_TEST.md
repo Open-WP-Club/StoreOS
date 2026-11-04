@@ -123,3 +123,10 @@ For Orders, Products and Customers:
    Expect: lists low-stock items with suggested quantities; totals correct.
 2. Export it (CSV/PDF).
    Expect: file downloads and opens; formula-like text cells are neutralized in CSV.
+
+## Fiscal device (Datecs FP) - HARDWARE UNVERIFIED
+Code: `electron/fiscalProtocol.js`, `electron/fiscal.js`, `src/utils/fiscal/`. Only the fake-port unit tests exist.
+With a real device, check: port/baud open (Settings > Fiscal), X report, a cash sale, a card sale, a split cash+card sale,
+a sale with line + sale discount (device total must equal the paid total), VAT letters (`20=Б,9=В,0=А` must match the
+device programming), error behaviour (unplug mid-sale -> sale kept, entry in the pending list), Z report.
+Confirm command numbers 48/49/53/56/60/69, tab-separated params, and payment mode codes against your model's manual.

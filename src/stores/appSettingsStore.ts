@@ -1,8 +1,27 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { createSecureStorage } from '../utils/secureStorage';
 import type { Language } from '../utils/i18n';
 import { MAX_DISCOUNT_PERCENT } from '../utils/posPricing';
 import { hashPin, verifyPinHash, isLegacyHash } from '../utils/pinHash';
+import { DEFAULT_VAT_MAP } from '../utils/fiscal';
+
+export interface FiscalSettings {
+  enabled: boolean;
+  port: string;
+  baud: number;
+  operator: string;
+  password: string;
+  vatMap: string;
+}
+export const DEFAULT_FISCAL: FiscalSettings = {
+  enabled: false,
+  port: '',
+  baud: 115200,
+  operator: '1',
+  password: '0000',
+  vatMap: DEFAULT_VAT_MAP,
+};
 
 // ============================================
 // Types
@@ -27,6 +46,7 @@ export interface AppSettingsState {
   receiptVatRate: number; // Receipt: VAT % included in prices; 0 hides the VAT line
   maxDiscountPercent: number; // POS: highest % discount a cashier can apply (0-100)
   openCashDrawer: boolean; // POS: ESC/POS kick with the receipt (needs a named printer)
+  fiscal: FiscalSettings; // Bulgarian fiscal device (Datecs FP, serial); untested on hardware
 
   // Customers
   syncCustomerProfile: boolean; // Push/pull local tags+notes via WooCommerce customer meta_data (default OFF)
@@ -56,6 +76,7 @@ interface AppSettingsActions {
   setMaxDiscountPercent: (v: number) => void;
   setReceiptShowLogo: (v: boolean) => void;
   setOpenCashDrawer: (v: boolean) => void;
+  setFiscal: (patch: Partial<FiscalSettings>) => void;
 
   setSyncCustomerProfile: (v: boolean) => void;
 
@@ -113,6 +134,8 @@ const useAppSettings = create<AppSettingsStore>()(
       receiptVatRate: 20,
       maxDiscountPercent: MAX_DISCOUNT_PERCENT,
       openCashDrawer: false,
+      fiscal: DEFAULT_FISCAL,
+      setFiscal: (patch) => set((s) => ({ fiscal: { ...s.fiscal, ...patch } })),
       syncCustomerProfile: false,
       pinEnabled: false,
       pinCode: null,
@@ -241,6 +264,7 @@ const useAppSettings = create<AppSettingsStore>()(
           receiptVatRate: 20,
           maxDiscountPercent: MAX_DISCOUNT_PERCENT,
           openCashDrawer: false,
+          fiscal: DEFAULT_FISCAL,
           syncCustomerProfile: false,
           pinEnabled: false,
           pinCode: null,
@@ -256,6 +280,8 @@ const useAppSettings = create<AppSettingsStore>()(
     }),
     {
       name: 'woocommerce-app-settings',
+      // Encrypted via OS keychain (fiscal password, PIN hash); plaintext fallback without Electron.
+      storage: createJSONStorage(() => createSecureStorage()),
       partialize: (state): Omit<AppSettingsState, 'isInitialized' | 'isLocked'> => ({
         language: state.language,
         defaultPrinter: state.defaultPrinter,
@@ -264,6 +290,7 @@ const useAppSettings = create<AppSettingsStore>()(
         receiptVatRate: state.receiptVatRate,
         maxDiscountPercent: state.maxDiscountPercent,
         openCashDrawer: state.openCashDrawer,
+        fiscal: state.fiscal,
         syncCustomerProfile: state.syncCustomerProfile,
         pinEnabled: state.pinEnabled,
         pinCode: state.pinCode,

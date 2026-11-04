@@ -25,6 +25,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   receipt: {
     print: (payload) => ipcRenderer.invoke('receipt:print', payload),
   },
+  fiscal: {
+    sale: (payload) => ipcRenderer.invoke('fiscal:sale', payload),
+    report: (payload) => ipcRenderer.invoke('fiscal:report', payload),
+  },
   backups: {
     getDir: () => ipcRenderer.invoke('backups:get-dir'),
     chooseDir: () => ipcRenderer.invoke('backups:choose-dir'),
