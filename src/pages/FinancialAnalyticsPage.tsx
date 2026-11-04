@@ -10,7 +10,8 @@ import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import { DollarSign, TrendingUp, PieChart, CreditCard, ArrowUp, ArrowDown } from 'lucide-react';
 import ExportMenu from '../components/ExportMenu';
 import { useReportExport } from '../hooks/useReportExport';
-import type { Order } from '../types';
+import type { Order, Product } from '../types';
+import { computeProfit, type ProfitReport } from '../utils/profitReport';
 
 interface DailyRevenueData {
   date: string;
@@ -50,6 +51,7 @@ const FinancialAnalyticsPage: React.FC = (): React.ReactElement => {
     timeRangeLabel,
     formatCurrency,
   } = useAnalyticsBase();
+  const [profit, setProfit] = useState<ProfitReport | null>(null);
   const [financialData, setFinancialData] = useState<FinancialData>({
     totalRevenue: 0,
     netRevenue: 0,
@@ -208,6 +210,10 @@ const FinancialAnalyticsPage: React.FC = (): React.ReactElement => {
       const orders = (await getCachedData('orders')) as Order[] | null;
       if (orders) {
         calculateFinancialMetrics(orders, selectedTimeRange);
+        const products = ((await getCachedData('products')) ?? []) as Product[];
+        const since = new Date();
+        since.setDate(since.getDate() - selectedTimeRange);
+        setProfit(computeProfit(orders, products, since));
       }
     } catch {
       // Error loading financial analytics - silently handle
@@ -467,6 +473,76 @@ const FinancialAnalyticsPage: React.FC = (): React.ReactElement => {
           </div>
         </div>
       </div>
+
+      {/* Profit (cost of goods) */}
+      {profit && (
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+            Gross Profit ({timeRangeLabel})
+          </h2>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+            Completed orders only (cancelled, refunded and failed excluded). Revenue is line totals
+            excl. tax; COGS uses the cost price set on each product.
+            {profit.missingCost > 0 &&
+              ` ${profit.missingCost} sold product(s) have no cost set and count as 0 cost.`}
+          </p>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {[
+              ['Revenue', formatCurrency(profit.revenue)],
+              ['COGS', formatCurrency(profit.cogs)],
+              ['Gross Profit', formatCurrency(profit.grossProfit)],
+              ['Margin', profit.margin === null ? '-' : `${profit.margin.toFixed(1)}%`],
+            ].map(([label, value]) => (
+              <div key={label}>
+                <div className="text-sm text-gray-500 dark:text-gray-400">{label}</div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">{value}</div>
+              </div>
+            ))}
+          </div>
+          {profit.products.length > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {[
+                { title: 'Top products by profit', rows: profit.products.slice(0, 5) },
+                { title: 'Bottom products by profit', rows: profit.products.slice(-5).reverse() },
+              ].map(({ title, rows }) => (
+                <div key={title} className="overflow-x-auto">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    {title}
+                  </h3>
+                  <table className="min-w-full text-sm divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="text-xs text-gray-500 dark:text-gray-400 uppercase">
+                      <tr>
+                        <th scope="col" className="py-2 text-left">
+                          Product
+                        </th>
+                        <th scope="col" className="py-2 text-right">
+                          Profit
+                        </th>
+                        <th scope="col" className="py-2 text-right">
+                          Margin
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                      {rows.map((p) => (
+                        <tr key={p.productId}>
+                          <td className="py-2 text-gray-900 dark:text-white">{p.name}</td>
+                          <td className="py-2 text-right text-gray-900 dark:text-white">
+                            {formatCurrency(p.profit)}
+                          </td>
+                          <td className="py-2 text-right text-gray-600 dark:text-gray-400">
+                            {p.margin === null ? '-' : `${p.margin.toFixed(1)}%`}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Revenue Trend Chart */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">

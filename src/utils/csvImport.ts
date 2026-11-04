@@ -3,15 +3,24 @@
  * Everything coming from the file is untrusted text: never render it as HTML.
  */
 import type { Product } from '../types';
+import { getCost, costMeta } from './costPrice';
 
 type ImportField =
-  'sku' | 'name' | 'regular_price' | 'sale_price' | 'stock_quantity' | 'stock_status' | 'status';
+  | 'sku'
+  | 'name'
+  | 'regular_price'
+  | 'sale_price'
+  | 'cost'
+  | 'stock_quantity'
+  | 'stock_status'
+  | 'status';
 
 export const IMPORT_FIELDS: { field: ImportField; label: string; aliases: string[] }[] = [
   { field: 'sku', label: 'SKU', aliases: ['sku'] },
   { field: 'name', label: 'Name', aliases: ['product name', 'name'] },
   { field: 'regular_price', label: 'Regular price', aliases: ['regular price', 'regular_price'] },
   { field: 'sale_price', label: 'Sale price', aliases: ['sale price', 'sale_price'] },
+  { field: 'cost', label: 'Cost price', aliases: ['cost', 'cost price', 'cost_price'] },
   {
     field: 'stock_quantity',
     label: 'Stock quantity',
@@ -95,13 +104,14 @@ interface ImportRow {
 
 const isMoney = (v: string): boolean => /^\d+(\.\d+)?$/.test(v);
 const isNumeric = (f: ImportField): boolean =>
-  f === 'regular_price' || f === 'sale_price' || f === 'stock_quantity';
+  f === 'regular_price' || f === 'sale_price' || f === 'cost' || f === 'stock_quantity';
 const sameValue = (f: ImportField, a: string, b: string): boolean =>
   isNumeric(f) && a !== '' && b !== '' && !isNaN(Number(a)) && !isNaN(Number(b))
     ? Number(a) === Number(b)
     : a === b;
 
 function currentValue(p: Product, field: ImportField): string {
+  if (field === 'cost') return getCost(p)?.toString() ?? '';
   const v = (p as unknown as Record<string, unknown>)[field];
   return v == null ? '' : String(v);
 }
@@ -111,6 +121,7 @@ function validate(field: ImportField, v: string): string | null {
   switch (field) {
     case 'regular_price':
     case 'sale_price':
+    case 'cost':
       return isMoney(v) ? null : `${field} must be a non-negative number (got "${v}")`;
     case 'stock_quantity':
       return /^-?\d+$/.test(v) ? null : `stock_quantity must be an integer (got "${v}")`;
@@ -175,7 +186,8 @@ export function computeImportDiff(
       const from = existing ? currentValue(existing, field) : '';
       if (existing && sameValue(field, from, value)) continue;
       out.changes.push({ field, from, to: value });
-      out.payload[field] = field === 'stock_quantity' ? Number(value) : value;
+      if (field === 'cost') out.payload.meta_data = [costMeta(value)];
+      else out.payload[field] = field === 'stock_quantity' ? Number(value) : value;
       if (field === 'stock_quantity') out.payload.manage_stock = true;
     }
     if (!existing) out.payload.sku = sku;

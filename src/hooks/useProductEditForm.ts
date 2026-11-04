@@ -3,7 +3,9 @@ import { useStoreConfig } from '../stores';
 import WooCommerceService from '../services/woocommerce';
 import { useOfflineMutation } from './useOfflineMutation';
 import { isPlaceholderId } from '../utils/offlinePlaceholders';
+import { getCost, costMeta } from '../utils/costPrice';
 import type {
+  WooCommerceMetaData,
   Product,
   ProductUpdateData,
   CatalogVisibility,
@@ -20,6 +22,7 @@ export interface ProductFormData {
   sku: string;
   regular_price: string;
   sale_price: string;
+  cost: string;
   manage_stock: boolean;
   stock_quantity: string;
   stock_status: 'instock' | 'outofstock' | 'onbackorder';
@@ -47,6 +50,7 @@ const INITIAL_FORM_DATA: ProductFormData = {
   sku: '',
   regular_price: '',
   sale_price: '',
+  cost: '',
   manage_stock: false,
   stock_quantity: '',
   stock_status: 'instock',
@@ -109,6 +113,7 @@ export function useProductEditForm(): UseProductEditFormResult {
       sku: productData.sku || '',
       regular_price: productData.regular_price || '',
       sale_price: productData.sale_price || '',
+      cost: getCost(productData)?.toString() ?? '',
       manage_stock: productData.manage_stock || false,
       stock_quantity: productData.stock_quantity?.toString() || '',
       stock_status: (productData.stock_status as ProductFormData['stock_status']) || 'instock',
@@ -204,6 +209,7 @@ export function useProductEditForm(): UseProductEditFormResult {
         downloadable: formData.downloadable,
         purchase_note: formData.purchase_note,
         slug: formData.slug || undefined,
+        meta_data: [costMeta(formData.cost) as WooCommerceMetaData],
       };
 
       let updated: Product | null = null;
