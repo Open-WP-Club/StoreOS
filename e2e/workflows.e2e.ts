@@ -58,24 +58,17 @@ test('backup: Create Backup -> wipe the view -> Restore from Backup brings it ba
   await saveOrdersView(page, 'Backed-up view');
 
   await goto(page, 'settings');
-  // The real code path runs; only the final <a download> sink is captured because a native
-  // save dialog cannot be driven over CDP.
-  await page.evaluate(() => {
-    const w = window as unknown as { __backup?: Promise<string> };
-    const orig = URL.createObjectURL.bind(URL);
-    URL.createObjectURL = (obj: Blob | MediaSource) => {
-      if (obj instanceof Blob) w.__backup = obj.text();
-      return orig(obj);
-    };
-  });
+  // The click triggers a real <a download>; let Chromium save it to a temp folder via CDP
+  // instead of the native save dialog.
+  const dlDir = fs.mkdtempSync(path.join(os.tmpdir(), 'storeos-dl-'));
+  const cdp = await app.browser.newBrowserCDPSession();
+  await cdp.send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: dlDir });
   await page.locator('#settings-backup-passphrase').fill('e2e-passphrase');
   await page.getByRole('button', { name: /^(Create Backup|Създай Backup)$/ }).click();
   await expect
-    .poll(() => page.evaluate(() => !!(window as unknown as { __backup?: unknown }).__backup))
-    .toBe(true);
-  const json = await page.evaluate(
-    () => (window as unknown as { __backup: Promise<string> }).__backup
-  );
+    .poll(() => fs.readdirSync(dlDir).filter((f) => !f.endsWith('.crdownload')))
+    .toHaveLength(1);
+  const json = fs.readFileSync(path.join(dlDir, fs.readdirSync(dlDir)[0]!), 'utf8');
   expect(json).not.toContain(CK);
   expect(json).not.toContain(CS);
   expect(JSON.parse(json).data.encryptedCredentials).toBeTruthy();
@@ -101,9 +94,7 @@ test('backup: Create Backup -> wipe the view -> Restore from Backup brings it ba
 });
 
 test('scheduled reports: settings persist across restart; enabling is blocked without a folder', async () => {
-  // Generating a report file is NOT covered: the output folder can only be set through a native
-  // folder dialog (reports:choose-dir), which cannot be driven over CDP, and reports:save refuses
-  // any folder the main process did not get from that dialog.
+  // File generation is covered by the next test (the folder dialog can't be driven over CDP).
   const mock = await startMockWoo({ orders: 5, products: 5, customers: 5 });
   const profile = newProfile();
   let app = await launchApp(profile);
@@ -139,6 +130,46 @@ test('scheduled reports: settings persist across restart; enabling is blocked wi
   await expect(app.page.locator('#sr-freq')).toHaveValue('weekly');
   await expect(app.page.locator('#sr-day')).toHaveValue('3');
   await expect(app.page.locator('#sr-time')).toHaveValue('07:45');
+  await app.close();
+  await mock.close();
+});
+
+test('scheduled reports: a due report is written to the chosen folder', async () => {
+  const mock = await startMockWoo({ orders: 5, products: 5, customers: 5 });
+  const profile = newProfile();
+  const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'storeos-reports-'));
+  // reports:save only writes to the folder persisted by reports:choose-dir; the native dialog
+  // can't be driven over CDP, so write the file that handler would have written.
+  fs.writeFileSync(path.join(profile, 'report-dir.json'), JSON.stringify({ dir: outDir }));
+  const app = await launchApp(profile);
+  await seedStore(app.page, mock.url, CK, CS);
+  // Daily slot at 00:00 is always in the past today; a lastRun before it makes the report due.
+  await app.page.evaluate((dir) => {
+    const lastRun = new Date().setHours(0, 0, 0, 0) - 3_600_000;
+    localStorage.setItem(
+      'scheduled-reports',
+      JSON.stringify({
+        state: {
+          enabled: true,
+          outputDir: dir,
+          reportType: 'sales-summary',
+          format: 'csv',
+          frequency: 'daily',
+          weekday: 1,
+          time: '00:00',
+          notify: false,
+          lastRun,
+        },
+        version: 0,
+      })
+    );
+  }, outDir);
+  await app.page.reload();
+  await expect
+    .poll(() => fs.readdirSync(outDir).filter((f) => /^sales-summary-.*\.csv$/.test(f)), {
+      timeout: 30_000,
+    })
+    .toHaveLength(1);
   await app.close();
   await mock.close();
 });

@@ -77,3 +77,15 @@ describe('StockCountModal', () => {
     expect(onClose).toHaveBeenCalled();
   });
 });
+
+describe('StockCountModal receive mode', () => {
+  it('adds the received quantity to the system stock', async () => {
+    const user = userEvent.setup();
+    const onApply = vi.fn().mockResolvedValue(undefined);
+    render(<StockCountModal receive products={products} onClose={vi.fn()} onApply={onApply} />);
+    await user.type(screen.getByLabelText('Scan barcode'), 'A-1{Enter}A-1{Enter}');
+    expect(screen.getByLabelText('Received Alpha')).toHaveValue(2);
+    await user.click(screen.getByRole('button', { name: /Apply 1 change/ }));
+    expect(onApply).toHaveBeenCalledWith([{ productId: 1, counted: 7 }]);
+  });
+});

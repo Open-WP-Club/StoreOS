@@ -24,7 +24,15 @@ import LoadingIndicator from '../components/LoadingIndicator';
 import { useToast } from '../hooks/useToast';
 import { useOfflineMutation } from '../hooks/useOfflineMutation';
 import { useProgressiveLoading } from '../hooks/useProgressiveLoading';
-import { Trash2, Edit, RefreshCw, ImageOff, ClipboardList, ScanBarcode } from 'lucide-react';
+import {
+  Trash2,
+  Edit,
+  RefreshCw,
+  ImageOff,
+  ClipboardList,
+  ScanBarcode,
+  PackagePlus,
+} from 'lucide-react';
 import type { Order, Product, StockStatus } from '../types';
 import { EMPTY_PRODUCTS } from '../constants';
 import StatCard from '../components/StatCard';
@@ -71,6 +79,7 @@ const InventoryPage: React.FC = (): React.ReactElement => {
   const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
   const [reorderOpen, setReorderOpen] = useState<boolean>(false);
   const [countOpen, setCountOpen] = useState<boolean>(false);
+  const [receiveOpen, setReceiveOpen] = useState<boolean>(false);
   const [bulkEditModalOpen, setBulkEditModalOpen] = useState<boolean>(false);
 
   // Sync products state with cache
@@ -492,6 +501,13 @@ const InventoryPage: React.FC = (): React.ReactElement => {
               <option value="out">Out of Stock</option>
             </select>
           </div>
+          <button
+            onClick={() => setReceiveOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-medium"
+          >
+            <PackagePlus className="w-4 h-4" />
+            Receive stock
+          </button>
           <ExportMenu onExportCSV={handleExportCSV} onExportPDF={handleExportPDF} />
           <button
             onClick={() => setReorderOpen(true)}
@@ -782,6 +798,15 @@ const InventoryPage: React.FC = (): React.ReactElement => {
         <StockCountModal
           products={products}
           onClose={() => setCountOpen(false)}
+          onApply={applyStockCount}
+        />
+      )}
+
+      {receiveOpen && (
+        <StockCountModal
+          receive
+          products={products}
+          onClose={() => setReceiveOpen(false)}
           onApply={applyStockCount}
         />
       )}

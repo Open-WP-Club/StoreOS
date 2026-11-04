@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import CustomerProfileExtras from '../CustomerProfileExtras';
@@ -6,7 +6,11 @@ import DuplicateCustomersModal from '../DuplicateCustomersModal';
 import useCustomerNotes, { getCustomerNote } from '../../stores/customerNotesStore';
 import { findDuplicateGroups } from '../../utils/customerProfile';
 import useAppSettings from '../../stores/appSettingsStore';
+import useStoreConfig from '../../stores/storeConfigStore';
 import { createMockCustomer, createMockOrder } from '../../__test_utils__';
+
+const mutateApi = vi.fn();
+vi.mock('../../hooks/useOfflineMutation', () => ({ useOfflineMutation: () => ({ mutateApi }) }));
 
 describe('CustomerProfileExtras', () => {
   beforeEach(() => useCustomerNotes.setState({ byStore: {} }));
@@ -63,6 +67,44 @@ describe('CustomerProfileExtras sync', () => {
     });
     render(<CustomerProfileExtras customer={c} storeId="s1" orders={[]} />);
     expect(getCustomerNote(useCustomerNotes.getState().byStore, 's1', 3).updatedAt).toBeUndefined();
+  });
+});
+
+describe('CustomerProfileExtras push', () => {
+  const store = {
+    id: 's1',
+    name: 'S',
+    url: 'https://x.test',
+    consumerKey: 'ck_test',
+    consumerSecret: 'cs_test',
+  };
+  beforeEach(() => {
+    useCustomerNotes.setState({ byStore: {} });
+    useStoreConfig.setState({ stores: [store as never], currentStoreId: 's1' });
+  });
+
+  const addVip = async (): Promise<void> => {
+    const c = createMockCustomer({ id: 3 });
+    render(<CustomerProfileExtras customer={c} storeId="s1" orders={[]} />);
+    await userEvent.setup().type(screen.getByLabelText('New tag'), 'vip{Enter}');
+  };
+
+  it('sends nothing when sync is OFF', async () => {
+    useAppSettings.setState({ syncCustomerProfile: false });
+    await addVip();
+    expect(screen.getByText('vip')).toBeInTheDocument();
+    expect(mutateApi).not.toHaveBeenCalled();
+  });
+
+  it('pushes update_customer when sync is ON', async () => {
+    useAppSettings.setState({ syncCustomerProfile: true });
+    await addVip();
+    expect(mutateApi).toHaveBeenCalledWith(
+      'update_customer',
+      expect.objectContaining({ id: 3 }),
+      's1',
+      expect.any(Function)
+    );
   });
 });
 

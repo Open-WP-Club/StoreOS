@@ -8,6 +8,8 @@ interface StockCountModalProps {
   onClose: () => void;
   /** Applies new quantities through the page's offline-aware stock update path. */
   onApply: (changes: Array<{ productId: number; counted: number }>) => Promise<void>;
+  /** Receive delivered goods: the entered quantity is added to the system stock instead of replacing it. */
+  receive?: boolean;
 }
 
 /** Scan items, enter counted quantities, review differences, then apply. */
@@ -15,6 +17,7 @@ export default function StockCountModal({
   products,
   onClose,
   onApply,
+  receive = false,
 }: StockCountModalProps): ReactElement {
   const [code, setCode] = useState('');
   const [message, setMessage] = useState('');
@@ -36,7 +39,13 @@ export default function StockCountModal({
   const rows = order.flatMap((id) => {
     const p = products.find((x) => x.id === id);
     return p
-      ? [{ product: p, system: p.stock_quantity ?? 0, counted: parseInt(counts[id] ?? '') || 0 }]
+      ? [
+          {
+            product: p,
+            system: p.stock_quantity ?? 0,
+            counted: (receive ? (p.stock_quantity ?? 0) : 0) + (parseInt(counts[id] ?? '') || 0),
+          },
+        ]
       : [];
   });
   const diffs = countDifferences(
@@ -58,7 +67,7 @@ export default function StockCountModal({
   return (
     <Modal
       onClose={onClose}
-      title="Stock count"
+      title={receive ? 'Receive stock' : 'Stock count'}
       className="w-full max-w-2xl mx-4 bg-white dark:bg-gray-800 rounded-lg shadow-xl p-5"
     >
       <input
@@ -87,7 +96,7 @@ export default function StockCountModal({
               <tr className="text-left text-gray-500 dark:text-gray-400">
                 <th className="py-1">Product</th>
                 <th className="py-1">System</th>
-                <th className="py-1">Counted</th>
+                <th className="py-1">{receive ? 'Received' : 'Counted'}</th>
                 <th className="py-1">Diff</th>
               </tr>
             </thead>
@@ -102,7 +111,7 @@ export default function StockCountModal({
                       <input
                         type="number"
                         min="0"
-                        aria-label={`Counted ${r.product.name}`}
+                        aria-label={`${receive ? 'Received' : 'Counted'} ${r.product.name}`}
                         value={counts[r.product.id] ?? ''}
                         onChange={(e) =>
                           setCounts((c) => ({ ...c, [r.product.id]: e.target.value }))

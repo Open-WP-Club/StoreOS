@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { POSCart } from '../POSCart';
 import { createMockProduct, createMockCustomer } from '../../__test_utils__';
+import useAppSettings from '../../stores/appSettingsStore';
 import type { CartItem } from '../../stores/posStore';
 
 const item = (id: number, name: string, price: number, quantity: number): CartItem => ({
@@ -119,6 +120,19 @@ describe('POSCart', () => {
     setup({ discountValue: 10, getDiscountAmount: () => 2.5, getTotal: () => 22.5 });
     expect(screen.getByText('Отстъпка')).toBeInTheDocument();
     expect(screen.getByText(/^-/)).toBeInTheDocument();
+  });
+
+  it('shows the max discount, and flags a capped discount', () => {
+    useAppSettings.setState({ maxDiscountPercent: 20 });
+    setup({ discountValue: 10, getDiscountAmount: () => 2.5 });
+    expect(screen.getByText('Макс. отстъпка: 20%')).toBeInTheDocument();
+  });
+
+  it('warns when the entered discount exceeds the limit', () => {
+    useAppSettings.setState({ maxDiscountPercent: 20 });
+    // 50% of 25 = 12.50 entered, but only 5.00 (20%) applied
+    setup({ discountValue: 50, getDiscountAmount: () => 5 });
+    expect(screen.getByText('Отстъпката е ограничена до 20% от сумата')).toBeInTheDocument();
   });
 
   it('hides the discount line without a discount', () => {

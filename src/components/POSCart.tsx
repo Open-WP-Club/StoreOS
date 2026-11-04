@@ -17,6 +17,7 @@ import {
   StickyNote,
 } from 'lucide-react';
 import { formatPrice } from '../utils/currency';
+import useAppSettings from '../stores/appSettingsStore';
 import type { WooCommerceCustomer } from '../types';
 import type { CartItem } from '../stores/posStore';
 import type { Discount } from '../utils/posPricing';
@@ -100,6 +101,10 @@ export function POSCart({
 }: POSCartProps): ReactElement {
   const payment = getPaymentSummary();
   const lineDiscountTotal = getLineDiscountAmount();
+  const maxDiscountPercent = useAppSettings((s) => s.maxDiscountPercent);
+  const saleBase = cart.reduce((sum, i) => sum + i.price * i.quantity, 0) - lineDiscountTotal;
+  const enteredSale = discountType === 'percent' ? (saleBase * discountValue) / 100 : discountValue;
+  const saleDiscountCapped = enteredSale - getDiscountAmount() > 0.005;
   const updateSplit = (i: number, patch: Partial<Payment>): void =>
     setSplitPayments((splitPayments ?? []).map((p, idx) => (idx === i ? { ...p, ...patch } : p)));
   return (
@@ -307,6 +312,13 @@ export function POSCart({
               <option value="fixed">{currencySymbol || 'fixed'}</option>
             </select>
           </div>
+          <p
+            className={`mt-1 text-xs ${saleDiscountCapped ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}
+          >
+            {saleDiscountCapped
+              ? `Отстъпката е ограничена до ${maxDiscountPercent}% от сумата`
+              : `Макс. отстъпка: ${maxDiscountPercent}%`}
+          </p>
         </div>
       )}
 
