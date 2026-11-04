@@ -37,7 +37,7 @@ jobs:
         run: pnpm run test:coverage
 
       - name: Upload coverage reports
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         if: success()
         continue-on-error: true
         with:
