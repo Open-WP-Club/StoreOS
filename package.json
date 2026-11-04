@@ -9,6 +9,7 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "build:electron": "electron-vite build && electron-builder",
+    "build:win": "electron-vite build && electron-builder --win nsis --x64 --publish never",
     "preview": "electron-vite preview",
     "restart": "node restart-app.js",
     "test": "vitest run",

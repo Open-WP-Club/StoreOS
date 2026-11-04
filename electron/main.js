@@ -11,6 +11,7 @@ import {
 import fs from 'fs';
 import { resolveReportPath } from './reportFiles';
 import { resolveBackupPath, listBackupNames, selectPrune } from './backupFiles';
+import { buildWinRawPrint } from './winRawPrint';
 import electronUpdater from 'electron-updater';
 import path from 'path';
 import { sanitizeNotificationPayload } from './ipcValidation';
@@ -322,12 +323,16 @@ ipcMain.handle('receipt:print', async (event, payload) => {
       )
     );
     if (openDrawer === true && deviceName) {
-      // ponytail: raw send via CUPS `lp` only (macOS/Linux); Windows needs a raw-spooler addon.
-      if (process.platform === 'win32') return { success: true, error: 'drawer unsupported' };
+      // CUPS `lp` on macOS/Linux; PowerShell + winspool RAW spooler on Windows (untested on hardware).
+      const kick =
+        process.platform === 'win32'
+          ? buildWinRawPrint(deviceName, DRAWER_KICK)
+          : { file: 'lp', args: ['-d', deviceName, '-o', 'raw'], env: process.env };
       await new Promise((resolve, reject) => {
         const child = require('child_process').execFile(
-          'lp',
-          ['-d', deviceName, '-o', 'raw'],
+          kick.file,
+          kick.args,
+          { env: kick.env, windowsHide: true },
           (err) => (err ? reject(err) : resolve())
         );
         child.stdin.end(DRAWER_KICK);
