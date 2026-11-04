@@ -153,7 +153,14 @@ test('PIN lockout persists across restart', async () => {
   }
   await expect(app.page.getByText(/Твърде много опити/)).toBeVisible({ timeout: 5000 });
   const st = () =>
-    app.page.evaluate(() => JSON.parse(localStorage.getItem('woocommerce-app-settings')!).state);
+    app.page.evaluate(() => {
+      // Settings are stored encrypted (enc:v1:) with the OS keychain; read them like the app does.
+      const raw = localStorage.getItem('woocommerce-app-settings')!;
+      const json = raw.startsWith('enc:v1:')
+        ? window.electronAPI!.secureStorage.decrypt(raw.slice('enc:v1:'.length))!
+        : raw;
+      return JSON.parse(json).state;
+    });
   const s1 = await st();
   console.log(
     'after 5 failures:',
