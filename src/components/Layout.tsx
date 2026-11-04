@@ -32,6 +32,7 @@ import {
   MessageSquare,
   Globe,
   Keyboard,
+  ClipboardList,
 } from 'lucide-react';
 import StoreSelector from './StoreSelector';
 import GlobalSearch from './GlobalSearch';
@@ -219,6 +220,7 @@ function Layout(): React.ReactElement {
       submenu: [
         { path: '/products', label: 'Products', icon: ShoppingBag },
         { path: '/inventory', label: 'Inventory', icon: Package },
+        { path: '/purchase-orders', label: 'Purchase Orders', icon: ClipboardList },
         { path: '/categories', label: 'Categories', icon: FolderTree },
         { path: '/attributes', label: 'Attributes', icon: Layers },
         { path: '/tax', label: 'Tax', icon: Receipt },

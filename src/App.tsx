@@ -29,6 +29,7 @@ const MultiStoreView = lazy(() => import('./pages/MultiStoreView'));
 const OrderDetailPage = lazy(() => import('./pages/OrderDetailPage'));
 const ProductEditPage = lazy(() => import('./pages/ProductEditPage'));
 const InventoryPage = lazy(() => import('./pages/InventoryPage'));
+const PurchaseOrdersPage = lazy(() => import('./pages/PurchaseOrdersPage'));
 const POSPage = lazy(() => import('./pages/POSPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const CustomersPage = lazy(() => import('./pages/CustomersPage'));
@@ -272,6 +273,7 @@ function AppContent(): React.ReactElement {
                   <Route path="/orders/:id" element={<OrderDetailPage />} />
                   <Route path="/products/:id" element={<ProductEditPage />} />
                   <Route path="/inventory" element={<InventoryPage />} />
+                  <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
                   <Route path="/customers" element={<CustomersPage />} />
                   <Route path="/coupons" element={<CouponsPage />} />
                   <Route path="/categories" element={<CategoriesPage />} />

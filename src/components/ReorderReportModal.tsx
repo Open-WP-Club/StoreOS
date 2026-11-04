@@ -3,6 +3,9 @@ import { X } from 'lucide-react';
 import { exportToCSV } from '../utils/csvExport';
 import { exportTableToPDF } from '../utils/pdfExport';
 import { buildReorderReport, DEFAULT_TARGET_DAYS } from '../utils/reorderReport';
+import useSuppliers, { getStoreData } from '../stores/suppliersStore';
+import { groupReorderBySupplier } from '../utils/purchaseOrders';
+import { getCost } from '../utils/costPrice';
 import ExportMenu from './ExportMenu';
 import Modal from './Modal';
 import type { Order, Product } from '../types';
@@ -14,6 +17,8 @@ interface ReorderReportModalProps {
   orders: Order[];
   lowStockThreshold: number;
   storeName: string;
+  /** When set, a "Create purchase order" action is offered. */
+  storeId?: string;
 }
 
 const inputCls =
@@ -26,7 +31,9 @@ const ReorderReportModal: React.FC<ReorderReportModalProps> = ({
   orders,
   lowStockThreshold,
   storeName,
+  storeId,
 }) => {
+  const [created, setCreated] = useState('');
   const [targetDays, setTargetDays] = useState<number>(DEFAULT_TARGET_DAYS);
   // Manual overrides keyed by product id; reset whenever the target cover changes.
   const [overrides, setOverrides] = useState<{ days: number; qty: Record<number, number> }>({
@@ -55,6 +62,31 @@ const ReorderReportModal: React.FC<ReorderReportModalProps> = ({
     { key: 'daysLeft', label: 'Days left', format: (v: unknown) => daysLabel(v as number | null) },
     { key: 'orderQty', label: 'Reorder qty' },
   ];
+
+  const handleCreatePO = (): void => {
+    if (!storeId) return;
+    const { addSupplier, addOrder } = useSuppliers.getState();
+    const groups = groupReorderBySupplier(finalRows, (id) => {
+      const p = products.find((x) => x.id === id);
+      return (p && getCost(p)) || 0;
+    });
+    for (const [name, lines] of groups) {
+      const existing = getStoreData(useSuppliers.getState().byStore, storeId).suppliers.find(
+        (s) => s.name.toLowerCase() === name.toLowerCase()
+      );
+      const supplier =
+        existing ??
+        (name === 'Unassigned'
+          ? null
+          : addSupplier(storeId, { name, contact: '', email: '', phone: '', notes: '' }));
+      addOrder(storeId, { supplierId: supplier?.id ?? null, supplierName: name, lines });
+    }
+    setCreated(
+      groups.size
+        ? `Created ${groups.size} draft purchase order(s) - see Purchase Orders.`
+        : 'Nothing to order.'
+    );
+  };
 
   const handleCSV = (): void => {
     exportToCSV(finalRows, columns, `reorder-${storeName}-${stamp}.csv`);
@@ -96,7 +128,16 @@ const ReorderReportModal: React.FC<ReorderReportModalProps> = ({
         <span className="text-gray-500 dark:text-gray-400">
           Based on the last 30 days of sales; low-stock threshold {lowStockThreshold}.
         </span>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+          {storeId && (
+            <button
+              onClick={handleCreatePO}
+              disabled={finalRows.length === 0}
+              className="px-3 py-1 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+            >
+              Create purchase order
+            </button>
+          )}
           <ExportMenu
             onExportCSV={handleCSV}
             onExportPDF={handlePDF}
@@ -105,6 +146,11 @@ const ReorderReportModal: React.FC<ReorderReportModalProps> = ({
         </div>
       </div>
 
+      {created && (
+        <p role="status" className="px-4 pb-2 text-sm text-green-700 dark:text-green-400">
+          {created}
+        </p>
+      )}
       <div className="overflow-auto px-4 pb-4">
         {finalRows.length === 0 ? (
           <p className="py-8 text-center text-gray-500 dark:text-gray-400">

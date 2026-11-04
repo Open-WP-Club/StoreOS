@@ -7,7 +7,7 @@ interface StockCountModalProps {
   products: Product[];
   onClose: () => void;
   /** Applies new quantities through the page's offline-aware stock update path. */
-  onApply: (changes: Array<{ productId: number; counted: number }>) => Promise<void>;
+  onApply: (changes: Array<{ productId: number; counted: number }>) => Promise<unknown>;
   /** Receive delivered goods: the entered quantity is added to the system stock instead of replacing it. */
   receive?: boolean;
 }
