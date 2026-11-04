@@ -9,7 +9,13 @@ import { Bar, Doughnut } from 'react-chartjs-2';
 import { Users, DollarSign, ShoppingCart, Mail, MapPin } from 'lucide-react';
 import ExportMenu from '../components/ExportMenu';
 import { useReportExport } from '../hooks/useReportExport';
-import type { Order } from '../types';
+import { exportToCSV } from '../utils/csvExport';
+import { segmentCustomers, segmentCsvRows, SEGMENT_CSV_COLUMNS } from '../utils/customerSegments';
+import { EMPTY_CUSTOMERS } from '../constants';
+import type { Order, WooCommerceOrder } from '../types';
+
+const EMPTY_ORDERS: WooCommerceOrder[] = [];
+const COHORT_COLS = [0, 1, 2, 3, 4, 5, 6];
 
 interface CustomerInfo {
   email: string;
@@ -33,6 +39,12 @@ interface CustomerData {
 const CustomerAnalyticsPage: React.FC = (): React.ReactElement => {
   const getCachedData = useCache((state) => state.getCachedData);
   const theme = useTheme((state) => state.theme);
+  const allCustomers = useCache((state) => state.cache.customers?.data) ?? EMPTY_CUSTOMERS;
+  const allOrders = useCache((state) => state.cache.orders?.data) ?? EMPTY_ORDERS;
+  const segmentation = useMemo(
+    () => segmentCustomers(allCustomers, allOrders),
+    [allCustomers, allOrders]
+  );
 
   const [loading, setLoading] = useState<boolean>(true);
   const {
@@ -361,6 +373,113 @@ const CustomerAnalyticsPage: React.FC = (): React.ReactElement => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Customer Segments (RFM) */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+        <div className="flex justify-between items-baseline mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Customer Segments</h2>
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            Repeat-purchase rate:{' '}
+            <span className="font-semibold text-gray-900 dark:text-white">
+              {(segmentation.repeatRate * 100).toFixed(1)}%
+            </span>
+          </span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-700/50">
+              <tr>
+                {['Segment', 'Customers', 'Revenue', 'Revenue share', ''].map((h) => (
+                  <th
+                    key={h || 'export'}
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              {segmentation.summary.map((s) => (
+                <tr key={s.segment}>
+                  <td className="px-6 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                    {s.segment}
+                  </td>
+                  <td className="px-6 py-3 text-sm text-gray-600 dark:text-gray-400">{s.count}</td>
+                  <td className="px-6 py-3 text-sm text-gray-600 dark:text-gray-400">
+                    {formatCurrency(s.revenue)}
+                  </td>
+                  <td className="px-6 py-3 text-sm text-gray-600 dark:text-gray-400">
+                    {(s.revenueShare * 100).toFixed(1)}%
+                  </td>
+                  <td className="px-6 py-3 text-sm">
+                    <button
+                      type="button"
+                      disabled={s.count === 0}
+                      onClick={() =>
+                        exportToCSV(
+                          segmentCsvRows(segmentation.rows, s.segment),
+                          SEGMENT_CSV_COLUMNS,
+                          `customers-${s.segment.toLowerCase().replace(/\s+/g, '-')}.csv`
+                        )
+                      }
+                      className="text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-40 disabled:no-underline"
+                    >
+                      Export CSV
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Acquisition cohorts */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          Cohort Retention (by first-order month)
+        </h2>
+        {segmentation.cohorts.length === 0 ? (
+          <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+            No order data available
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs uppercase text-gray-500 dark:text-gray-400">
+                  <th className="px-3 py-2">Cohort</th>
+                  <th className="px-3 py-2">Size</th>
+                  {COHORT_COLS.map((k) => (
+                    <th key={k} className="px-3 py-2">
+                      M{k}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {segmentation.cohorts.map((c) => (
+                  <tr key={c.month} className="border-t border-gray-200 dark:border-gray-700">
+                    <td className="px-3 py-2 text-gray-900 dark:text-white">{c.month}</td>
+                    <td className="px-3 py-2 text-gray-600 dark:text-gray-400">{c.size}</td>
+                    {c.retention.map((v, k) => (
+                      <td
+                        key={k}
+                        className="px-3 py-2 text-gray-900 dark:text-white"
+                        style={{ backgroundColor: `rgba(59, 130, 246, ${(v * 0.6).toFixed(2)})` }}
+                      >
+                        {Math.round(v * 100)}%
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Top Customers */}
